@@ -1,0 +1,143 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Pengguna {
+  id_pengguna        String              @id
+  nama               String
+  email              String              @unique
+  whatsapp           String?
+  kata_sandi         String
+  peran              String              @default("Member")
+  foto_profil        String?
+  
+  tugas_ditangani    Tugas[]             @relation("PenanggungJawab")
+  kontributor_tugas  KontributorTugas[]
+  komentar           Komentar[]
+  notifikasi         Notifikasi[]
+}
+
+model Proyek {
+  id_proyek    String        @id
+  nama_proyek  String
+  deskripsi    String?       @db.Text
+  tipe_tugas   String
+  mode_kanban  String
+  dibuat_pada  DateTime      @default(now())
+  
+  kolom_papan  KolomPapan[]
+  tugas        Tugas[]
+}
+
+model KolomPapan {
+  id_kolom      String  @id
+  id_proyek     String
+  judul_kolom   String
+  status_tugas  String
+  urutan        Int
+
+  proyek        Proyek  @relation(fields: [id_proyek], references: [id_proyek], onDelete: Cascade)
+}
+
+model Tugas {
+  id_tugas             String   @id
+  id_proyek            String
+  id_penanggung_jawab  String?
+  id_template          String?
+  
+  judul_tugas          String
+  deskripsi            String?  @db.Text
+  status               String
+  prioritas            String
+  tipe                 String
+  batas_waktu          DateTime?
+  apakah_diblokir      Boolean  @default(false)
+  alasan_diblokir      String?  @db.Text
+  catatan_selesai      String?  @db.Text
+  dibuat_pada          DateTime @default(now())
+  diperbarui_pada      DateTime @updatedAt
+
+  proyek               Proyek            @relation(fields: [id_proyek], references: [id_proyek], onDelete: Cascade)
+  penanggung_jawab     Pengguna?         @relation("PenanggungJawab", fields: [id_penanggung_jawab], references: [id_pengguna], onDelete: SetNull)
+  template             TemplateTugas?    @relation(fields: [id_template], references: [id_template], onDelete: SetNull)
+
+  kontributor          KontributorTugas[]
+  komentar             Komentar[]
+  lampiran             Lampiran[]
+  daftar_periksa       DaftarPeriksa[]
+  notifikasi           Notifikasi[]
+}
+
+model KontributorTugas {
+  id_tugas     String
+  id_pengguna  String
+
+  tugas        Tugas    @relation(fields: [id_tugas], references: [id_tugas], onDelete: Cascade)
+  pengguna     Pengguna @relation(fields: [id_pengguna], references: [id_pengguna], onDelete: Cascade)
+
+  @@id([id_tugas, id_pengguna])
+}
+
+model Komentar {
+  id_komentar   String   @id
+  id_tugas      String
+  id_pengguna   String
+  isi_komentar  String   @db.Text
+  dibuat_pada   DateTime @default(now())
+
+  tugas         Tugas    @relation(fields: [id_tugas], references: [id_tugas], onDelete: Cascade)
+  pengguna      Pengguna @relation(fields: [id_pengguna], references: [id_pengguna], onDelete: Cascade)
+}
+
+model Lampiran {
+  id_lampiran    String   @id
+  id_tugas       String
+  nama_file      String
+  tautan_url     String
+  tipe_lampiran  String
+  dibuat_pada    DateTime @default(now())
+
+  tugas          Tugas    @relation(fields: [id_tugas], references: [id_tugas], onDelete: Cascade)
+}
+
+model DaftarPeriksa {
+  id_periksa      String  @id
+  id_tugas        String
+  teks_periksa    String
+  apakah_selesai  Boolean @default(false)
+
+  tugas           Tugas   @relation(fields: [id_tugas], references: [id_tugas], onDelete: Cascade)
+}
+
+
+
+model Notifikasi {
+  id_notifikasi    String   @id
+  id_pengguna      String
+  id_tugas         String?
+  pesan            String   @db.Text
+  tipe             String
+  sudah_dibaca     Boolean  @default(false)
+  waktu            DateTime @default(now())
+  badge            String?
+  aksi_diperlukan  String?
+
+  pengguna         Pengguna @relation(fields: [id_pengguna], references: [id_pengguna], onDelete: Cascade)
+  tugas            Tugas?   @relation(fields: [id_tugas], references: [id_tugas], onDelete: SetNull)
+}
+
+model TemplateTugas {
+  id_template   String   @id
+  nama_template String
+  kategori      String
+  deskripsi     String?  @db.Text
+  prioritas     String
+  estimasi_jam  Int
+
+  tugas         Tugas[]
+}

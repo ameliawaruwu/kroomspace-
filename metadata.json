@@ -1,0 +1,7 @@
+{
+  "name": "KroomSpace - AI Scrum-Kanban Manager",
+  "description": "A project management system combining Scrum and Kanban with AI-driven task prioritization and maintenance integration.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
