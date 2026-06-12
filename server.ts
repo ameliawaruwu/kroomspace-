@@ -65,7 +65,8 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
-  app.use(express.json());
+  app.use(express.json({ limit: '50mb' }));
+  app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
   // AI Integration Endpoint
   app.post("/api/analyze-external", async (req, res) => {
@@ -148,20 +149,62 @@ async function startServer() {
           Description: ${task.description}
           Type: ${task.type}
           Deadline: ${task.deadline}
-          Return only one word: Low, Medium, or High.`,
-        config: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: { priority: { type: Type.STRING, enum: ["Low", "Medium", "High"] } },
-            required: ["priority"]
-          }
-        }
+          
+          Based on standard IT practices, return ONLY one word: Low, Medium, or High.`,
       });
-      res.json(JSON.parse(response.text));
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: "AI Priority Analysis failed" });
+      
+      res.json({ priority: response.text.trim() });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Failed to analyze priority" });
+    }
+  });
+
+  app.post("/api/ai/generate-report", async (req, res) => {
+    try {
+      const { task, documentation, user } = req.body;
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) return res.status(400).json({ error: "Missing API Key" });
+      
+      const ai = new GoogleGenAI({ apiKey });
+      
+      const prompt = `Anda adalah asisten AI teknis profesional. Buatkan sebuah Laporan Resmi (berformat HTML) penyelesaian tugas/maintenance berdasarkan data berikut:
+      
+      DETAIL TUGAS:
+      - Judul: ${task.title}
+      - ID: ${task.id}
+      - Tipe: ${task.type}
+      - Prioritas: ${task.priority}
+      
+      DOKUMENTASI TEKNISI:
+      - Teknisi: ${documentation.authorName}
+      - Waktu Selesai: ${new Date(documentation.createdAt).toLocaleString('id-ID')}
+      - Catatan Penyelesaian: ${documentation.completionNotes}
+      - Kendala: ${documentation.obstacles || '-'}
+      - Solusi: ${documentation.solutions || '-'}
+
+      Instruksi format:
+      1. Jangan sertakan tag \`\`\`html atau markdown lainnya. Kembalikan murni tag HTML.
+      2. Gunakan gaya CSS inline yang elegan, bersih, font sans-serif modern (seperti Inter atau Arial), dan warna korporat (biru dan abu-abu).
+      3. Struktur HTML harus lengkap dengan div container (max-width: 800px; margin: auto; padding: 40px; border: 1px solid #eee; border-radius: 8px; background: white; color: #333;).
+      4. Header harus memiliki judul "LAPORAN PENYELESAIAN TUGAS - KROOMSPACE".
+      5. Isi mencakup: Ringkasan Eksekutif, Detail Tugas, Analisis Kendala, dan Rekomendasi/Tindak Lanjut.
+      6. Buat bahasanya profesional, baku, dan jelas.`;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: prompt
+      });
+      
+      let html = response.text.trim();
+      if (html.startsWith('\`\`\`html')) html = html.substring(7);
+      if (html.startsWith('\`\`\`')) html = html.substring(3);
+      if (html.endsWith('\`\`\`')) html = html.substring(0, html.length - 3);
+
+      res.json({ html: html.trim() });
+    } catch (error) {
+      console.error("[Generate Report Error]", error);
+      res.status(500).json({ error: "Gagal menghasilkan laporan PDF via AI" });
     }
   });
 
@@ -303,7 +346,7 @@ async function startServer() {
         return res.status(400).json({ error: "Email sudah terdaftar" });
       }
 
-      const newId = await generateId('pengguna', 'P', 'id_pengguna');
+      const newId = await generateId('pengguna', 'id_pengguna');
       const newUser = await prisma.pengguna.create({
         data: {
           id_pengguna: newId,
@@ -503,8 +546,20 @@ async function startServer() {
   // 1. Ambil semua Proyek
   app.get("/api/proyek", async (req, res) => {
     try {
+      const { userId } = req.query;
       const proyek = await prisma.proyek.findMany({
-        include: { kolom_papan: true }
+        where: userId ? { 
+          OR: [
+            { id_pengguna: String(userId) },
+            { anggota: { some: { id_pengguna: String(userId) } } }
+          ]
+        } : undefined,
+        include: { 
+          kolom_papan: true,
+          anggota: {
+            include: { pengguna: true }
+          }
+        }
       });
       res.json(proyek);
     } catch (error) {
@@ -516,8 +571,8 @@ async function startServer() {
   // 2. Buat Proyek baru
   app.post("/api/proyek", async (req, res) => {
     try {
-      const { nama_proyek, tipe_tugas, mode_kanban, deskripsi, columns } = req.body;
-      const newId = await generateId('proyek', 'PRJ', 'id_proyek');
+      const { nama_proyek, tipe_tugas, mode_kanban, deskripsi, columns, userId } = req.body;
+      const newId = await generateId('proyek', 'id_proyek');
       const proyekBaru = await prisma.proyek.create({
         data: {
           id_proyek: newId,
@@ -525,6 +580,7 @@ async function startServer() {
           tipe_tugas,
           mode_kanban,
           deskripsi,
+          id_pengguna: userId || null,
           ...(columns && columns.length > 0 && {
             kolom_papan: {
               create: columns.map((c: any) => ({
@@ -583,23 +639,326 @@ async function startServer() {
     }
   });
 
+  // 2.1a Delete Proyek
+  app.delete("/api/proyek/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      await prisma.proyek.delete({
+        where: { id_proyek: id }
+      });
+      res.status(204).send();
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Gagal menghapus proyek" });
+    }
+  });
+
+
+  // ─── API Template Proyek ───────────────────────────────────────────────────
+
+  // GET semua template proyek
+  app.get("/api/proyek-templates", async (req, res) => {
+    try {
+      const templates = await prisma.templateProyek.findMany({
+        orderBy: { dibuat_pada: 'asc' }
+      });
+      // Parse JSON fields sebelum dikirim
+      const result = templates.map(t => ({
+        ...t,
+        kolom_papan: t.kolom_papan ? JSON.parse(t.kolom_papan) : [],
+        tugas: t.tugas ? JSON.parse(t.tugas) : [],
+      }));
+      res.json(result);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Gagal mengambil template proyek" });
+    }
+  });
+
+  // GET satu template proyek
+  app.get("/api/proyek-templates/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const tmpl = await prisma.templateProyek.findUnique({ where: { id_template: id } });
+      if (!tmpl) return res.status(404).json({ error: "Template tidak ditemukan" });
+      res.json({
+        ...tmpl,
+        kolom_papan: tmpl.kolom_papan ? JSON.parse(tmpl.kolom_papan) : [],
+        tugas: tmpl.tugas ? JSON.parse(tmpl.tugas) : [],
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Gagal mengambil template proyek" });
+    }
+  });
+
+  // POST /api/proyek-templates/generate (AI Template Generation)
+  app.post("/api/proyek-templates/generate", async (req, res) => {
+    try {
+      const { nama_template, deskripsi, kategori, tipe_tugas, mode_kanban } = req.body;
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) return res.status(400).json({ error: "Gemini API Key is not configured." });
+
+      const ai = new GoogleGenAI({ apiKey });
+      const prompt = `Buatkan draf daftar tugas (task list) beserta checklist pekerjaan standar industri untuk template proyek berikut:
+      - Nama Template: ${nama_template}
+      - Deskripsi: ${deskripsi}
+      - Kategori: ${kategori}
+      - Tipe Tugas Utama: ${tipe_tugas}
+      - Mode Kanban: ${mode_kanban}
+
+      Buatkan minimal 3-5 tugas yang relevan. Setiap tugas harus memiliki:
+      1. Judul Tugas (title)
+      2. Deskripsi singkat (description)
+      3. Tingkat prioritas (priority: "Low", "Medium", atau "High")
+      4. Tipe tugas (type: harus berupa "Development", "Bug Fix", "Maintenance", "Infrastructure", "API Service", atau "Security")
+      5. Checklist langkah kerja (checklist: array objek dengan property "text")
+
+      Kembalikan hasilnya sebagai objek JSON dengan struktur:
+      {
+        "tasks": [
+          {
+            "title": "Judul Tugas",
+            "description": "Deskripsi Tugas",
+            "priority": "Medium",
+            "type": "Development",
+            "checklist": [
+              { "text": "Langkah 1" },
+              { "text": "Langkah 2" }
+            ]
+          }
+        ]
+      }`;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              tasks: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    title: { type: Type.STRING },
+                    description: { type: Type.STRING },
+                    priority: { type: Type.STRING, enum: ["Low", "Medium", "High"] },
+                    type: { type: Type.STRING, enum: ["Development", "Bug Fix", "Maintenance", "Infrastructure", "API Service", "Security"] },
+                    checklist: {
+                      type: Type.ARRAY,
+                      items: {
+                        type: Type.OBJECT,
+                        properties: { text: { type: Type.STRING } },
+                        required: ["text"]
+                      }
+                    }
+                  },
+                  required: ["title", "description", "priority", "type", "checklist"]
+                }
+              }
+            },
+            required: ["tasks"]
+          }
+        }
+      });
+
+      const generatedData = JSON.parse(response.text);
+      res.json(generatedData);
+    } catch (error) {
+      console.error("[Generate Template Error]", error);
+      res.status(500).json({ error: "Gagal membuat draf tugas dengan AI" });
+    }
+  });
+
+  // POST buat template proyek baru
+  app.post("/api/proyek-templates", async (req, res) => {
+    try {
+      const { nama_template, deskripsi, kategori, tipe_tugas, mode_kanban, kolom_papan, tugas } = req.body;
+      const newId = await generateId('templateProyek', 'id_template');
+      const newTemplate = await prisma.templateProyek.create({
+        data: {
+          id_template: newId,
+          nama_template,
+          deskripsi,
+          kategori: kategori || 'Development',
+          tipe_tugas,
+          mode_kanban,
+          kolom_papan: kolom_papan ? JSON.stringify(kolom_papan) : null,
+          tugas: tugas ? JSON.stringify(tugas) : null,
+        }
+      });
+      res.status(201).json(newTemplate);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Gagal membuat template proyek" });
+    }
+  });
+
+  // DELETE template proyek
+  app.delete("/api/proyek-templates/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      await prisma.templateProyek.delete({ where: { id_template: id } });
+      res.status(204).send();
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Gagal menghapus template proyek" });
+    }
+  });
+
+  // POST Terapkan Template → Buat Proyek + Tugas + Checklist sekaligus
+  app.post("/api/proyek-templates/:id/terapkan", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { nama_proyek, userId } = req.body;
+
+      // 1. Ambil template
+      const tmpl = await prisma.templateProyek.findUnique({ where: { id_template: id } });
+      if (!tmpl) return res.status(404).json({ error: "Template tidak ditemukan" });
+
+      const kolom: any[] = tmpl.kolom_papan ? JSON.parse(tmpl.kolom_papan) : [];
+      const tugasTemplate: any[] = tmpl.tugas ? JSON.parse(tmpl.tugas) : [];
+
+      // 2. Buat Proyek baru
+      const proyekId = await generateId('proyek', 'id_proyek');
+      let kolomCounter = parseInt((await generateId('kolomPapan', 'id_kolom')).match(/\d+$/)?.[0] || '1');
+
+      const proyekBaru = await prisma.proyek.create({
+        data: {
+          id_proyek: proyekId,
+          nama_proyek: nama_proyek || tmpl.nama_template,
+          deskripsi: tmpl.deskripsi,
+          tipe_tugas: tmpl.tipe_tugas,
+          mode_kanban: tmpl.mode_kanban,
+          id_pengguna: userId || null,
+          kolom_papan: {
+            create: kolom.map((c: any, idx: number) => ({
+              id_kolom: `KB${(kolomCounter + idx).toString().padStart(3, '0')}`,
+              judul_kolom: c.title,
+              status_tugas: c.status,
+              urutan: c.order ?? idx,
+            }))
+          }
+        },
+        include: { kolom_papan: true }
+      });
+
+      // 3. Buat Tugas + Checklist dari template
+      const tugasBuats: any[] = [];
+      let tugasCounter = parseInt((await generateId('tugas', 'id_tugas')).match(/\d+$/)?.[0] || '1');
+      let checklistCounter = parseInt((await generateId('daftarPeriksa', 'id_periksa')).match(/\d+$/)?.[0] || '1');
+
+      for (let ti = 0; ti < tugasTemplate.length; ti++) {
+        const tTask = tugasTemplate[ti];
+        const tugasId = `T${(tugasCounter + ti).toString().padStart(3, '0')}`;
+        const checklist: any[] = tTask.checklist || [];
+
+        const tugasBaru = await prisma.tugas.create({
+          data: {
+            id_tugas: tugasId,
+            id_proyek: proyekId,
+            judul_tugas: tTask.title,
+            deskripsi: tTask.description || '',
+            status: 'Backlog',
+            prioritas: tTask.priority || 'Medium',
+            tipe: tTask.type || tmpl.tipe_tugas,
+            daftar_periksa: checklist.length > 0 ? {
+              create: checklist.map((cl: any, ci: number) => ({
+                id_periksa: `CL${(checklistCounter + ci).toString().padStart(3, '0')}`,
+                teks_periksa: cl.text,
+                apakah_selesai: false,
+              }))
+            } : undefined,
+          },
+          include: { daftar_periksa: true }
+        });
+
+        checklistCounter += checklist.length;
+        tugasBuats.push(tugasBaru);
+      }
+
+      res.status(201).json({
+        proyek: proyekBaru,
+        tugas: tugasBuats,
+        message: `Proyek "${proyekBaru.nama_proyek}" berhasil dibuat dari template dengan ${tugasBuats.length} tugas.`
+      });
+
+    } catch (error) {
+      console.error("Terapkan Template Error:", error);
+      res.status(500).json({ error: "Gagal menerapkan template proyek", details: error instanceof Error ? error.message : String(error) });
+    }
+  });
+
+
+
+  // 2.2 Tambah Anggota Proyek
+  app.post("/api/proyek/:id/anggota", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { id_pengguna } = req.body;
+
+      let user = await prisma.pengguna.findUnique({ where: { id_pengguna } });
+      if (!user) {
+        // Auto-create user if missing (for mock users support)
+        user = await prisma.pengguna.create({
+          data: {
+            id_pengguna,
+            nama: "Team Member",
+            email: `${id_pengguna}@kroombox.com`,
+            kata_sandi: "password",
+            peran: "Member"
+          }
+        });
+      }
+
+      const anggotaBaru = await prisma.anggotaProyek.create({
+        data: {
+          id_proyek: id,
+          id_pengguna
+        },
+        include: { pengguna: true }
+      });
+      res.status(201).json(anggotaBaru);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Gagal menambah anggota proyek" });
+    }
+  });
+
+  // 2.3 Hapus Anggota Proyek
+  app.delete("/api/proyek/:id/anggota/:userId", async (req, res) => {
+    try {
+      const { id, userId } = req.params;
+      await prisma.anggotaProyek.delete({
+        where: { id_proyek_id_pengguna: { id_proyek: id, id_pengguna: userId } }
+      });
+      res.status(204).send();
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Gagal menghapus anggota proyek" });
+    }
+  });
+
   // --- WEBHOOK INTEGRATION (CRM -> KroomSpace) ---
   app.post("/api/webhook/crm-incident", async (req, res) => {
     try {
       // Data payload dari web CRM teman Anda
-      const { incidentId, title, description, urgency, customerPhone } = req.body;
+      const { incidentId, title, description, urgency, customerPhone, customerEmail } = req.body;
       
       // 1. Buat Tugas Otomatis di Papan Kanban
-      const taskId = await generateId('tugas', 'TSK', 'id_tugas');
+      const taskId = await generateId('tugas', 'id_tugas');
       const firstProject = await prisma.proyek.findFirst();
       
       if (firstProject) {
         const newTask = await prisma.tugas.create({
           data: {
             id_tugas: taskId,
-            judul_tugas: `[CRM INCIDENT ${incidentId || 'NEW'}] ${title || 'Laporan Pengguna Baru'}`,
-            deskripsi: description || 'Tugas ini dibuat otomatis oleh sistem terintegrasi Web CRM.',
-            status: 'Backlog',
+            judul_tugas: `[CRM INCIDENT ${incidentId}] ${title}`,
+            deskripsi: `Tugas ini dibuat otomatis oleh sistem terintegrasi Web CRM.\n\n[Client Email: ${customerEmail}]`,
+            status: "Backlog",
             prioritas: urgency || 'High',
             tipe: 'CRM Incident',
             id_proyek: firstProject.id_proyek,
@@ -620,19 +979,37 @@ async function startServer() {
           }
         });
 
-        // 3. Simulasi Eksekusi Bot WhatsApp
-        const waMessage = `🚨 *INSIDEN CRM BARU (KroomSpace)* 🚨\n\n*ID:* ${incidentId}\n*Judul:* ${title}\n*Prioritas:* ${urgency}\n\nMohon segera dicek di Papan Kanban!`;
-        console.log("\n========================================================");
-        console.log("🟢 [WHATSAPP BOT API] MENGIRIM PESAN KE GRUP TIM TEKNIS...");
-        console.log(`Isi Pesan:\n${waMessage}`);
-        if (customerPhone) {
-           console.log(`\n🟢 [WHATSAPP BOT API] Mengirim konfirmasi penerimaan tiket ke pelanggan (${customerPhone})...`);
+        // 3. Eksekusi Pengiriman Email Otomatis Asli
+        if (customerEmail && transporter) {
+          try {
+            const info = await transporter.sendMail({
+              from: emailFrom,
+              to: customerEmail,
+              subject: `KroomSpace: Laporan Diterima - ${title || 'Terkait Sistem Anda'}`,
+              html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333; line-height: 1.6;">
+                      <h2 style="color: #2D7FEA; border-bottom: 2px solid #EBF5FF; padding-bottom: 10px;">Laporan Berhasil Diterima</h2>
+                      <div style="background-color: #F8FBFF; padding: 20px; border-radius: 8px; margin-top: 20px;">
+                        <p>Halo,</p>
+                        <p>Kami telah menerima laporan/keluhan Anda dari sistem CRM.</p>
+                        <p><strong>ID Laporan:</strong> ${incidentId || '-'}</p>
+                        <p><strong>Judul:</strong> ${title || '-'}</p>
+                        <p><strong>Prioritas:</strong> ${urgency || '-'}</p>
+                        <p style="margin-top: 15px;">Tim teknis kami sedang menjadwalkan tindakan perbaikan/maintenance. Kami akan segera mengabari Anda kembali setelah proses maintenance ini selesai.</p>
+                      </div>
+                      <p style="font-size: 12px; color: #777; margin-top: 30px; text-align: center;">Pesan otomatis ini dikirim oleh Sistem Integrasi KroomSpace.</p>
+                    </div>`,
+            });
+            console.log(`[CRM Webhook] Email sukses terkirim ke pelanggan (${customerEmail}). Message ID: ${info.messageId}`);
+          } catch (emailErr) {
+            console.error("[CRM Webhook] Gagal mengirim email otomatis:", emailErr);
+          }
+        } else {
+           console.log(`[CRM Webhook] Laporan dicatat, namun tidak ada email pelanggan (customerEmail) yang dilampirkan atau SMTP belum siap.`);
         }
-        console.log("========================================================\n");
 
         res.status(201).json({ 
           success: true, 
-          message: "Insiden CRM berhasil masuk ke Kanban dan Bot WA berhasil ditrigger (Simulasi).",
+          message: "Insiden CRM berhasil masuk ke Kanban dan Email Konfirmasi berhasil dikirim ke pelanggan.",
           task: newTask
         });
       } else {
@@ -681,7 +1058,7 @@ async function startServer() {
 
       // Cari proyek pertama untuk menampung tugas
       const firstProject = await prisma.proyek.findFirst();
-      const taskId = await generateId('tugas', 'TSK', 'id_tugas');
+      const taskId = await generateId('tugas', 'id_tugas');
 
       if (firstProject) {
         const newTask = await prisma.tugas.create({
@@ -741,7 +1118,9 @@ async function startServer() {
   // Notifikasi Endpoints
   app.get("/api/notifikasi", async (req, res) => {
     try {
+      const { userId } = req.query;
       const notif = await prisma.notifikasi.findMany({
+        where: userId ? { id_pengguna: String(userId) } : undefined,
         orderBy: { waktu: 'desc' }
       });
       res.json(notif);
@@ -754,7 +1133,7 @@ async function startServer() {
   app.post("/api/notifikasi", async (req, res) => {
     try {
       const { id_pengguna, id_tugas, pesan, tipe, sudah_dibaca } = req.body;
-      const newId = await generateId('notifikasi', 'NOT', 'id_notifikasi');
+      const newId = await generateId('notifikasi', 'id_notifikasi');
       const notifBaru = await prisma.notifikasi.create({
         data: {
           id_notifikasi: newId,
@@ -800,103 +1179,63 @@ async function startServer() {
     }
   });
 
-  // Template Tugas Endpoints
-  app.get("/api/templates", async (req, res) => {
-    try {
-      const templates = await prisma.templateTugas.findMany();
-      res.json(templates);
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: "Gagal mengambil template" });
-    }
-  });
-
-  app.post("/api/templates", async (req, res) => {
-    try {
-      const { nama_template, kategori, deskripsi, prioritas, estimasi_jam } = req.body;
-      const newId = await generateId('templateTugas', 'TPL', 'id_template');
-      const templateBaru = await prisma.templateTugas.create({
-        data: {
-          id_template: newId,
-          nama_template,
-          kategori,
-          deskripsi,
-          prioritas,
-          estimasi_jam: parseInt(estimasi_jam) || 1
-        }
-      });
-      res.status(201).json(templateBaru);
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: "Gagal membuat template" });
-    }
-  });
-
-  app.put("/api/templates/:id", async (req, res) => {
-    try {
-      const { id } = req.params;
-      const { nama_template, kategori, deskripsi, prioritas, estimasi_jam } = req.body;
-      const templateUpdated = await prisma.templateTugas.update({
-        where: { id_template: id },
-        data: {
-          ...(nama_template && { nama_template }),
-          ...(kategori && { kategori }),
-          ...(deskripsi !== undefined && { deskripsi }),
-          ...(prioritas && { prioritas }),
-          ...(estimasi_jam !== undefined && { estimasi_jam: parseInt(estimasi_jam) }),
-        }
-      });
-      res.json(templateUpdated);
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: "Gagal update template" });
-    }
-  });
-
-  app.delete("/api/templates/:id", async (req, res) => {
-    try {
-      const { id } = req.params;
-      await prisma.templateTugas.delete({
-        where: { id_template: id }
-      });
-      res.status(204).send();
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: "Gagal menghapus template" });
-    }
-  });
-
   // 3. Ambil semua Tugas
   app.get("/api/tugas", async (req, res) => {
     try {
+      const { userId } = req.query;
       const tugas = await prisma.tugas.findMany({
+        where: userId ? { 
+          proyek: { 
+            OR: [
+              { id_pengguna: String(userId) },
+              { anggota: { some: { id_pengguna: String(userId) } } }
+            ]
+          }
+        } : undefined,
         include: {
           proyek: true,
           penanggung_jawab: true,
           komentar: true,
           lampiran: true,
           daftar_periksa: true,
-
           kontributor: true,
         }
       });
       res.json(tugas);
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: "Gagal mengambil data tugas" });
+      console.error('[GET /api/tugas] Error:', error);
+      res.status(500).json({ error: "Gagal mengambil data tugas", details: error instanceof Error ? error.message : String(error) });
     }
   });
 
   // 4. Buat Tugas baru
   app.post("/api/tugas", async (req, res) => {
     try {
-      const { id_proyek, judul_tugas, deskripsi, status, prioritas, tipe, id_penanggung_jawab, checklist, comments, attachments, contributors, catatan_selesai, batas_waktu } = req.body;
-      const newId = await generateId('tugas', 'TSK', 'id_tugas');
+      const { id_proyek, judul_tugas, deskripsi, status, prioritas, tipe, id_penanggung_jawab, checklist, comments, attachments, contributors, catatan_selesai, batas_waktu, tanggal_mulai, tanggal_selesai } = req.body;
+      const newId = await generateId('tugas', 'id_tugas');
       
-      let baseChecklistId = checklist && checklist.length > 0 ? parseInt((await generateId('daftarPeriksa', 'CHK', 'id_periksa')).replace('CHK', '')) || 1 : 1;
-      let baseCommentId = comments && comments.length > 0 ? parseInt((await generateId('komentar', 'CMT', 'id_komentar')).replace('CMT', '')) || 1 : 1;
-      let baseAttachId = attachments && attachments.length > 0 ? parseInt((await generateId('lampiran', 'LMP', 'id_lampiran')).replace('LMP', '')) || 1 : 1;
+      let baseChecklistId = checklist && checklist.length > 0 ? parseInt((await generateId('daftarPeriksa', 'id_periksa')).match(/\d+$/)?.[0] || '1') : 1;
+      let baseCommentId = comments && comments.length > 0 ? parseInt((await generateId('komentar', 'id_komentar')).match(/\d+$/)?.[0] || '1') : 1;
+      let baseAttachId = attachments && attachments.length > 0 ? parseInt((await generateId('lampiran', 'id_lampiran')).match(/\d+$/)?.[0] || '1') : 1;
 
+      // Auto-create missing users for assignment/contributors
+      const usersToCheck = [];
+      if (id_penanggung_jawab) usersToCheck.push(id_penanggung_jawab);
+      if (contributors && contributors.length > 0) usersToCheck.push(...contributors);
+      for (const uid of usersToCheck) {
+        let user = await prisma.pengguna.findUnique({ where: { id_pengguna: uid } });
+        if (!user) {
+          await prisma.pengguna.create({
+            data: {
+              id_pengguna: uid,
+              nama: "Team Member",
+              email: `${uid}@kroombox.com`,
+              kata_sandi: "password",
+              peran: "Member"
+            }
+          });
+        }
+      }
 
       const tugasBaru = await prisma.tugas.create({
         data: {
@@ -910,6 +1249,8 @@ async function startServer() {
           tipe,
           catatan_selesai: catatan_selesai || null,
           batas_waktu: batas_waktu ? new Date(batas_waktu) : null,
+          tanggal_mulai: tanggal_mulai ? new Date(tanggal_mulai) : null,
+          tanggal_selesai: tanggal_selesai ? new Date(tanggal_selesai) : null,
           ...(contributors && contributors.length > 0 && {
             kontributor: {
               create: contributors.map((c: string) => ({ id_pengguna: c }))
@@ -918,16 +1259,18 @@ async function startServer() {
           ...(checklist && checklist.length > 0 && {
             daftar_periksa: {
               create: checklist.map((c: any, idx: number) => ({
-                id_periksa: `CHK${(baseChecklistId + idx).toString().padStart(3, '0')}`,
+                id_periksa: `CL${(baseChecklistId + idx).toString().padStart(3, '0')}`,
                 teks_periksa: c.text,
-                apakah_selesai: c.completed
+                apakah_selesai: c.completed,
+                tanggal_mulai: c.startDate ? new Date(c.startDate) : null,
+                tanggal_selesai: c.endDate ? new Date(c.endDate) : null
               }))
             }
           }),
           ...(comments && comments.length > 0 && {
             komentar: {
               create: comments.map((c: any, idx: number) => ({
-                id_komentar: `CMT${(baseCommentId + idx).toString().padStart(3, '0')}`,
+                id_komentar: `KM${(baseCommentId + idx).toString().padStart(3, '0')}`,
                 id_pengguna: c.userId,
                 isi_komentar: c.text,
                 dibuat_pada: new Date(c.createdAt || c.timestamp || Date.now())
@@ -937,7 +1280,7 @@ async function startServer() {
           ...(attachments && attachments.length > 0 && {
             lampiran: {
               create: attachments.map((a: any, idx: number) => ({
-                id_lampiran: `LMP${(baseAttachId + idx).toString().padStart(3, '0')}`,
+                id_lampiran: `L${(baseAttachId + idx).toString().padStart(3, '0')}`,
                 nama_file: a.name,
                 tautan_url: a.url,
                 tipe_lampiran: a.type,
@@ -951,7 +1294,7 @@ async function startServer() {
       res.status(201).json(tugasBaru);
     } catch (error) {
       console.error(error);
-      res.status(500).json({ error: "Gagal membuat tugas" });
+      res.status(500).json({ error: "Gagal membuat tugas", details: error instanceof Error ? error.message : String(error) });
     }
   });
 
@@ -959,7 +1302,7 @@ async function startServer() {
   app.put("/api/tugas/:id", async (req, res) => {
     try {
       const { id } = req.params;
-      const { status, judul_tugas, deskripsi, prioritas, tipe, id_penanggung_jawab, checklist, comments, attachments, contributors, catatan_selesai, batas_waktu } = req.body;
+      const { status, judul_tugas, deskripsi, prioritas, tipe, id_penanggung_jawab, checklist, comments, attachments, contributors, catatan_selesai, batas_waktu, tanggal_mulai, tanggal_selesai } = req.body;
       const tugasUpdated = await prisma.tugas.update({
         where: { id_tugas: id },
         data: {
@@ -971,6 +1314,8 @@ async function startServer() {
           ...(id_penanggung_jawab !== undefined && { id_penanggung_jawab }),
           ...(catatan_selesai !== undefined && { catatan_selesai }),
           ...(batas_waktu !== undefined && { batas_waktu: batas_waktu ? new Date(batas_waktu) : null }),
+          ...(tanggal_mulai !== undefined && { tanggal_mulai: tanggal_mulai ? new Date(tanggal_mulai) : null }),
+          ...(tanggal_selesai !== undefined && { tanggal_selesai: tanggal_selesai ? new Date(tanggal_selesai) : null }),
         }
       });
 
@@ -989,13 +1334,15 @@ async function startServer() {
       if (checklist !== undefined) {
         await prisma.daftarPeriksa.deleteMany({ where: { id_tugas: id } });
         if (checklist && checklist.length > 0) {
-          let baseChecklistId = parseInt((await generateId('daftarPeriksa', 'CHK', 'id_periksa')).replace('CHK', '')) || 1;
+          let baseChecklistId = parseInt((await generateId('daftarPeriksa', 'id_periksa')).match(/\d+$/)?.[0] || '1');
           await prisma.daftarPeriksa.createMany({
             data: checklist.map((c: any, idx: number) => ({
-              id_periksa: c.id && c.id.startsWith('CHK') ? c.id : `CHK${(baseChecklistId + idx).toString().padStart(3, '0')}`,
+              id_periksa: c.id && c.id.startsWith('CL') ? c.id : `CL${(baseChecklistId + idx).toString().padStart(3, '0')}`,
               id_tugas: id,
               teks_periksa: c.text,
-              apakah_selesai: c.completed
+              apakah_selesai: c.completed,
+              tanggal_mulai: c.startDate ? new Date(c.startDate) : null,
+              tanggal_selesai: c.endDate ? new Date(c.endDate) : null
             }))
           });
         }
@@ -1004,10 +1351,10 @@ async function startServer() {
       if (comments !== undefined) {
         await prisma.komentar.deleteMany({ where: { id_tugas: id } });
         if (comments && comments.length > 0) {
-          let baseCommentId = parseInt((await generateId('komentar', 'CMT', 'id_komentar')).replace('CMT', '')) || 1;
+          let baseCommentId = parseInt((await generateId('komentar', 'id_komentar')).match(/\d+$/)?.[0] || '1');
           await prisma.komentar.createMany({
             data: comments.map((c: any, idx: number) => ({
-              id_komentar: c.id && c.id.startsWith('CMT') ? c.id : `CMT${(baseCommentId + idx).toString().padStart(3, '0')}`,
+              id_komentar: c.id && c.id.startsWith('KM') ? c.id : `KM${(baseCommentId + idx).toString().padStart(3, '0')}`,
               id_tugas: id,
               id_pengguna: c.userId,
               isi_komentar: c.text,
@@ -1020,10 +1367,10 @@ async function startServer() {
       if (attachments !== undefined) {
         await prisma.lampiran.deleteMany({ where: { id_tugas: id } });
         if (attachments && attachments.length > 0) {
-          let baseAttachId = parseInt((await generateId('lampiran', 'LMP', 'id_lampiran')).replace('LMP', '')) || 1;
+          let baseAttachId = parseInt((await generateId('lampiran', 'id_lampiran')).match(/\d+$/)?.[0] || '1');
           await prisma.lampiran.createMany({
             data: attachments.map((a: any, idx: number) => ({
-              id_lampiran: a.id && a.id.startsWith('LMP') ? a.id : `LMP${(baseAttachId + idx).toString().padStart(3, '0')}`,
+              id_lampiran: a.id && a.id.startsWith('L') ? a.id : `L${(baseAttachId + idx).toString().padStart(3, '0')}`,
               id_tugas: id,
               nama_file: a.name,
               tautan_url: a.url,
@@ -1039,6 +1386,91 @@ async function startServer() {
     } catch (error) {
       console.error(error);
       res.status(500).json({ error: "Gagal memperbarui tugas" });
+    }
+  });
+
+  // Dokumentasi Endpoints
+  app.get("/api/dokumentasi", async (req, res) => {
+    try {
+      const dokumentasi = await prisma.dokumentasiTugas.findMany({
+        include: { pengguna: true }
+      });
+      res.json(dokumentasi);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Gagal mengambil dokumentasi" });
+    }
+  });
+
+  app.post("/api/dokumentasi", async (req, res) => {
+    try {
+      const { id_tugas, id_pengguna, catatan_selesai, kendala, solusi } = req.body;
+      const newId = await generateId('dokumentasiTugas', 'id_dokumentasi');
+      const docBaru = await prisma.dokumentasiTugas.create({
+        data: {
+          id_dokumentasi: newId,
+          id_tugas,
+          id_pengguna,
+          catatan_selesai,
+          kendala,
+          solusi
+        },
+        include: { pengguna: true }
+      });
+      res.status(201).json(docBaru);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Gagal membuat dokumentasi" });
+    }
+  });
+
+  app.delete("/api/dokumentasi/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      await prisma.dokumentasiTugas.delete({
+        where: { id_dokumentasi: id }
+      });
+      res.status(204).send();
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Gagal menghapus dokumentasi" });
+    }
+  });
+
+  // Maintenance Report Endpoint
+  app.post("/api/maintenance/report", async (req, res) => {
+    try {
+      const { to_email, subject, summary_text } = req.body;
+      if (!to_email || !summary_text) {
+        return res.status(400).json({ error: "Email tujuan dan isi laporan tidak boleh kosong" });
+      }
+
+      if (!transporter) {
+        return res.status(500).json({ error: "Layanan email (SMTP) belum diinisialisasi" });
+      }
+
+      const info = await transporter.sendMail({
+        from: emailFrom,
+        to: to_email,
+        subject: subject || "Laporan Maintenance KroomSpace",
+        html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333; line-height: 1.6;">
+                <h2 style="color: #2D7FEA; border-bottom: 2px solid #EBF5FF; padding-bottom: 10px;">Laporan Maintenance</h2>
+                <div style="background-color: #F8FBFF; padding: 20px; border-radius: 8px; margin-top: 20px;">
+                  <p style="white-space: pre-wrap;">${summary_text}</p>
+                </div>
+                <p style="font-size: 12px; color: #777; margin-top: 30px; text-align: center;">Dikirim secara otomatis oleh Sistem KroomSpace.</p>
+              </div>`,
+      });
+
+      console.log(`[Maintenance Report] Dikirim ke ${to_email}. Message ID: ${info.messageId}`);
+      if (nodemailer.getTestMessageUrl(info)) {
+        console.log(`[Email Preview] ${nodemailer.getTestMessageUrl(info)}`);
+      }
+
+      res.json({ message: "Laporan berhasil dikirim" });
+    } catch (error) {
+      console.error("[Maintenance Report Error]", error);
+      res.status(500).json({ error: "Gagal mengirim laporan maintenance" });
     }
   });
 

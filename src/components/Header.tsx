@@ -14,7 +14,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ 
   darkMode, 
-  setDarkMode, 
+  setDarkMode,
   onNotificationClick,
   onProfileClick,
   user,
@@ -24,13 +24,13 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className={cn(
-      "h-20 flex items-center justify-between px-8 fixed top-0 right-0 left-0 lg:left-[300px] z-30 transition-all duration-300",
+      "h-16 md:h-20 flex items-center justify-between px-4 md:px-8 fixed top-0 right-0 left-0 lg:left-[300px] z-30 transition-all duration-300",
       darkMode 
         ? "bg-[#0D1B35]/90 backdrop-blur-xl border-b border-[#1E3A5F]/50" 
         : "bg-white/90 backdrop-blur-xl border-b border-[#BFDFFF]/40 shadow-sm shadow-[#3FA9F5]/5"
     )}>
-      {/* Search Bar */}
-      <div className="flex items-center gap-4 flex-1 max-w-xl">
+      {/* Search Bar - hidden on mobile, visible md+ */}
+      <div className="hidden md:flex items-center gap-4 flex-1 max-w-xl">
         <div className="relative w-full group">
           <Search 
             className="absolute left-4 top-1/2 -translate-y-1/2 transition-colors group-focus-within:text-[#3FA9F5]" 
@@ -49,8 +49,12 @@ export const Header: React.FC<HeaderProps> = ({
           />
         </div>
       </div>
+      {/* Mobile title placeholder */}
+      <div className="md:hidden flex-1 pl-10">
+        <span className="font-black text-sm tracking-wider bg-gradient-to-r from-[#3FA9F5] to-[#2D7FEA] bg-clip-text text-transparent">KroomSpace</span>
+      </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 md:gap-4">
         {/* Dark Mode Toggle */}
         <button 
           onClick={() => setDarkMode(!darkMode)}
@@ -64,9 +68,9 @@ export const Header: React.FC<HeaderProps> = ({
           {darkMode ? <Sun size={18} /> : <Moon size={18} />}
         </button>
 
-        {/* Language Switcher */}
+        {/* Language Switcher - hidden on mobile */}
         <div className={cn(
-          "flex items-center p-1 rounded-2xl border transition-all",
+          "hidden md:flex items-center p-1 rounded-2xl border transition-all",
           darkMode 
             ? "bg-[#1E3A5F]/40 border-[#1E3A5F]/60" 
             : "bg-[#F0F9FF] border-[#BFDFFF]/60"

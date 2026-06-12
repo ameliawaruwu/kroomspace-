@@ -8,7 +8,11 @@
     "build": "vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "seed": "tsx prisma/seed.ts",
+    "db:reset": "npx prisma db push --force-reset && tsx prisma/seed.ts",
+    "db:push": "npx prisma db push",
+    "db:studio": "npx prisma studio"
   },
   "dependencies": {
     "@google/genai": "^1.29.0",
@@ -20,6 +24,7 @@
     "date-fns": "^4.1.0",
     "dotenv": "^17.2.3",
     "express": "^4.21.2",
+    "html2pdf.js": "^0.14.0",
     "i18next": "^26.2.0",
     "lucide-react": "^0.546.0",
     "motion": "^12.23.24",
@@ -37,6 +42,7 @@
     "@types/nodemailer": "^8.0.0",
     "autoprefixer": "^10.4.21",
     "prisma": "^6.19.3",
+    "puppeteer": "^25.1.0",
     "tailwindcss": "^4.1.14",
     "tsx": "^4.21.0",
     "typescript": "~5.8.2",

@@ -121,6 +121,10 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
     const trimmedPassword = password.trim();
 
     if (isLogin) {
+      if (!trimmedEmail || !trimmedPassword) {
+        setError(t('invalidCredentials'));
+        return;
+      }
       try {
         const response = await fetch('/api/auth/login', {
           method: 'POST',
@@ -377,11 +381,11 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
                       <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                       <input 
                         type="email" 
+                        id="username"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-100 focus:border-blue-500/20 focus:bg-white rounded-2xl outline-none transition-all font-medium text-slate-900 placeholder:text-slate-300"
                         placeholder="name@company.com"
-                        required
                       />
                     </div>
                   </div>
@@ -392,11 +396,11 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
                       <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                       <input 
                         type={showPassword ? "text" : "password"} 
+                        id="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         className="w-full pl-12 pr-12 py-3.5 bg-slate-50 border border-slate-100 focus:border-blue-500/20 focus:bg-white rounded-2xl outline-none transition-all font-medium text-slate-900 placeholder:text-slate-300"
                         placeholder="••••••••"
-                        required
                       />
                       <button
                         type="button"
@@ -447,6 +451,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
 
               {error && (
                 <motion.p 
+                  id="login-error"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   className={cn(
@@ -460,6 +465,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
 
               <button 
                 type="submit"
+                id="login-form-submit"
                 className="w-full group flex items-center justify-center gap-3 p-4 bg-[#1E3A8A] hover:bg-[#152a65] text-white rounded-2xl transition-all duration-300 shadow-lg shadow-[#1E3A8A]/20 font-bold mt-6"
               >
                 {isLogin ? t('login') : (!isLogin && registerMode === 'otp' ? t('verifyOtp') : t('register'))}
@@ -583,7 +589,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
             transition={{ delay: 0.5, duration: 1 }}
             className="text-2xl font-black text-white mb-3 tracking-wide"
           >
-            Smart Scrum & Kanban
+            Pusat Manajemen Proyek & Maintenance
           </motion.h2>
           <motion.p 
             initial={{ opacity: 0 }}
@@ -591,7 +597,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
             transition={{ delay: 0.8, duration: 1 }}
             className="text-blue-100 text-sm leading-relaxed"
           >
-            Tingkatkan efisiensi kolaborasi tim. Kelola setiap tugas, atur jadwal pemeliharaan, dan capai target dengan manajemen proyek terpusat yang ditenagai oleh kecerdasan buatan.
+            Solusi terpadu untuk efisiensi kolaborasi tim Anda. Pantau progress tugas harian, atur jadwal maintenance aset, dan selesaikan pekerjaan lebih cepat tanpa hambatan.
           </motion.p>
         </div>
       </div>

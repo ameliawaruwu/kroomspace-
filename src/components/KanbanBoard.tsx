@@ -23,19 +23,24 @@ import {
   MessageCircle,
   Send,
   Loader2,
-  MapPin,
   Camera,
   Save,
   Edit,
+  Settings,
+  Trash2,
   Flag,
-  Tag
+  Tag,
+  BookOpen,
+  FilePlus,
+  FolderKanban
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Task, TaskStatus, Priority, Project, TaskTemplate, ChecklistItem, KanbanMode } from '../types';
+import { Task, TaskStatus, Priority, Project, TaskTemplate, ChecklistItem, KanbanMode, Documentation } from '../types';
 import { mockUsers, mockTemplates } from '../services/apiService';
 import { analyzePriority, sortTasksByPriority, getMaintenanceConsultation } from '../services/aiService';
 import { cn } from '../lib/utils';
 import { useLanguage } from '../context/LanguageContext';
+import { DocumentationDrawer } from './DocumentationDrawer';
 
 const COLUMNS: TaskStatus[] = ['Backlog', 'To Do', 'In Progress', 'Review', 'Done'];
 const DraggableAny = Draggable as any;
@@ -44,6 +49,7 @@ interface KanbanBoardProps {
   tasks: Task[];
   setTasks: (tasks: Task[]) => void;
   projects: Project[];
+  setProjects?: React.Dispatch<React.SetStateAction<Project[]>>;
   currentProjectId: string;
   setCurrentProjectId: (id: string) => void;
   isBoardOpen: boolean;
@@ -59,6 +65,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   tasks, 
   setTasks, 
   projects, 
+  setProjects,
   currentProjectId, 
   setCurrentProjectId,
   isBoardOpen,
@@ -73,9 +80,11 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [isNewTask, setIsNewTask] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isSorting, setIsSorting] = useState<string | null>(null);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [newProjectMode, setNewProjectMode] = useState<KanbanMode>('Project');
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectDesc, setNewProjectDesc] = useState('');
@@ -84,6 +93,11 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   const [attachmentUrl, setAttachmentUrl] = useState('');
   const [attachmentType, setAttachmentType] = useState<'file' | 'link'>('link');
   const [filterMode, setFilterMode] = useState<'all' | 'my'>('all');
+  
+  // Custom Modal States
+  const [showAddColumnModal, setShowAddColumnModal] = useState(false);
+  const [newColName, setNewColName] = useState('');
+  const [columnToDelete, setColumnToDelete] = useState<string | null>(null);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [completionNotes, setCompletionNotes] = useState('');
@@ -93,9 +107,47 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   const [chatInput, setChatInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [newChecklistItem, setNewChecklistItem] = useState('');
+  const [documentations, setDocumentations] = useState<Documentation[]>([]);
+  const [docDrawerTask, setDocDrawerTask] = useState<Task | null>(null);
+  const [docDrawerMode, setDocDrawerMode] = useState<'view' | 'add'>('view');
+  const [showAddMemberModal, setShowAddMemberModal] = useState(false);
+  const [memberSearchQuery, setMemberSearchQuery] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const currentProject = projects.find(p => p.id === currentProjectId);
   const isOperational = currentProject?.mode === 'Operational';
+
+  const [dbUsers, setDbUsers] = useState<any[]>([]);
+  const projectOwner = dbUsers.find(u => u.id === (currentProject as any)?.id_pengguna) || user;
+  const projectMembers = currentProject?.anggota?.map(a => dbUsers.find(u => u.id === a.id_pengguna)).filter(Boolean) || [];
+  const allProjectUsers = [projectOwner, ...projectMembers].filter((v, i, a) => v && a.findIndex(t => (t?.id === v?.id)) === i);
+
+  React.useEffect(() => {
+    fetch('/api/users')
+      .then(res => res.json())
+      .then(data => setDbUsers(data))
+      .catch(console.error);
+
+    fetch('/api/dokumentasi')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          const mappedDocs: Documentation[] = data.map((d: any) => ({
+            id: d.id_dokumentasi,
+            taskId: d.id_tugas,
+            completionNotes: d.catatan_selesai,
+            obstacles: d.kendala || '',
+            solutions: d.solusi || '',
+            attachments: [],
+            authorId: d.id_pengguna,
+            authorName: d.pengguna?.nama || 'Unknown',
+            authorAvatar: d.pengguna?.foto_profil,
+            createdAt: d.dibuat_pada,
+          }));
+          setDocumentations(mappedDocs);
+        }
+      })
+      .catch(console.error);
+  }, []);
 
   const isCriticalTask = (task: Task) => {
     const criticalKeywords = ['error', 'down', 'critical', 'urgent', 'bug', 'fail', 'mati', 'rusak', 'kendala'];
@@ -126,7 +178,8 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
       return pMap[b.priority] - pMap[a.priority];
     })[0];
 
-  const handleAddTask = (status: TaskStatus = 'Backlog') => {
+  const handleAddTask = (status?: string) => {
+    const defaultStatus = typeof status === 'string' ? status : (boardColumns[0]?.status || 'To Do');
     if (isOperational) {
       setShowTemplateModal(true);
       return;
@@ -135,7 +188,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
       id: `t${Date.now()}`,
       title: '',
       description: '',
-      status,
+      status: defaultStatus,
       priority: 'Medium',
       type: 'Development',
       createdAt: new Date().toISOString().split('T')[0],
@@ -144,6 +197,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
       comments: []
     };
     setSelectedTask(newTask);
+    setIsNewTask(true);  // Mark as new task - NOT yet in tasks array
     setIsEditing(true);
   };
 
@@ -168,10 +222,6 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
     setShowTemplateModal(false);
     onSuccess(`${t('taskCreated')}: ${template.name}`);
     
-    onAddNotification(
-      `${t('newTaskFromTemplateNotification')} ${template.name}`,
-      'Info'
-    );
   };
 
   const handleAISuggest = async () => {
@@ -291,21 +341,22 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
     if (!selectedTask) return;
     if (!selectedTask.title.trim()) return;
 
-    const taskExists = tasks.some(t => t.id === selectedTask.id);
-    if (taskExists) {
+    // Use isNewTask flag (not tasks.some) because inline editing may have
+    // already inserted the task into the array with a temporary ID,
+    // which would cause PUT to be called with a non-existent DB ID.
+    if (isNewTask) {
+      // Remove any partial/inline-inserted version first, then add the final version
+      const withoutTemp = tasks.filter(t => t.id !== selectedTask.id);
+      setTasks([...withoutTemp, selectedTask]);
+
+      onSuccess(t('taskCreated'));
+    } else {
       setTasks(tasks.map(t => t.id === selectedTask.id ? selectedTask : t));
       onSuccess(t('taskUpdated'));
-    } else {
-      setTasks([...tasks, selectedTask]);
-      onAddNotification(
-        `${t('newTaskCreated')} ${selectedTask.title}`,
-        'Task',
-        false
-      );
-      onSuccess(t('taskCreated'));
     }
     setSelectedTask(null);
     setIsEditing(false);
+    setIsNewTask(false);
     setAttachmentName('');
     setAttachmentUrl('');
   };
@@ -443,15 +494,22 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   };
 
   return (
-    <div className={cn("min-h-screen", isBoardOpen ? "h-screen overflow-hidden" : "overflow-y-auto transition-colors")}>
+    <div className={cn("min-h-screen", isBoardOpen ? "h-screen overflow-hidden" : "space-y-8 animate-in fade-in duration-700 overflow-y-auto transition-colors pb-20")}>
       {!isBoardOpen ? (
-        <div className="p-8 space-y-8 relative max-w-7xl mx-auto">
-          <header className="sticky top-0 z-20 py-4 -mt-4 mb-4 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-md transition-colors">
-            <h1 className="text-3xl font-bold text-slate-900 dark:text-white transition-colors">{t('boards')}</h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-1 transition-colors">{t('select')}</p>
+        <>
+          <header className={cn(
+            "flex flex-col md:flex-row justify-between items-start md:items-center sticky top-0 z-30 px-8 py-6 backdrop-blur-xl border-b transition-all gap-4",
+            darkMode 
+              ? "bg-[#0D1B35]/90 border-[#1E3A5F]/40" 
+              : "bg-[#F4F8FC]/90 border-[#BFDFFF]/30"
+          )}>
+            <div>
+              <h1 className={cn("text-3xl font-black tracking-tight", darkMode ? "text-white" : "text-slate-800")}>{t('boards')}</h1>
+              <p className={cn("mt-1 font-medium text-sm", darkMode ? "text-slate-400" : "text-slate-500")}>{t('select')}</p>
+            </div>
           </header>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="px-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {projects.map((project) => {
               const projectTasks = tasks.filter(t => t.projectId === project.id);
               const completedCount = projectTasks.filter(t => t.status === 'Done').length;
@@ -470,7 +528,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   <div className="flex justify-between items-start mb-6">
                     <div className={cn(
                       "p-3.5 rounded-2xl shadow-sm",
-                      project.type === 'Maintenance' ? "bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400" : "bg-blue-50 dark:bg-blue-500/10 text-blue-500 dark:text-blue-400"
+                      project.type === 'Maintenance' ? "bg-sky-50 dark:bg-sky-500/10 text-sky-500 dark:text-sky-400" : "bg-blue-50 dark:bg-blue-500/10 text-blue-500 dark:text-blue-400"
                     )}>
                       {project.type === 'Maintenance' ? <Zap size={24} /> : <Trello size={24} />}
                     </div>
@@ -498,7 +556,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                     </div>
                   </div>
 
-                  <div className="mt-8 pt-6 border-t border-slate-50 dark:border-slate-700 flex justify-between items-center">
+                  <div className="mt-8 pt-6 border-t border-slate-50 dark:border-slate-700 flex justify-between items-center relative">
                     <div className="flex -space-x-2">
                       {mockUsers.slice(0, 3).map(user => (
                         <img key={user.id} src={user.avatar} className="w-8 h-8 rounded-full border-2 border-white dark:border-slate-800 shadow-sm" alt="" />
@@ -507,13 +565,56 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                     <div className="flex items-center gap-1.5 text-blue-500 dark:text-blue-400 font-bold text-xs uppercase tracking-tight">
                       {t('openBoard')} <ChevronRight size={14} />
                     </div>
+                    
+                    <div className="absolute -top-12 right-0 flex gap-2 translate-x-4 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all">
+                      <button 
+                        onClick={(e) => { 
+                          e.stopPropagation(); 
+                          setNewProjectName(project.name);
+                          setNewProjectDesc(project.description);
+                          setNewProjectMode(project.mode);
+                          setCurrentProjectId(project.id); // Or use a separate state like editingProjectId
+                          setShowCreateModal(true); 
+                        }}
+                        className="p-2 bg-white dark:bg-slate-900 text-slate-400 hover:text-blue-600 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm transition-all"
+                      >
+                        <Settings size={16} />
+                      </button>
+                      <button 
+                        onClick={async (e) => { 
+                          e.stopPropagation(); 
+                          if (confirm('Apakah Anda yakin ingin menghapus proyek ini? Semua tugas di dalamnya juga akan terhapus.')) {
+                            try {
+                              const res = await fetch(`/api/proyek/${project.id}`, { method: 'DELETE' });
+                              if (res.ok) {
+                                if (setProjects) setProjects(projects.filter(p => p.id !== project.id));
+                                onSuccess('Proyek berhasil dihapus');
+                              } else {
+                                alert('Gagal menghapus proyek');
+                              }
+                            } catch (e) {
+                              console.error(e);
+                            }
+                          }
+                        }}
+                        className="p-2 bg-white dark:bg-slate-900 text-slate-400 hover:text-rose-600 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm transition-all"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </div>
                 </motion.div>
               );
             })}
 
             <button 
-              onClick={() => setShowCreateModal(true)}
+              onClick={() => {
+                setEditingProjectId(null);
+                setNewProjectName('');
+                setNewProjectDesc('');
+                setNewProjectMode('Project');
+                setShowCreateModal(true);
+              }}
               className="h-full min-h-[320px] bg-white/50 dark:bg-slate-800/50 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-[2.5rem] flex flex-col items-center justify-center gap-4 text-slate-400 hover:text-blue-500 hover:bg-white dark:hover:bg-slate-800 hover:border-blue-200 transition-all group shadow-sm hover:shadow-xl hover:shadow-blue-500/5"
             >
               <div className="w-16 h-16 rounded-full bg-white dark:bg-slate-700 flex items-center justify-center group-hover:shadow-lg transition-all border border-slate-100 dark:border-slate-600">
@@ -522,10 +623,10 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
               <span className="font-bold text-sm tracking-wide">{t('createProject')}</span>
             </button>
           </div>
-        </div>
+        </>
       ) : (
-        <div className="h-[calc(100vh-5rem)] flex flex-col pt-4 overflow-hidden relative">
-          <header className="px-8 py-6 border-b border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl sticky top-0 z-30 transition-all">
+        <div className="flex flex-col overflow-hidden" style={{ height: 'calc(100vh - 5rem)' }}>
+          <header className="px-4 md:px-8 py-4 md:py-5 border-b border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl sticky top-0 z-30 transition-all">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
               <div className="flex items-start gap-4">
                 <button 
@@ -580,7 +681,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                                     )}
                                   >
                                     <div className="flex items-center gap-3">
-                                      <div className={cn("w-2 h-2 rounded-full", p.mode === 'Operational' ? "bg-rose-500" : "bg-blue-500")} />
+                                      <div className={cn("w-2 h-2 rounded-full", p.mode === 'Operational' ? "bg-[#3FA9F5]" : "bg-[#2D7FEA]")} />
                                       {p.name}
                                     </div>
                                     {p.id === currentProjectId && <CheckCircle2 size={14} className="text-blue-500" />}
@@ -599,7 +700,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                       <div className={cn(
                         "px-2 py-0.5 text-[9px] font-black rounded-md border uppercase tracking-widest",
                         isOperational 
-                          ? "bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-100 dark:border-rose-500/20"
+                          ? "bg-sky-50 dark:bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-100 dark:border-sky-500/20"
                           : "bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-500/20"
                       )}>
                         {isOperational ? 'Operational' : 'Project'}
@@ -637,12 +738,19 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                 </div>
 
                 <div className="flex -space-x-2 mr-2">
-                  {mockUsers.map(user => (
-                    <div key={user.id} className="w-9 h-9 rounded-xl border-2 border-white dark:border-slate-900 overflow-hidden shadow-sm group hover:translate-y-[-4px] transition-all cursor-pointer relative" title={user.name}>
-                      <img src={user.avatar} alt={user.name} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" />
+                  {allProjectUsers.map((u: any) => (
+                    <div key={u.id} className="w-9 h-9 rounded-full border-2 border-white dark:border-slate-900 overflow-hidden shadow-sm group hover:translate-y-[-4px] transition-all cursor-pointer relative" title={u.name}>
+                      <img src={u.avatar} alt={u.name} className="w-full h-full object-cover transition-all" />
                       <div className="absolute inset-0 bg-blue-500/0 group-hover:bg-blue-500/10 transition-all" />
                     </div>
                   ))}
+                  <button 
+                    onClick={() => setShowAddMemberModal(true)}
+                    className="w-9 h-9 rounded-full border-2 border-dashed border-slate-300 dark:border-slate-600 flex items-center justify-center bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-blue-500 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all cursor-pointer z-10"
+                    title={t('addMember') || "Add Member"}
+                  >
+                    <Plus size={16} />
+                  </button>
                 </div>
 
                 <div className="h-8 w-px bg-slate-200 dark:bg-slate-700 mx-1 hidden lg:block" />
@@ -677,21 +785,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                             {!isOperational && (
                               <button 
                                 onClick={() => {
-                                  const newColName = prompt(t('newColumnName'));
-                                  if (newColName && currentProject) {
-                                    const newCol = {
-                                      id: `col-${Date.now()}`,
-                                      title: newColName,
-                                      status: newColName,
-                                      order: boardColumns.length
-                                    };
-                                    const updatedProject = {
-                                      ...currentProject,
-                                      columns: [...(currentProject.columns || boardColumns), newCol]
-                                    };
-                                    onAddProject(updatedProject, tasks);
-                                    onSuccess(t('columnAdded'));
-                                  }
+                                  setShowAddColumnModal(true);
                                   setActiveMenu(null);
                                 }}
                                 className="w-full px-5 py-3 text-left text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-blue-600 flex items-center gap-3 transition-all"
@@ -731,290 +825,387 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
             </div>
           </header>
 
-          <DragDropContext onDragEnd={onDragEnd}>
-            <div className="flex-1 flex gap-6 overflow-x-auto pb-6 px-8 scrollbar-hide">
-              {boardColumns.map((column, index) => (
-                <div key={column.id} className="flex flex-shrink-0">
-                  <div className="min-w-[320px] max-w-[350px] flex flex-col pt-4 pb-2 px-3 bg-white dark:bg-slate-800 rounded-[32px] border border-slate-100 dark:border-slate-700 shadow-sm select-none">
-                  <div className="flex items-center justify-between mb-4 px-2">
-                    <div className="flex items-center gap-2.5">
-                      <h3 className="font-bold text-slate-900 dark:text-white tracking-tight transition-colors">{(t('status') as any)[column.status] || column.title}</h3>
-                      <span className="px-2.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-lg text-[10px] font-black border border-slate-200 dark:border-slate-700">
-                        {tasks.filter(t => t.status === column.status).length}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      {!isOperational && (
-                        <button 
-                          onClick={() => {
-                            if (confirm(t('deleteColumn'))) {
-                              const updatedProject = {
-                                ...currentProject!,
-                                columns: boardColumns.filter(c => c.id !== column.id)
-                              };
-                              onAddProject(updatedProject, tasks);
-                            }
-                          }}
-                          className="text-slate-300 hover:text-rose-500 p-1.5 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all"
-                        >
-                          <X size={16} />
-                        </button>
-                      )}
-                      <div className="relative">
-                        <button 
-                          onClick={() => setActiveMenu(activeMenu === column.id ? null : column.id)}
-                          className="text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 p-1.5 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-all"
-                        >
-                          <MoreHorizontal size={20} />
-                        </button>
+          {!currentProject ? (
+            <div className="flex flex-col items-center justify-center h-[60vh] text-center">
+              <div className="w-24 h-24 bg-blue-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6 border-4 border-white dark:border-slate-900 shadow-sm">
+                <FolderKanban className="w-12 h-12 text-blue-500" />
+              </div>
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+                Papan Kanban Kosong
+              </h2>
+              <p className="text-slate-500 dark:text-slate-400 max-w-md">
+                Anda belum memiliki proyek. Silakan buat proyek baru melalui menu di sidebar sebelah kiri untuk mulai mengatur tugas Anda.
+              </p>
+            </div>
+          ) : (
+            <DragDropContext onDragEnd={onDragEnd}>
+              <div className="flex-1 flex gap-4 md:gap-5 overflow-x-auto pb-8 px-4 md:px-6 pt-6 scrollbar-hide items-start" style={{ background: 'transparent' }}>
+                {boardColumns.map((column, index) => (
+                  <div key={column.id} className="flex flex-shrink-0">
+                    <div className={cn(
+                      "w-[280px] md:w-[300px] flex-shrink-0 flex flex-col pt-4 pb-4 px-3 rounded-2xl select-none",
+                      darkMode 
+                        ? "bg-[#0D1E3A]" 
+                        : "bg-[#EBF5FF]"
+                    )}>
+                    <div className="flex items-center justify-between mb-3 px-1">
+                      <div className="flex items-center gap-2.5">
+                        <div className={cn(
+                          "w-2.5 h-2.5 rounded-full",
+                          column.status === 'To Do' ? 'bg-amber-400' :
+                          column.status === 'In Progress' ? 'bg-[#3FA9F5]' :
+                          column.status === 'Review' ? 'bg-violet-500' :
+                          column.status === 'Done' ? 'bg-rose-500' :
+                          'bg-slate-400'
+                        )} />
+                        <h3 className={cn("font-bold text-sm tracking-tight", darkMode ? "text-white" : "text-slate-800")}>
+                          {(t('status') as any)[column.status] || column.title}
+                        </h3>
+                        <span className={cn(
+                          "min-w-[22px] h-[22px] flex items-center justify-center rounded-full text-[11px] font-black",
+                          column.status === 'To Do' ? 'bg-amber-400 text-white' :
+                          column.status === 'In Progress' ? 'bg-[#3FA9F5] text-white' :
+                          column.status === 'Review' ? 'bg-violet-500 text-white' :
+                          column.status === 'Done' ? 'bg-rose-500 text-white' :
+                          darkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-300 text-slate-600'
+                        )}>
+                          {filteredTasks.filter(t => t.status === column.status).length}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        {!isOperational && (
+                          <button 
+                            onClick={() => {
+                              setColumnToDelete(column.id);
+                            }}
+                            className="text-slate-300 hover:text-rose-500 p-1.5 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all"
+                          >
+                            <X size={16} />
+                          </button>
+                        )}
+                        <div className="relative">
+                          <button 
+                            onClick={() => setActiveMenu(activeMenu === column.id ? null : column.id)}
+                            className="text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 p-1.5 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-all"
+                          >
+                            <MoreHorizontal size={20} />
+                          </button>
 
-                        <AnimatePresence>
-                          {activeMenu === column.id && (
-                            <>
-                              <div 
-                                className="fixed inset-0 z-10" 
-                                onClick={() => setActiveMenu(null)} 
-                              />
-                              <motion.div
-                                initial={{ opacity: 0, scale: 0.95, y: -10 }}
-                                animate={{ opacity: 1, scale: 1, y: 0 }}
-                                exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                                className="absolute right-0 mt-3 w-56 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-700 py-2.5 z-20"
-                              >
-                                <button
-                                  onClick={() => handleAISort(column.status)}
-                                  disabled={isSorting === column.id}
-                                  className="w-full px-4 py-2.5 text-left text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-blue-600 dark:hover:text-blue-400 flex items-center gap-3 transition-all disabled:opacity-50 group"
+                          <AnimatePresence>
+                            {activeMenu === column.id && (
+                              <>
+                                <div 
+                                  className="fixed inset-0 z-10" 
+                                  onClick={() => setActiveMenu(null)} 
+                                />
+                                <motion.div
+                                  initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                                  exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                                  className="absolute right-0 mt-3 w-56 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-700 py-2.5 z-20"
                                 >
-                                  {isSorting === column.id ? (
-                                    <Loader2 size={18} className="animate-spin text-blue-500" />
-                                  ) : (
-                                    <Sparkles size={18} className="text-blue-500 group-hover:scale-110 transition-transform" />
-                                  )}
-                                  <span className="font-bold">{t('aiSortPriority')}</span>
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    const newTitle = prompt(t('newColumnName'), column.title);
-                                    if (newTitle && currentProject) {
-                                      const updatedProject = {
-                                        ...currentProject,
-                                        columns: boardColumns.map(c => c.id === column.id ? { ...c, title: newTitle, status: newTitle } : c)
-                                      };
-                                      onAddProject(updatedProject, tasks);
-                                      onSuccess(t('success'));
-                                    }
-                                    setActiveMenu(null);
-                                  }}
-                                  className="w-full px-4 py-2.5 text-left text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-blue-600 dark:hover:text-blue-400 flex items-center gap-3 transition-all font-bold"
-                                >
-                                  <Edit size={18} />
-                                  {t('edit')}
-                                </button>
-                                <button
-                                  onClick={() => handleAddTask(column.status)}
-                                  className="w-full px-4 py-2.5 text-left text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-blue-600 dark:hover:text-blue-400 flex items-center gap-3 transition-all font-bold"
-                                >
-                                  <Plus size={18} />
-                                  {t('createNewTask')}
-                                </button>
-                                <button
-                                  onClick={() => setShowTemplateModal(true)}
-                                  className="w-full px-4 py-2.5 text-left text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-blue-600 dark:hover:text-blue-400 flex items-center gap-3 transition-all font-bold"
-                                >
-                                  <FileText size={18} className="text-blue-500" />
-                                  {t('useTemplate')}
-                                </button>
-                              </motion.div>
-                            </>
-                          )}
-                        </AnimatePresence>
+                                  <button
+                                    onClick={() => handleAISort(column.status)}
+                                    disabled={isSorting === column.id}
+                                    className="w-full px-4 py-2.5 text-left text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-blue-600 dark:hover:text-blue-400 flex items-center gap-3 transition-all disabled:opacity-50 group"
+                                  >
+                                    {isSorting === column.id ? (
+                                      <Loader2 size={18} className="animate-spin text-blue-500" />
+                                    ) : (
+                                      <Sparkles size={18} className="text-blue-500 group-hover:scale-110 transition-transform" />
+                                    )}
+                                    <span className="font-bold">{t('aiSortPriority')}</span>
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      const newTitle = prompt(t('newColumnName'), column.title);
+                                      if (newTitle && currentProject) {
+                                        const updatedProject = {
+                                          ...currentProject,
+                                          columns: boardColumns.map(c => c.id === column.id ? { ...c, title: newTitle, status: newTitle } : c)
+                                        };
+                                        onAddProject(updatedProject, tasks);
+                                        onSuccess(t('success'));
+                                      }
+                                      setActiveMenu(null);
+                                    }}
+                                    className="w-full px-4 py-2.5 text-left text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-blue-600 dark:hover:text-blue-400 flex items-center gap-3 transition-all font-bold"
+                                  >
+                                    <Edit size={18} />
+                                    {t('edit')}
+                                  </button>
+                                  <button
+                                    onClick={() => handleAddTask(column.status)}
+                                    className="w-full px-4 py-2.5 text-left text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-blue-600 dark:hover:text-blue-400 flex items-center gap-3 transition-all font-bold"
+                                  >
+                                    <Plus size={18} />
+                                    {t('createNewTask')}
+                                  </button>
+                                  <button
+                                    onClick={() => setShowTemplateModal(true)}
+                                    className="w-full px-4 py-2.5 text-left text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-blue-600 dark:hover:text-blue-400 flex items-center gap-3 transition-all font-bold"
+                                  >
+                                    <FileText size={18} className="text-blue-500" />
+                                    {t('useTemplate')}
+                                  </button>
+                                </motion.div>
+                              </>
+                            )}
+                          </AnimatePresence>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <Droppable droppableId={column.status}>
-                    {(provided, snapshot) => (
-                      <div
-                        {...provided.droppableProps}
-                        ref={provided.innerRef}
-                        className={cn(
-                          "flex-1 rounded-[1.5rem] transition-all duration-300 min-h-[500px]",
-                          snapshot.isDraggingOver ? "bg-slate-50/50 dark:bg-slate-900/50" : ""
-                        )}
-                      >
-                        {filteredTasks
-                          .filter((t) => t.status === column.status)
-                          .map((task: Task, index: number) => (
-                            <DraggableAny key={task.id} draggableId={task.id} index={index}>
-                              {(provided: any, snapshot: any) => (
-                                <div
-                                  ref={provided.innerRef}
-                                  {...provided.draggableProps}
-                                  {...provided.dragHandleProps}
-                                  onClick={() => setSelectedTask(task)}
-                                  className={cn(
-                                    "bg-white dark:bg-slate-800 p-0 rounded-[1.25rem] border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all cursor-pointer group relative overflow-hidden mb-4 flex flex-col",
-                                    snapshot.isDragging && "shadow-2xl ring-2 ring-blue-500/20 rotate-1 scale-[1.02]",
-                                    recommendedTask?.id === task.id && "ring-2 ring-blue-500/40"
-                                  )}
-                                >
-                                  {/* Folder Tab Area */}
-                                  <div className="flex items-start justify-between">
-                                    <div className={cn(
-                                      "px-3 py-1.5 border-b border-r border-slate-200 dark:border-slate-700 rounded-br-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 w-fit",
-                                      task.priority === 'High' ? "text-rose-500" :
-                                      task.priority === 'Medium' ? "text-amber-500" :
-                                      "text-emerald-500"
-                                    )}>
-                                      <Flag size={10} className="fill-current" />
-                                      {task.priority} PRIORITY
-                                    </div>
-                                    <div className="p-2 text-slate-300 hover:text-slate-400">
-                                      <MoreHorizontal size={16} />
-                                    </div>
-                                  </div>
+                    <Droppable droppableId={column.status}>
+                      {(provided, snapshot) => (
+                        <div
+                          {...provided.droppableProps}
+                          ref={provided.innerRef}
+                          className={cn(
+                            "rounded-xl transition-all duration-300 px-1 py-1 min-h-[100px]",
+                            snapshot.isDraggingOver 
+                              ? darkMode ? "bg-[#3FA9F5]/8" : "bg-[#3FA9F5]/8" 
+                              : ""
+                          )}
+                        >
+                          {filteredTasks
+                            .filter((t) => t.status === column.status)
+                            .map((task: Task, index: number) => {
+                              const assigneeUser = mockUsers.find(u => u.id === task.assignee);
+                              const contributors = (task.contributors || []).map(cId => mockUsers.find(u => u.id === cId)).filter(Boolean);
+                              const isOverdue = task.deadline && new Date(task.deadline) < new Date();
+                              const checkDone = task.checklist?.filter(c => c.completed).length || 0;
+                              const checkTotal = task.checklist?.length || 0;
 
-                                  {/* Content Area */}
-                                  <div className="p-4 pt-3 flex flex-col gap-3">
-                                    <h4 className="font-bold text-slate-900 dark:text-white leading-snug line-clamp-2">
-                                      {task.title}
-                                    </h4>
-                                    
-                                    {task.description && (
-                                      <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
-                                        {task.description}
-                                      </p>
-                                    )}
+                              // Status badge config
+                              const statusBadge = (() => {
+                                if (task.status === 'Done') return { label: 'Complete', color: 'text-emerald-600 bg-emerald-50 border-emerald-200', dot: 'bg-emerald-500' };
+                                if (task.status === 'In Progress') return { label: 'On Track', color: 'text-[#3FA9F5] bg-blue-50 border-blue-200', dot: 'bg-[#3FA9F5]' };
+                                if (task.status === 'Review') return { label: 'In Review', color: 'text-violet-600 bg-violet-50 border-violet-200', dot: 'bg-violet-500' };
+                                return { label: 'Not Started', color: 'text-slate-500 bg-slate-100 border-slate-200', dot: 'bg-slate-400' };
+                              })();
 
-                                    {/* Checklist progress badge */}
-                                    {task.checklist && task.checklist.length > 0 && (
-                                      <div className="space-y-1.5">
-                                        <div className="flex justify-between items-center text-[9px] font-black text-slate-400 uppercase tracking-wider">
-                                          <span className="flex items-center gap-1">
-                                            <CheckCircle2 size={10} className="text-blue-500" />
-                                            Checklist
-                                          </span>
-                                          <span>
-                                            {task.checklist.filter(c => c.completed).length}/{task.checklist.length}
-                                          </span>
-                                        </div>
-                                        <div className="h-1 w-full bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
-                                          <div 
-                                            className="h-full bg-blue-500 rounded-full" 
-                                            style={{ width: `${(task.checklist.filter(c => c.completed).length / task.checklist.length) * 100}%` }}
-                                          />
-                                        </div>
-                                      </div>
-                                    )}
+                              const priorityBadge = task.priority === 'High'
+                                ? 'text-rose-500 bg-rose-50 border-rose-200'
+                                : task.priority === 'Medium'
+                                  ? 'text-amber-500 bg-amber-50 border-amber-100'
+                                  : 'text-blue-500 bg-blue-50 border-blue-100';
 
-                                    {/* Member Avatars Stack & Deadline */}
-                                    <div className="flex items-center justify-between mt-1 pt-1">
-                                      {/* Stacked avatars */}
-                                      <div className="flex items-center -space-x-1.5 overflow-hidden">
-                                        {/* Assignee */}
-                                        <img 
-                                          src={mockUsers.find(u => u.id === task.assignee)?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=unassigned`} 
-                                          className="w-6 h-6 rounded-full bg-slate-100 border-2 border-white dark:border-slate-800 shadow-sm"
-                                          title={`Assignee: ${mockUsers.find(u => u.id === task.assignee)?.name || 'Belum ditugaskan'}`}
-                                          alt="Assignee"
-                                        />
-                                        {/* Contributors */}
-                                        {task.contributors?.map(cId => {
-                                          const u = mockUsers.find(user => user.id === cId);
-                                          if (!u) return null;
-                                          return (
-                                            <img 
-                                              key={u.id}
-                                              src={u.avatar} 
-                                              className="w-6 h-6 rounded-full bg-slate-100 border-2 border-white dark:border-slate-800 shadow-sm"
-                                              title={`Contributor: ${u.name}`}
-                                              alt={u.name}
-                                            />
-                                          );
-                                        })}
-                                      </div>
-
-                                      {/* Deadline Badge */}
-                                      {task.deadline && (
-                                        <div className={cn(
-                                          "flex items-center gap-1 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider shadow-sm",
-                                          new Date(task.deadline) < new Date() 
-                                            ? "bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 border border-rose-100 dark:border-rose-950/20" 
-                                            : "bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400 border border-slate-100 dark:border-slate-800"
-                                        )}>
-                                          <Calendar size={10} />
-                                          {task.deadline}
-                                        </div>
+                              return (
+                                <DraggableAny key={task.id} draggableId={task.id} index={index}>
+                                  {(provided: any, snapshot: any) => (
+                                    <div
+                                      ref={provided.innerRef}
+                                      {...provided.draggableProps}
+                                      {...provided.dragHandleProps}
+                                      onClick={() => setSelectedTask(task)}
+                                      className={cn(
+                                        "rounded-xl border cursor-pointer mb-3 transition-all duration-200 overflow-hidden",
+                                        darkMode
+                                          ? "bg-[#1C2B45] border-[#1E3A5F]/60 hover:border-[#3FA9F5]/50 hover:shadow-lg hover:shadow-[#3FA9F5]/10"
+                                          : "bg-white border-slate-200/80 hover:border-slate-300 hover:shadow-md hover:shadow-slate-200/60",
+                                        snapshot.isDragging && "shadow-2xl scale-[1.02] rotate-1 opacity-95",
+                                        recommendedTask?.id === task.id && (darkMode ? "ring-1 ring-[#3FA9F5]/50" : "ring-1 ring-[#3FA9F5]/30")
                                       )}
-                                    </div>
+                                    >
+                                      <div className="p-4 space-y-3">
+                                        {/* Row 1: Status badge + more menu */}
+                                        <div className="flex items-center justify-between">
+                                          <span className={cn(
+                                            "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold border",
+                                            darkMode
+                                              ? task.status === 'Done' ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30' :
+                                                task.status === 'In Progress' ? 'text-[#3FA9F5] bg-[#3FA9F5]/10 border-[#3FA9F5]/30' :
+                                                task.status === 'Review' ? 'text-violet-400 bg-violet-500/10 border-violet-500/30' :
+                                                'text-slate-400 bg-slate-700/50 border-slate-600/30'
+                                              : statusBadge.color
+                                          )}>
+                                            <span className={cn("w-1.5 h-1.5 rounded-full", darkMode ? statusBadge.dot : statusBadge.dot)} />
+                                            {statusBadge.label}
+                                          </span>
+                                          <button
+                                            onClick={(e) => { e.stopPropagation(); setActiveMenu(activeMenu === task.id ? null : task.id); }}
+                                            className={cn("p-1 rounded-lg transition-colors", darkMode ? "text-slate-500 hover:text-slate-300 hover:bg-white/5" : "text-slate-300 hover:text-slate-500 hover:bg-slate-100")}
+                                          >
+                                            <MoreHorizontal size={15} />
+                                          </button>
+                                        </div>
 
-                                    {/* Footer tags / files count */}
-                                    <div className="flex items-center justify-between pt-2.5 border-t border-slate-100 dark:border-slate-700/50 mt-1">
-                                      <div className="flex items-center gap-1 text-slate-400">
-                                        <Paperclip size={11} />
-                                        <span className="text-[9px] font-bold uppercase tracking-wider">{task.attachments?.length || 0} Files</span>
-                                      </div>
-                                      <div className="flex items-center gap-1 text-slate-400">
-                                        <Tag size={11} />
-                                        <span className="text-[9px] font-bold uppercase tracking-wider truncate max-w-[90px]">{task.type}</span>
+                                        {/* Row 2: Title */}
+                                        <h4 className={cn("font-bold text-[14px] leading-snug line-clamp-2", darkMode ? "text-white" : "text-slate-800")}>
+                                          {task.title}
+                                        </h4>
+
+                                        {/* Row 3: Description */}
+                                        {task.description && (
+                                          <p className={cn("text-[11px] line-clamp-2 leading-relaxed", darkMode ? "text-slate-400" : "text-slate-500")}>
+                                            {task.description}
+                                          </p>
+                                        )}
+
+                                        {/* Row 4: Assignees label + avatars */}
+                                        <div className="flex items-center justify-between">
+                                          <div className="flex items-center gap-2">
+                                            <span className={cn("text-[11px] font-medium", darkMode ? "text-slate-500" : "text-slate-400")}>Assignees :</span>
+                                            <div className="flex -space-x-1.5">
+                                              {assigneeUser && (
+                                                <img
+                                                  src={assigneeUser.avatar}
+                                                  title={assigneeUser.name}
+                                                  alt={assigneeUser.name}
+                                                  className="w-6 h-6 rounded-full border-2 border-white dark:border-[#1C2B45] shadow-sm object-cover"
+                                                />
+                                              )}
+                                              {contributors.slice(0, 2).map((u: any) => (
+                                                <img
+                                                  key={u.id}
+                                                  src={u.avatar}
+                                                  title={u.name}
+                                                  alt={u.name}
+                                                  className="w-6 h-6 rounded-full border-2 border-white dark:border-[#1C2B45] shadow-sm object-cover"
+                                                />
+                                              ))}
+                                            </div>
+                                          </div>
+                                        </div>
+
+                                        {/* Row 5: Date + Priority */}
+                                        <div className="flex items-center justify-between">
+                                          <div className={cn("flex items-center gap-1.5 text-[11px] font-medium", darkMode ? "text-slate-400" : "text-slate-500")}>
+                                            <Flag size={11} className={isOverdue ? "text-rose-400" : darkMode ? "text-slate-500" : "text-slate-400"} />
+                                            <span className={isOverdue ? "text-rose-400 font-bold" : ""}>
+                                              {task.deadline || '—'}
+                                            </span>
+                                          </div>
+                                          <span className={cn(
+                                            "px-2.5 py-0.5 rounded-full text-[10px] font-bold border",
+                                            darkMode
+                                              ? task.priority === 'High' ? 'text-rose-400 bg-rose-500/10 border-rose-500/30' :
+                                                task.priority === 'Medium' ? 'text-amber-400 bg-amber-500/10 border-amber-500/30' :
+                                                'text-blue-400 bg-blue-500/10 border-blue-500/30'
+                                              : priorityBadge
+                                          )}>
+                                            {task.priority}
+                                          </span>
+                                        </div>
+
+                                        {/* Row 6: Footer counts */}
+                                        <div className={cn("flex items-center gap-4 pt-2 border-t text-[11px]", darkMode ? "border-[#1E3A5F]/50" : "border-slate-100")}>
+                                          <div className={cn("flex items-center gap-1", darkMode ? "text-slate-500" : "text-slate-400")}>
+                                            <MessageSquare size={11} />
+                                            <span>{task.comments?.length || 0} Comments</span>
+                                          </div>
+                                          <div className={cn("flex items-center gap-1", darkMode ? "text-slate-500" : "text-slate-400")}>
+                                            <Paperclip size={11} />
+                                            <span>{task.attachments?.filter(a => a.type === 'link').length || 0} Links</span>
+                                          </div>
+                                          {checkTotal > 0 && (
+                                            <div className={cn("flex items-center gap-1", darkMode ? "text-slate-500" : "text-slate-400")}>
+                                              <CheckCircle2 size={11} />
+                                              <span>{checkDone}/{checkTotal}</span>
+                                            </div>
+                                          )}
+                                        </div>
+
+                                        {/* Row 7: Documentation buttons */}
+                                        <div className={cn(
+                                          "flex items-center gap-2 pt-2 border-t",
+                                          darkMode ? "border-[#1E3A5F]/50" : "border-slate-100"
+                                        )}>
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              setDocDrawerTask(task);
+                                              setDocDrawerMode('view');
+                                            }}
+                                            className={cn(
+                                              "flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-[10px] font-bold border transition-all hover:scale-[1.02]",
+                                              darkMode
+                                                ? "border-[#1E3A5F]/60 text-slate-400 hover:text-[#3FA9F5] hover:border-[#3FA9F5]/40 hover:bg-[#3FA9F5]/5"
+                                                : "border-slate-200 text-slate-500 hover:text-[#2D7FEA] hover:border-[#3FA9F5]/40 hover:bg-[#EBF5FF]"
+                                            )}
+                                          >
+                                            <BookOpen size={11} />
+                                            Lihat Dok
+                                            {documentations.filter(d => d.taskId === task.id).length > 0 && (
+                                              <span className="ml-0.5 w-4 h-4 rounded-full text-white text-[8px] font-black flex items-center justify-center" style={{ background: '#3FA9F5' }}>
+                                                {documentations.filter(d => d.taskId === task.id).length}
+                                              </span>
+                                            )}
+                                          </button>
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              setDocDrawerTask(task);
+                                              setDocDrawerMode('add');
+                                            }}
+                                            className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-[10px] font-bold text-white transition-all hover:scale-[1.02] shadow-sm"
+                                            style={{ background: 'linear-gradient(135deg, #3FA9F5, #2D7FEA)', boxShadow: '0 2px 10px rgba(63,169,245,0.25)' }}
+                                          >
+                                            <FilePlus size={11} />
+                                            Tambah Dok
+                                          </button>
+                                        </div>
                                       </div>
                                     </div>
-                                  </div>
-                                </div>
+                                  )}
+                                </DraggableAny>
+                              );
+                            })}
+                            {provided.placeholder}
+                            <button 
+                              onClick={() => handleAddTask(column.status)}
+                              className={cn(
+                                "w-full mt-2 py-3 rounded-xl flex items-center justify-center gap-2 transition-all group border-2 border-dashed",
+                                darkMode
+                                  ? "border-[#1E3A5F] text-slate-600 hover:text-[#3FA9F5] hover:border-[#3FA9F5]/50 hover:bg-[#3FA9F5]/5"
+                                  : "border-slate-200 text-slate-400 hover:text-[#2D7FEA] hover:border-[#3FA9F5]/40 hover:bg-[#3FA9F5]/5"
                               )}
-                              </DraggableAny>
-                            ))}
-                          {provided.placeholder}
-                          <button 
-                            onClick={() => handleAddTask(column.status)}
-                            className="w-full mt-4 py-4 border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-3xl text-slate-300 hover:text-blue-500 hover:border-blue-200 dark:hover:border-blue-500/30 hover:bg-white dark:hover:bg-slate-800 transition-all flex items-center justify-center gap-2 group"
-                          >
-                            <Plus size={16} className="group-hover:scale-125 transition-transform" />
-                            <span className="text-[10px] font-black uppercase tracking-widest">{t('addTask')}</span>
-                          </button>
-                        </div>
-                      )}
-                    </Droppable>
-                  </div>
-
-
-                </div>
-              ))}
-              {!isOperational && (
-                <div className="flex-shrink-0 w-80 flex flex-col pt-2 pr-10">
-                  <div className="flex items-center justify-between mb-5 px-3">
-                    <h3 className="font-bold text-slate-400 dark:text-slate-600 tracking-tight uppercase text-[10px] tracking-[0.2em]">{t('newColumn')}</h3>
-                  </div>
-                  <button 
-                    onClick={() => {
-                      const newColName = prompt(t('newColumnName'));
-                      if (newColName && currentProject) {
-                        const newCol = {
-                          id: `col-${Date.now()}`,
-                          title: newColName,
-                          status: newColName,
-                          order: boardColumns.length
-                        };
-                        const updatedProject = {
-                          ...currentProject,
-                          columns: [...(currentProject.columns || boardColumns), newCol]
-                        };
-                        onAddProject(updatedProject, tasks);
-                        onSuccess(t('columnAdded'));
-                      }
-                    }}
-                    className="w-full h-[500px] border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[2.5rem] flex flex-col items-center justify-center gap-4 text-slate-400 hover:text-blue-500 hover:bg-white dark:hover:bg-slate-800 hover:border-blue-200 transition-all group shadow-sm hover:shadow-xl hover:shadow-blue-500/5"
-                  >
-                    <div className="w-12 h-12 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center group-hover:scale-110 transition-all border border-slate-100 dark:border-slate-700">
-                      <Plus size={24} />
+                            >
+                              <Plus size={15} className="group-hover:scale-110 transition-transform" />
+                              <span className="text-[11px] font-bold">{t('addTask')}</span>
+                            </button>
+                          </div>
+                        )}
+                      </Droppable>
                     </div>
-                    <span className="font-bold text-[10px] uppercase tracking-widest">{t('addColumn')}</span>
-                  </button>
-                </div>
-              )}
-            </div>
-          </DragDropContext>
+                  </div>
+                ))}
+                {!isOperational && (
+                  <div className="flex-shrink-0 w-80 flex flex-col pt-2 pr-10">
+                    <div className="flex items-center justify-between mb-5 px-3">
+                      <h3 className="font-bold text-slate-400 dark:text-slate-600 tracking-tight uppercase text-[10px] tracking-[0.2em]">{t('newColumn')}</h3>
+                    </div>
+                    <button 
+                      onClick={() => {
+                        const newColName = prompt(t('newColumnName'));
+                        if (newColName && currentProject) {
+                          const newCol = {
+                            id: `col-${Date.now()}`,
+                            title: newColName,
+                            status: newColName,
+                            order: boardColumns.length
+                          };
+                          const updatedProject = {
+                            ...currentProject,
+                            columns: [...(currentProject.columns || boardColumns), newCol]
+                          };
+                          onAddProject(updatedProject, tasks);
+                          onSuccess(t('columnAdded'));
+                        }
+                      }}
+                      className="w-full h-[500px] border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[2.5rem] flex flex-col items-center justify-center gap-4 text-slate-400 hover:text-blue-500 hover:bg-white dark:hover:bg-slate-800 hover:border-blue-200 transition-all group shadow-sm hover:shadow-xl hover:shadow-blue-500/5"
+                    >
+                      <div className="w-12 h-12 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center group-hover:scale-110 transition-all border border-slate-100 dark:border-slate-700">
+                        <Plus size={24} />
+                      </div>
+                      <span className="font-bold text-[10px] uppercase tracking-widest">{t('addColumn')}</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            </DragDropContext>
+          )}
 
           {/* Template selection modal */}
           <AnimatePresence>
@@ -1051,9 +1242,9 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                             <div className={cn(
                               "px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider flex items-center gap-2",
                               template.category === 'Infrastructure' ? "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400" :
-                              template.category === 'API Service' ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400" :
-                              template.category === 'Security' ? "bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400" :
-                              template.category === 'Maintenance' ? "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400" :
+                              template.category === 'API Service' ? "bg-sky-50 text-sky-600 dark:bg-sky-500/10 dark:text-sky-400" :
+                              template.category === 'Security' ? "bg-[#EBF5FF] text-[#2D7FEA] dark:bg-[#3FA9F5]/10 dark:text-[#3FA9F5]" :
+                              template.category === 'Maintenance' ? "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400" :
                               "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400"
                             )}>
                               {template.category}
@@ -1067,12 +1258,11 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                              <div className={cn(
                                "w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border",
                                template.category === 'Infrastructure' ? "bg-blue-50 text-blue-500 border-blue-100" :
-                               template.category === 'API Service' ? "bg-indigo-50 text-indigo-500 border-indigo-100" :
-                               template.category === 'Security' ? "bg-rose-50 text-rose-500 border-rose-100" :
-                               template.category === 'Maintenance' ? "bg-amber-50 text-amber-500 border-amber-100" :
+                               template.category === 'API Service' ? "bg-sky-50 text-sky-500 border-sky-100" :
+                               template.category === 'Security' ? "bg-[#EBF5FF] text-[#2D7FEA] border-[#BFDFFF]/50" :
+                               template.category === 'Maintenance' ? "bg-blue-50 text-blue-500 border-blue-100" :
                                "bg-blue-50 text-blue-500 border-blue-100"
                              )}>
-                                {/* Fallback to circle/dots if specific icons not available or just use Zap for all maintenance */}
                                 <Layers size={20} />
                              </div>
                              <div>
@@ -1147,6 +1337,9 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                     className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700 focus:border-blue-500/50 focus:bg-white dark:focus:bg-slate-900 text-slate-900 dark:text-white outline-none transition-all h-32 resize-none placeholder:text-slate-300 dark:placeholder:text-slate-600 font-medium"
                   />
                 </div>
+                
+
+
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">{t('boardMode')}</label>
                   <div className="grid grid-cols-2 gap-4">
@@ -1189,15 +1382,16 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   onClick={() => {
                     if (!newProjectName) return;
 
-                    const projectId = `p${Date.now()}`;
+                    const projectId = editingProjectId || `p${Date.now()}`;
+                    const existingProject = projects.find(p => p.id === projectId);
                     const newProject: Project = {
                       id: projectId,
                       name: newProjectName,
                       description: newProjectDesc,
-                      createdAt: new Date().toISOString().split('T')[0],
+                      createdAt: existingProject ? existingProject.createdAt : new Date().toISOString().split('T')[0],
                       type: newProjectMode === 'Operational' ? 'Maintenance' : 'Development',
                       mode: newProjectMode,
-                      columns: [
+                      columns: existingProject ? existingProject.columns : [
                         { id: 'col-1', title: 'Backlog', status: 'Backlog', order: 0 },
                         { id: 'col-2', title: 'To Do', status: 'To Do', order: 1 },
                         { id: 'col-3', title: 'In Progress', status: 'In Progress', order: 2 },
@@ -1211,10 +1405,11 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                     setNewProjectName('');
                     setNewProjectDesc('');
                     setNewProjectMode('Project');
+                    setEditingProjectId(null);
                   }}
                   className="py-4 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 transition-all shadow-xl shadow-blue-600/30"
                 >
-                  {t('create')}
+                  {editingProjectId ? t('edit') : t('create')}
                 </button>
               </div>
             </motion.div>
@@ -1236,7 +1431,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                 <div className="flex items-center gap-4 flex-1 min-w-0">
                   <div className={cn(
                     "p-3 rounded-2xl shadow-sm flex-shrink-0",
-                    selectedTask.type === 'Maintenance' ? "bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400" : "bg-blue-50 dark:bg-blue-500/10 text-blue-500 dark:text-blue-400"
+                    selectedTask.type === 'Maintenance' ? "bg-sky-50 dark:bg-sky-500/10 text-sky-500 dark:text-sky-400" : "bg-blue-50 dark:bg-blue-500/10 text-blue-500 dark:text-blue-400"
                   )}>
                     {selectedTask.type === 'Maintenance' ? <Zap size={20} /> : <Trello size={20} />}
                   </div>
@@ -1247,7 +1442,10 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                       onChange={(e) => {
                         const updatedTask = { ...selectedTask, title: e.target.value };
                         setSelectedTask(updatedTask);
-                        setTasks(tasks.map(t => t.id === selectedTask.id ? updatedTask : t));
+                        // Only update array if task already exists in DB (not a new task being created)
+                        if (!isNewTask) {
+                          setTasks(tasks.map(t => t.id === selectedTask.id ? updatedTask : t));
+                        }
                       }}
                       placeholder="Judul Tugas..."
                       className="text-lg font-bold text-slate-900 dark:text-white bg-transparent border-none outline-none focus:ring-2 focus:ring-blue-500/20 rounded-xl px-2 py-1 w-full"
@@ -1276,8 +1474,13 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   )}
                   <button 
                     onClick={() => {
+                      // If cancelling a new task, remove any temp entry from tasks array
+                      if (isNewTask && selectedTask) {
+                        setTasks(tasks.filter(t => t.id !== selectedTask.id));
+                      }
                       setSelectedTask(null);
                       setIsEditing(false);
+                      setIsNewTask(false);
                     }}
                     className="p-2.5 bg-slate-50 hover:bg-rose-50 hover:text-rose-500 dark:bg-slate-900 dark:hover:bg-rose-950/20 dark:hover:text-rose-400 border border-slate-100 dark:border-slate-800 rounded-2xl text-slate-400 transition-all"
                   >
@@ -1302,7 +1505,10 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                       onChange={(e) => {
                         const updatedTask = { ...selectedTask, description: e.target.value };
                         setSelectedTask(updatedTask);
-                        setTasks(tasks.map(t => t.id === selectedTask.id ? updatedTask : t));
+                        // Only update array if task already exists in DB (not a new task being created)
+                        if (!isNewTask) {
+                          setTasks(tasks.map(t => t.id === selectedTask.id ? updatedTask : t));
+                        }
                       }}
                       placeholder="Tambahkan deskripsi lengkap tugas ini di sini..."
                       className="w-full text-xs text-slate-700 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-slate-900/50 p-5 rounded-2xl border border-slate-100 dark:border-slate-700 outline-none focus:border-blue-500/50 focus:bg-white dark:focus:bg-slate-900 transition-all min-h-[120px] resize-none font-medium"
@@ -1367,6 +1573,34 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                               item.completed && "line-through opacity-50"
                             )}
                           />
+
+                          <div className="w-28 flex-shrink-0">
+                            <input 
+                              type="date"
+                              value={item.startDate || ''}
+                              onChange={(e) => {
+                                const next = [...(selectedTask.checklist || [])];
+                                next[idx].startDate = e.target.value;
+                                setSelectedTask({ ...selectedTask, checklist: next });
+                              }}
+                              className="w-full px-2 py-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-lg text-[10px] font-bold text-slate-500 outline-none"
+                              title="Tanggal Mulai (Start Date)"
+                            />
+                          </div>
+                          
+                          <div className="w-28 flex-shrink-0">
+                            <input 
+                              type="date"
+                              value={item.endDate || ''}
+                              onChange={(e) => {
+                                const next = [...(selectedTask.checklist || [])];
+                                next[idx].endDate = e.target.value;
+                                setSelectedTask({ ...selectedTask, checklist: next });
+                              }}
+                              className="w-full px-2 py-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-lg text-[10px] font-bold text-slate-500 outline-none"
+                              title="Tanggal Selesai (End Date)"
+                            />
+                          </div>
 
                           <button 
                             onClick={() => {
@@ -1627,7 +1861,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                       <select
                         value={selectedTask.type}
                         onChange={(e) => {
-                          const updatedTask = { ...selectedTask, type: e.target.value };
+                          const updatedTask = { ...selectedTask, type: e.target.value as any };
                           setSelectedTask(updatedTask);
                           setTasks(tasks.map(t => t.id === selectedTask.id ? updatedTask : t));
                         }}
@@ -1641,9 +1875,24 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                       </select>
                     </div>
 
+                    {/* Start Date picker */}
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Tanggal Mulai</label>
+                      <input 
+                        type="date"
+                        value={selectedTask.startDate || ''}
+                        onChange={(e) => {
+                          const updatedTask = { ...selectedTask, startDate: e.target.value };
+                          setSelectedTask(updatedTask);
+                          setTasks(tasks.map(t => t.id === selectedTask.id ? updatedTask : t));
+                        }}
+                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-600 dark:text-slate-300 outline-none"
+                      />
+                    </div>
+                  
                     {/* Due Date picker */}
                     <div className="space-y-2">
-                      <label className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Tenggat Waktu</label>
+                      <label className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Tanggal Selesai (Deadline)</label>
                       <div className="relative">
                         <input
                           type="date"
@@ -1671,8 +1920,10 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                         className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white text-xs font-bold focus:border-blue-500 outline-none transition-all shadow-sm"
                       >
                         <option value="">Belum Ditugaskan</option>
-                        {mockUsers.map(u => (
-                          <option key={u.id} value={u.id}>{u.name}</option>
+                        {allProjectUsers.map(u => (
+                          <option key={u?.id || u?.id_pengguna} value={u?.id || u?.id_pengguna}>
+                            {u?.nama || u?.name}
+                          </option>
                         ))}
                       </select>
                     </div>
@@ -1684,37 +1935,50 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                     <label className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
                       <UserIcon size={12} className="text-blue-500" /> Kontributor Tim
                     </label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {mockUsers.map(u => {
-                        const isContributor = selectedTask.contributors?.includes(u.id);
+                    <div className="grid grid-cols-1 gap-2">
+                      {allProjectUsers.map(u => {
+                        if (!u) return null;
+                        const uid = u.id || u.id_pengguna;
+                        const isSelected = selectedTask?.contributors?.includes(uid);
                         return (
-                          <button
-                            key={u.id}
-                            onClick={() => {
-                              const current = selectedTask.contributors || [];
-                              const next = isContributor ? current.filter(id => id !== u.id) : [...current, u.id];
-                              const updatedTask = { ...selectedTask, contributors: next };
-                              setSelectedTask(updatedTask);
-                              setTasks(tasks.map(t => t.id === selectedTask.id ? updatedTask : t));
-                              
-                              if (!isContributor) {
-                                onAddNotification(
-                                  `${t('addedToTaskNotification')} ${selectedTask.title}`,
-                                  'Task',
-                                  !!u.whatsapp
-                                );
-                              }
-                            }}
-                            className={cn(
-                              "flex items-center gap-2 p-2 rounded-xl border transition-all text-left group",
-                              isContributor 
-                                ? "bg-blue-50 dark:bg-blue-500/10 border-blue-500 dark:border-blue-500/30 text-blue-600 dark:text-blue-400 shadow-sm" 
-                                : "bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-500 hover:border-slate-200"
-                            )}
-                          >
-                            <img src={u.avatar} className="w-6 h-6 rounded-full border border-white/20" alt={u.name} />
-                            <span className="text-[10px] font-bold truncate">{u.name}</span>
-                          </button>
+                          <label key={uid} className="flex items-center gap-3 p-2 hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-lg cursor-pointer">
+                            <input 
+                              type="checkbox" 
+                              checked={isSelected}
+                              onChange={(e) => {
+                                const curr = selectedTask?.contributors || [];
+                                const newCont = e.target.checked 
+                                  ? [...curr, uid]
+                                  : curr.filter(id => id !== uid);
+                                
+                                const updatedTask = selectedTask ? { ...selectedTask, contributors: newCont } : null;
+                                setSelectedTask(updatedTask);
+                                
+                                if (updatedTask) {
+                                  setTasks(tasks.map(t => t.id === updatedTask.id ? updatedTask : t));
+                                }
+                                
+                                if (e.target.checked) {
+                                  onAddNotification(
+                                    `Anda ditambahkan ke tugas: ${selectedTask?.title}`,
+                                    'Task',
+                                    false
+                                  );
+                                }
+                              }}
+                              className="w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-600"
+                            />
+                            <div className="flex items-center gap-2">
+                              <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-blue-600 font-bold text-[10px] overflow-hidden">
+                                {u.avatar || u.foto_profil ? (
+                                  <img src={u.avatar || u.foto_profil} alt={u.nama || u.name} className="w-full h-full object-cover" />
+                                ) : (
+                                  (u.nama || u.name || 'U').charAt(0).toUpperCase()
+                                )}
+                              </div>
+                              <span className="text-sm font-medium dark:text-slate-300">{u.nama || u.name}</span>
+                            </div>
+                          </label>
                         );
                       })}
                     </div>
@@ -1768,10 +2032,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
               {/* Modal Footer */}
               <div className="p-6 bg-slate-50/20 dark:bg-slate-900/10 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3 transition-colors">
                 <button 
-                  onClick={() => {
-                    setSelectedTask(null);
-                    setIsEditing(false);
-                  }}
+                  onClick={handleSaveTask}
                   className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-blue-500/20"
                 >
                   Selesai
@@ -1953,7 +2214,6 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   )}
                 </div>
 
-                {/* Suggested Questions */}
                 {chatMessages.length < 3 && (
                   <div className="px-6 py-2 flex flex-wrap gap-2">
                     {(Array.isArray(t('aiAssistant.suggestedQuestions', { returnObjects: true })) 
@@ -2000,6 +2260,310 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
           </AnimatePresence>
         </div>
       )}
+
+      {/* Add Member Modal */}
+      <AnimatePresence>
+        {showAddMemberModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowAddMemberModal(false)}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-md bg-white dark:bg-slate-800 rounded-[2.5rem] shadow-2xl p-10"
+            >
+              <h2 className="text-2xl font-bold tracking-tight mb-2 text-slate-900 dark:text-white">
+                Add Team Member
+              </h2>
+              <p className="text-slate-500 dark:text-slate-400 font-medium mb-6">
+                Search and select a user to add to this project.
+              </p>
+              
+              <div className="mb-6 relative">
+                <input 
+                  type="text" 
+                  placeholder="Ketik nama anggota..."
+                  value={memberSearchQuery}
+                  onChange={(e) => setMemberSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm font-medium dark:text-white"
+                />
+                <svg className="w-5 h-5 absolute left-3 top-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              
+              <div className="space-y-3 mb-10 max-h-80 overflow-y-auto pr-2 custom-scrollbar">
+                {/* Current Members Section */}
+                <div className="mb-6">
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Anggota Proyek Saat Ini</h3>
+                  <div className="space-y-2">
+                    {allProjectUsers.map((member: any) => (
+                      <div key={member.id || member.id_pengguna} className="w-full text-left p-3 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 flex items-center justify-between gap-4 shadow-sm">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-blue-600 font-bold overflow-hidden">
+                            {member.avatar || member.foto_profil ? (
+                              <img src={member.avatar || member.foto_profil} alt={member.nama || member.name} className="w-full h-full object-cover" />
+                            ) : (
+                              (member.nama || member.name || 'U').charAt(0).toUpperCase()
+                            )}
+                          </div>
+                          <div>
+                            <div className="text-sm font-bold text-slate-700 dark:text-slate-200">{member.nama || member.name}</div>
+                            <div className="text-[10px] text-slate-400 font-medium">{member.email}</div>
+                          </div>
+                        </div>
+                        {member.id !== user?.id && member.id !== (currentProject as any)?.id_pengguna && (
+                          <button 
+                            onClick={async () => {
+                              try {
+                                const res = await fetch(`/api/proyek/${currentProject?.id}/anggota/${member.id || member.id_pengguna}`, {
+                                  method: 'DELETE'
+                                });
+                                if (res.ok) {
+                                  onSuccess(`${member.nama || member.name} dihapus dari proyek`);
+                                  if (setProjects && currentProject) {
+                                    setProjects(projects.map(p => p.id === currentProject.id ? { ...p, anggota: (p.anggota || []).filter((a: any) => a.id_pengguna !== (member.id || member.id_pengguna)) } : p));
+                                  }
+                                } else {
+                                  onAddNotification('Gagal menghapus anggota', 'Error');
+                                }
+                              } catch (err) {
+                                onAddNotification('Terjadi kesalahan koneksi', 'Error');
+                              }
+                            }}
+                            className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors"
+                            title="Hapus anggota"
+                          >
+                            <X size={16} />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Add New Members Section */}
+                <div>
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Tambah Anggota Baru</h3>
+                  <div className="space-y-2">
+                    {dbUsers
+                      .filter(u => !allProjectUsers.find(member => member.id === u.id || member.id_pengguna === u.id))
+                      .filter(u => (u.nama || u.name || '').toLowerCase().includes(memberSearchQuery.toLowerCase()))
+                      .map((u: any) => (
+                      <button 
+                        key={u.id || u.id_pengguna}
+                        onClick={async () => {
+                          try {
+                            const res = await fetch(`/api/proyek/${currentProject?.id}/anggota`, {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ id_pengguna: u.id || u.id_pengguna })
+                            });
+                            if (res.ok) {
+                              onSuccess(`${u.nama || u.name} ditambahkan ke proyek!`);
+                              if (setProjects && currentProject) {
+                                setProjects(projects.map(p => p.id === currentProject.id ? { ...p, anggota: [...(p.anggota || []), { id_pengguna: u.id || u.id_pengguna, id_proyek: currentProject.id }] } : p));
+                              }
+                            } else {
+                              const data = await res.json().catch(() => ({}));
+                              onAddNotification(data.error || 'Gagal menambahkan anggota', 'Error');
+                            }
+                          } catch (err) {
+                            console.error(err);
+                            onAddNotification('Terjadi kesalahan koneksi', 'Error');
+                          }
+                        }}
+                        className="w-full text-left p-3 bg-slate-50 dark:bg-slate-900 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-2xl border border-slate-100 dark:border-slate-700 hover:border-blue-500/30 transition-all font-bold text-slate-700 dark:text-slate-200 group flex items-center gap-4"
+                      >
+                        <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-blue-600 font-bold overflow-hidden">
+                          {u.avatar || u.foto_profil ? (
+                            <img src={u.avatar || u.foto_profil} alt={u.nama || u.name} className="w-full h-full object-cover" />
+                          ) : (
+                            (u.nama || u.name || 'U').charAt(0).toUpperCase()
+                          )}
+                        </div>
+                        <div>
+                          <div className="text-sm">{u.nama || u.name}</div>
+                          <div className="text-xs text-slate-400 font-medium">{u.email}</div>
+                        </div>
+                      </button>
+                    ))}
+                    {dbUsers.filter(u => !allProjectUsers.find(member => member.id === u.id || member.id_pengguna === u.id)).length === 0 && (
+                      <div className="text-center p-4 text-slate-400 text-sm font-medium border border-dashed border-slate-200 dark:border-slate-700 rounded-2xl">
+                        Semua pengguna telah bergabung.
+                      </div>
+                    )}
+                    {dbUsers.filter(u => !allProjectUsers.find(member => member.id === u.id || member.id_pengguna === u.id)).length > 0 && 
+                     dbUsers.filter(u => !allProjectUsers.find(member => member.id === u.id || member.id_pengguna === u.id))
+                            .filter(u => (u.nama || u.name || '').toLowerCase().includes(memberSearchQuery.toLowerCase())).length === 0 && (
+                      <div className="text-center p-4 text-slate-400 text-sm font-medium border border-dashed border-slate-200 dark:border-slate-700 rounded-2xl">
+                        Tidak ada pengguna dengan nama tersebut.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <button 
+                onClick={() => setShowAddMemberModal(false)}
+                className="w-full py-4 bg-slate-100 dark:bg-slate-900 text-slate-500 rounded-2xl font-bold hover:bg-slate-200 dark:hover:bg-slate-800 transition-all"
+              >
+                {t('cancel')}
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Documentation Drawer ── */}
+      <AnimatePresence>
+        {docDrawerTask && (
+          <DocumentationDrawer
+            key={docDrawerTask.id}
+            task={docDrawerTask}
+            user={user}
+            darkMode={darkMode}
+            documentations={documentations}
+            defaultMode={docDrawerMode}
+            onSave={(newDoc) => {
+              fetch('/api/dokumentasi', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  id_tugas: newDoc.taskId,
+                  id_pengguna: newDoc.authorId,
+                  catatan_selesai: newDoc.completionNotes,
+                  kendala: newDoc.obstacles,
+                  solusi: newDoc.solutions,
+                })
+              }).then(res => res.json())
+                .then(dbDoc => {
+                  const savedDoc = { ...newDoc, id: dbDoc.id_dokumentasi, createdAt: dbDoc.dibuat_pada };
+                  setDocumentations(prev => [savedDoc, ...prev]);
+                  onSuccess('Dokumentasi berhasil disimpan ke database!');
+                })
+                .catch(err => {
+                  console.error(err);
+                  onSuccess('Gagal menyimpan dokumentasi ke database.');
+                });
+            }}
+            onDelete={(docId) => {
+              fetch(`/api/dokumentasi/${docId}`, { method: 'DELETE' })
+                .then(() => {
+                  setDocumentations(prev => prev.filter(d => d.id !== docId));
+                  onSuccess('Dokumentasi berhasil dihapus.');
+                })
+                .catch(err => {
+                   console.error(err);
+                   onSuccess('Gagal menghapus dokumentasi.');
+                });
+            }}
+            onClose={() => setDocDrawerTask(null)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Add Column Modal */}
+      <AnimatePresence>
+        {showAddColumnModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-white dark:bg-slate-800 w-full max-w-sm rounded-[2rem] shadow-2xl overflow-hidden p-8 border border-slate-100 dark:border-slate-700"
+            >
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">Tambah Kolom Baru</h3>
+              <input 
+                type="text"
+                placeholder="Nama kolom..."
+                value={newColName}
+                onChange={(e) => setNewColName(e.target.value)}
+                autoFocus
+                className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm focus:border-blue-500 outline-none mb-6"
+              />
+              <div className="flex gap-3 justify-end">
+                <button 
+                  onClick={() => { setShowAddColumnModal(false); setNewColName(''); }}
+                  className="px-4 py-2 font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-all"
+                >
+                  Batal
+                </button>
+                <button 
+                  onClick={() => {
+                    if (newColName && currentProject) {
+                      const newCol = {
+                        id: `col-${Date.now()}`,
+                        title: newColName,
+                        status: newColName,
+                        order: boardColumns.length
+                      };
+                      const updatedProject = {
+                        ...currentProject,
+                        columns: [...(currentProject.columns || boardColumns), newCol]
+                      };
+                      onAddProject(updatedProject, tasks);
+                      onSuccess(t('columnAdded'));
+                    }
+                    setShowAddColumnModal(false);
+                    setNewColName('');
+                  }}
+                  className="px-4 py-2 font-bold bg-blue-600 text-white rounded-xl shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all"
+                >
+                  Tambah
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Delete Column Modal */}
+      <AnimatePresence>
+        {columnToDelete && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-white dark:bg-slate-800 w-full max-w-sm rounded-[2rem] shadow-2xl overflow-hidden p-8 border border-slate-100 dark:border-slate-700"
+            >
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Hapus Kolom?</h3>
+              <p className="text-slate-500 text-sm mb-6">Apakah Anda yakin ingin menghapus kolom ini? Tugas di dalamnya mungkin akan hilang dari tampilan board jika tidak dipindahkan.</p>
+              <div className="flex gap-3 justify-end">
+                <button 
+                  onClick={() => setColumnToDelete(null)}
+                  className="px-4 py-2 font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-all"
+                >
+                  Batal
+                </button>
+                <button 
+                  onClick={() => {
+                    const updatedProject = {
+                      ...currentProject!,
+                      columns: boardColumns.filter(c => c.id !== columnToDelete)
+                    };
+                    onAddProject(updatedProject, tasks);
+                    setColumnToDelete(null);
+                  }}
+                  className="px-4 py-2 font-bold bg-rose-500 text-white rounded-xl shadow-lg shadow-rose-500/20 hover:bg-rose-600 transition-all"
+                >
+                  Hapus
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
     </div>
   );
 };
+
+export default KanbanBoard;

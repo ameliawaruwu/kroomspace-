@@ -1,809 +1,1117 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  FileText, 
-  Plus, 
-  Copy, 
-  Trash2, 
+import {
+  FolderKanban,
+  Plus,
+  Trash2,
   Search,
   Zap,
   Bug,
   Code,
   X,
   CheckCircle2,
-  AlertCircle,
-  Settings,
-  Target,
-  MessageSquare,
+  CheckSquare,
   Clock,
   Shield,
-  MapPin,
-  Camera,
   Layers,
   ChevronRight,
-  GripVertical,
   Server,
-  Activity,
-  Database,
   Globe,
-  Lock,
-  Cpu
+  Database,
+  Cpu,
+  ArrowRight,
+  Sparkles,
+  ListChecks,
+  LayoutTemplate,
+  AlertTriangle,
+  CheckCheck,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
-import { Task, TaskType, Priority, Project, TaskTemplate, ChecklistItem, CustomField, AutomationRule } from '../types';
-import { mockTemplates } from '../services/apiService';
-
+import { Project, ProjectTemplate, TemplateTask, Priority, TaskType } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 
-interface TaskTemplatesProps {
-  onAddTask: (task: Partial<Task>) => void;
-  onAddProject: (project: Project, tasks: Task[]) => void;
+interface ProjectTemplatesProps {
+  onAddProject: (project: Project, tasks: any[]) => void;
   darkMode: boolean;
   projects: Project[];
   user: any;
 }
 
-export const TaskTemplates: React.FC<TaskTemplatesProps> = ({ onAddTask, onAddProject, darkMode, projects, user }) => {
-  const { language, t } = useLanguage();
-  const [activeView, setActiveView] = useState<'list' | 'builder' | 'use'>('list');
-  const [editingTemplate, setEditingTemplate] = useState<TaskTemplate | null>(null);
-  const [useData, setUseData] = useState<Partial<Task>>({});
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+const getCategoryIcon = (kategori: string, size = 24) => {
+  const props = { size, strokeWidth: 1.8 };
+  switch (kategori) {
+    case 'Infrastructure': return <Server {...props} />;
+    case 'API Service':    return <Globe {...props} />;
+    case 'Security':       return <Shield {...props} />;
+    case 'Maintenance':    return <Zap {...props} />;
+    case 'Bug Fix':        return <Bug {...props} />;
+    default:               return <Code {...props} />;  // Development
+  }
+};
+
+const getCategoryGradient = (kategori: string) => {
+  switch (kategori) {
+    case 'Infrastructure': return 'from-[#3FA9F5] to-[#2D7FEA]';
+    case 'API Service':    return 'from-[#2D7FEA] to-[#1E40AF]';
+    case 'Security':       return 'from-[#67C6FF] to-[#3FA9F5]';
+    case 'Maintenance':    return 'from-[#3FA9F5] to-[#1E3A8A]';
+    default:               return 'from-[#3FA9F5] to-[#2D7FEA]';  // Development
+  }
+};
+
+const getCategoryBg = (kategori: string, dark: boolean) => {
+  if (dark) {
+    switch (kategori) {
+      case 'Infrastructure': return 'bg-[#3FA9F5]/10 text-[#3FA9F5] border-[#3FA9F5]/20';
+      case 'API Service':    return 'bg-[#2D7FEA]/10 text-[#60A5FA] border-[#2D7FEA]/20';
+      case 'Security':       return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+      case 'Maintenance':    return 'bg-sky-500/10 text-sky-400 border-sky-500/20';
+      default:               return 'bg-[#3FA9F5]/10 text-[#3FA9F5] border-[#3FA9F5]/20';
+    }
+  }
+  switch (kategori) {
+    case 'Infrastructure': return 'bg-[#EBF5FF] text-[#2D7FEA] border-[#BFDFFF]/50';
+    case 'API Service':    return 'bg-blue-50 text-blue-600 border-blue-100';
+    case 'Security':       return 'bg-sky-50 text-sky-600 border-sky-100';
+    case 'Maintenance':    return 'bg-blue-50 text-[#2D7FEA] border-blue-100';
+    default:               return 'bg-[#EBF5FF] text-[#2D7FEA] border-[#BFDFFF]/50';
+  }
+};
+
+const getPriorityColor = (priority: string) => {
+  switch (priority) {
+    case 'High':   return 'text-rose-500 bg-rose-50 dark:bg-rose-500/10';
+    case 'Medium': return 'text-amber-500 bg-amber-50 dark:bg-amber-500/10';
+    default:       return 'text-slate-500 bg-slate-50 dark:bg-slate-500/10';
+  }
+};
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
+export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, darkMode, projects, user }) => {
+  const { t } = useLanguage();
+
+  const [templates, setTemplates] = useState<ProjectTemplate[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
-  const isAdmin = user.role === 'Admin';
-  
-  const [templates, setTemplates] = useState<TaskTemplate[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>('Semua');
 
-  useEffect(() => {
-    fetch('/api/templates')
-      .then(res => res.json())
-      .then(data => {
-        if (Array.isArray(data)) {
-          const mapped = data.map((t: any) => ({
-            id: t.id_template,
-            name: t.nama_template,
-            category: t.kategori,
-            description: t.deskripsi || '',
-            priority: t.prioritas,
-            estimatedHours: t.estimasi_jam,
-            slaDays: 7, // default since it's not in db
-            assignmentType: 'manual',
-            checklist: [],
-            customFields: [],
-            automationRules: [],
-            whatsappTrigger: { onCreate: true, onAssign: false, onDone: true, onOverdue: false }
-          }));
-          setTemplates(mapped as TaskTemplate[]);
-        }
-      })
-      .catch(console.error);
-  }, []);
+  // Modal states
+  const [previewTemplate, setPreviewTemplate] = useState<ProjectTemplate | null>(null);
+  const [applyTemplate, setApplyTemplate] = useState<ProjectTemplate | null>(null);
+  const [projectName, setProjectName] = useState('');
+  const [isApplying, setIsApplying] = useState(false);
+  const [successMsg, setSuccessMsg] = useState('');
 
-  const [showUseTemplateModal, setShowUseTemplateModal] = useState(false);
-  const [templateToUse, setTemplateToUse] = useState<TaskTemplate | null>(null);
+  // Create Template States (Admin Only)
+  const [isCreating, setIsCreating] = useState(false);
+  const [newTemplateName, setNewTemplateName] = useState('');
+  const [newTemplateDesc, setNewTemplateDesc] = useState('');
+  const [newTemplateCat, setNewTemplateCat] = useState('Development');
+  const [newTemplateType, setNewTemplateType] = useState('Development');
+  const [newTemplateMode, setNewTemplateMode] = useState('Kanban');
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+  const [generatedTasks, setGeneratedTasks] = useState<TemplateTask[]>([]);
+  const [createStep, setCreateStep] = useState(1); // 1: Input details, 2: Review generated tasks
+  const [isAiGenerated, setIsAiGenerated] = useState(false);
 
-  const getCategoryIcon = (category: TaskType) => {
-    switch (category) {
-      case 'Infrastructure': return <Server size={28} />;
-      case 'API Service': return <Globe size={28} />;
-      case 'Security': return <Shield size={28} />;
-      case 'Maintenance': return <Zap size={28} />;
-      case 'Bug Fix': return <Bug size={28} />;
-      case 'Development': return <Code size={28} />;
-      default: return <Layers size={28} />;
-    }
-  };
-
-  const getCategoryColor = (category: TaskType) => {
-    switch (category) {
-      case 'Infrastructure': return 'bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-500/10 dark:border-blue-500/20';
-      case 'API Service': return 'bg-indigo-50 text-indigo-600 border-indigo-100 dark:bg-indigo-500/10 dark:border-indigo-500/20';
-      case 'Security': return 'bg-rose-50 text-rose-600 border-rose-100 dark:bg-rose-500/10 dark:border-rose-500/20';
-      case 'Maintenance': return 'bg-amber-50 text-amber-600 border-amber-100 dark:bg-amber-500/10 dark:border-amber-500/20';
-      case 'Bug Fix': return 'bg-rose-50 text-rose-600 border-rose-100 dark:bg-rose-500/10 dark:border-rose-500/20';
-      case 'Development': return 'bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-500/10 dark:border-blue-500/20';
-      default: return 'bg-slate-50 text-slate-600 border-slate-100 dark:bg-slate-500/10 dark:border-slate-500/20';
-    }
-  };
-
-  const handleCreateNew = () => {
-    setEditingTemplate({
-      id: Date.now().toString(),
-      name: '',
-      category: 'Development',
-      description: '',
-      priority: 'Medium',
-      estimatedHours: 1,
-      slaDays: 7,
-      assignmentType: 'manual',
-      checklist: [],
-      customFields: [],
-      automationRules: [],
-      whatsappTrigger: { onCreate: true, onAssign: false, onDone: true, onOverdue: false }
-    });
-    setActiveView('builder');
-  };
-
-  const saveTemplate = async () => {
-    if (!editingTemplate) return;
+  const handleGenerateTemplate = async () => {
+    if (!newTemplateName.trim()) return;
+    setIsGeneratingAI(true);
     try {
-      const exists = templates.find(t => t.id === editingTemplate.id);
-      // Wait, if it exists but it has a timestamp ID, we might need to check if it's really in DB.
-      // If it starts with 'TPL', it's from DB. Otherwise it's new.
-      const isNew = !editingTemplate.id.startsWith('TPL');
-      
-      const res = await fetch(isNew ? '/api/templates' : `/api/templates/${editingTemplate.id}`, {
-        method: isNew ? 'POST' : 'PUT',
+      const res = await fetch('/api/proyek-templates/generate', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          nama_template: editingTemplate.name,
-          kategori: editingTemplate.category,
-          deskripsi: editingTemplate.description,
-          prioritas: editingTemplate.priority,
-          estimasi_jam: editingTemplate.estimatedHours
+          nama_template: newTemplateName,
+          deskripsi: newTemplateDesc,
+          kategori: newTemplateCat,
+          tipe_tugas: newTemplateType,
+          mode_kanban: newTemplateMode,
         })
       });
-      const dbTemp = await res.json();
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
       
-      const formatted = {
-        ...editingTemplate,
-        id: dbTemp.id_template || editingTemplate.id
+      setGeneratedTasks(data.tasks || []);
+      setIsAiGenerated(true);
+      setCreateStep(2);
+    } catch (e: any) {
+      console.error(e);
+      alert(`Gagal merancang template dengan AI: ${e.message}`);
+    } finally {
+      setIsGeneratingAI(false);
+    }
+  };
+
+  const handleSaveTemplate = async () => {
+    try {
+      const defaultColumns = [
+        { id: 'col-1', title: 'Backlog', status: 'Backlog', order: 0 },
+        { id: 'col-2', title: 'In Progress', status: 'In Progress', order: 1 },
+        { id: 'col-3', title: 'Testing', status: 'Testing', order: 2 },
+        { id: 'col-4', title: 'Done', status: 'Done', order: 3 }
+      ];
+
+      const res = await fetch('/api/proyek-templates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nama_template: newTemplateName,
+          deskripsi: newTemplateDesc,
+          kategori: newTemplateCat,
+          tipe_tugas: newTemplateType,
+          mode_kanban: newTemplateMode,
+          kolom_papan: defaultColumns,
+          tugas: generatedTasks,
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+
+      const mapped: ProjectTemplate = {
+        id: data.id_template,
+        name: data.nama_template,
+        description: data.deskripsi || '',
+        kategori: data.kategori || 'Development',
+        type: data.tipe_tugas,
+        mode: data.mode_kanban,
+        columns: defaultColumns,
+        tasks: generatedTasks,
+        createdAt: data.dibuat_pada,
       };
 
-      if (!isNew) {
-        setTemplates(templates.map(t => t.id === editingTemplate.id ? formatted : t));
-      } else {
-        setTemplates([...templates, formatted]);
-      }
-      setActiveView('list');
-      setSuccessMessage(t('templateSavedSuccess'));
-      setTimeout(() => setSuccessMessage(''), 3000);
-    } catch (e) { console.error(e); }
+      setTemplates(prev => [...prev, mapped]);
+      setIsCreating(false);
+      setNewTemplateName('');
+      setNewTemplateDesc('');
+      setGeneratedTasks([]);
+      setCreateStep(1);
+      setSuccessMsg(`✅ Template "${mapped.name}" berhasil dibuat dengan Asisten AI!`);
+      setTimeout(() => setSuccessMsg(''), 4000);
+    } catch (e: any) {
+      console.error(e);
+      alert(`Gagal menyimpan template: ${e.message}`);
+    }
   };
 
-  const handleUseTemplate = (template: TaskTemplate) => {
-    setTemplateToUse(template);
-    setUseData({
-      title: template.name,
-      description: template.description,
-      priority: template.priority,
-      type: template.category,
-      checklist: template.checklist.map(i => ({ ...i, id: `c-${Math.random()}` })),
-      customFields: template.customFields.map(f => ({ ...f, id: `f-${Math.random()}` })),
-      status: 'To Do',
-      projectId: projects[0]?.id || ''
-    });
-    setActiveView('use');
+  // ─── Fetch templates from API ─────────────────────────────────────────────
+  useEffect(() => {
+    setLoading(true);
+    fetch('/api/proyek-templates')
+      .then(res => res.json())
+      .then((data: any[]) => {
+        if (!Array.isArray(data)) return;
+        const mapped: ProjectTemplate[] = data.map(d => ({
+          id: d.id_template,
+          name: d.nama_template,
+          description: d.deskripsi || '',
+          kategori: d.kategori || 'Development',
+          type: d.tipe_tugas,
+          mode: d.mode_kanban,
+          columns: Array.isArray(d.kolom_papan) ? d.kolom_papan : [],
+          tasks: Array.isArray(d.tugas) ? d.tugas : [],
+          createdAt: d.dibuat_pada,
+        }));
+        setTemplates(mapped);
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
+
+  const categories = ['Semua', ...Array.from(new Set(templates.map(t => t.kategori)))];
+
+  const filtered = templates.filter(t => {
+    const matchCat = selectedCategory === 'Semua' || t.kategori === selectedCategory;
+    const q = searchQuery.toLowerCase();
+    const matchQ = !q || t.name.toLowerCase().includes(q) || t.description.toLowerCase().includes(q);
+    return matchCat && matchQ;
+  });
+
+  // ─── Terapkan Template ────────────────────────────────────────────────────
+  const handleApply = async () => {
+    if (!applyTemplate || !projectName.trim()) return;
+    setIsApplying(true);
+    try {
+      const res = await fetch(`/api/proyek-templates/${applyTemplate.id}/terapkan`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nama_proyek: projectName, userId: user.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+
+      // Format project and tasks for state update
+      const newProject: Project = {
+        id: data.proyek.id_proyek,
+        name: data.proyek.nama_proyek,
+        description: data.proyek.deskripsi || '',
+        createdAt: data.proyek.dibuat_pada?.split?.('T')?.[0] || new Date().toISOString().split('T')[0],
+        type: data.proyek.tipe_tugas,
+        mode: data.proyek.mode_kanban,
+        columns: (data.proyek.kolom_papan || []).map((c: any) => ({
+          id: c.id_kolom, title: c.judul_kolom, status: c.status_tugas, order: c.urutan
+        }))
+      };
+
+      const newTasks = (data.tugas || []).map((t: any) => ({
+        id: t.id_tugas,
+        title: t.judul_tugas,
+        description: t.deskripsi || '',
+        status: t.status,
+        priority: t.prioritas,
+        type: t.tipe,
+        projectId: data.proyek.id_proyek,
+        createdAt: t.dibuat_pada || new Date().toISOString(),
+        checklist: (t.daftar_periksa || []).map((cl: any) => ({
+          id: cl.id_periksa, text: cl.teks_periksa, completed: cl.apakah_selesai
+        }))
+      }));
+
+      onAddProject(newProject, newTasks);
+      setApplyTemplate(null);
+      setProjectName('');
+      setSuccessMsg(`✅ Proyek "${newProject.name}" berhasil dibuat dengan ${newTasks.length} tugas!`);
+      setTimeout(() => setSuccessMsg(''), 4000);
+    } catch (e: any) {
+      console.error(e);
+      setSuccessMsg(`❌ Gagal menerapkan template: ${e.message}`);
+      setTimeout(() => setSuccessMsg(''), 4000);
+    } finally {
+      setIsApplying(false);
+    }
   };
 
-  const confirmUseTemplate = (projectId?: string) => {
-    const targetProjectId = projectId || useData.projectId;
-    if (!templateToUse || !targetProjectId) return;
-    
-    const newTask: Task = {
-      ...useData,
-      projectId: targetProjectId,
-      id: `task-${Date.now()}`,
-      createdAt: new Date().toISOString(),
-      deadline: useData.deadline || new Date(Date.now() + templateToUse.slaDays * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      automationRules: templateToUse.automationRules,
-      templateId: templateToUse.id,
-      assignee: user.id
-    } as Task;
-
-    onAddTask(newTask);
-    setActiveView('list');
-    setTemplateToUse(null);
-    setSuccessMessage(t('taskAdded'));
-    setTimeout(() => setSuccessMessage(''), 3000);
+  // ─── Delete Template ──────────────────────────────────────────────────────
+  const handleDelete = async (id: string) => {
+    if (!confirm('Hapus template ini? Tindakan ini tidak dapat dibatalkan.')) return;
+    await fetch(`/api/proyek-templates/${id}`, { method: 'DELETE' }).catch(console.error);
+    setTemplates(prev => prev.filter(t => t.id !== id));
   };
 
-  const filteredTemplates = templates.filter(t => 
-    t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    t.description.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const isAdmin = user?.role === 'Admin';
+  const totalTugas = (t: ProjectTemplate) => t.tasks?.length ?? 0;
+  const totalChecklist = (t: ProjectTemplate) =>
+    (t.tasks ?? []).reduce((s, task) => s + (task.checklist?.length ?? 0), 0);
 
+  // ─── Render ───────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen pb-20">
-      {activeView === 'list' ? (
-        <div className="space-y-8 relative max-w-7xl mx-auto px-4 sm:px-0">
-          <header className="flex flex-col xl:flex-row xl:items-center justify-between gap-6 px-8 py-8 sticky top-0 z-20 bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-xl border-b border-white/20 dark:border-slate-800/20 transition-all">
-            <div className="space-y-1">
-              <h1 className="text-4xl font-black tracking-tight text-slate-900 dark:text-white">{t('templates')}</h1>
-              <p className="text-slate-500 dark:text-slate-400 font-medium text-sm">{t('templatesSubHeader')}</p>
+    <div className="animate-in fade-in duration-500 pb-24">
+
+      {/* ── Header ── */}
+      <header className={cn(
+        "flex flex-col xl:flex-row xl:items-center justify-between gap-6 px-8 py-6 sticky top-0 z-30 backdrop-blur-xl border-b transition-all",
+        darkMode ? "bg-[#0D1B35]/90 border-[#1E3A5F]/40" : "bg-[#F4F8FC]/90 border-[#BFDFFF]/30"
+      )}>
+        <div>
+          <div className="flex items-center gap-3 mb-1">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#3FA9F5] to-[#2D7FEA] flex items-center justify-center shadow-lg shadow-[#2D7FEA]/20">
+              <LayoutTemplate size={20} className="text-white" />
             </div>
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full xl:w-auto">
-              <div className="relative flex-1 xl:w-96 group">
-                <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={20} />
-                <input 
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder={t('searchTemplates')}
-                  className="w-full pl-14 pr-6 py-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-3xl outline-none focus:ring-4 focus:ring-blue-500/10 transition-all shadow-sm text-slate-900 dark:text-white text-sm font-medium"
-                />
+            <h1 className={cn("text-3xl font-black tracking-tight", darkMode ? "text-white" : "text-slate-800")}>
+              Template Proyek
+            </h1>
+          </div>
+          <p className={cn("text-sm font-medium ml-14", darkMode ? "text-slate-400" : "text-slate-500")}>
+            Blueprint proyek lengkap — tugas & checklist siap pakai, di-generate AI
+          </p>
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 xl:w-auto">
+          <div className="relative group">
+            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={18} />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder="Cari template..."
+              className="w-full pl-12 pr-5 py-3.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none focus:ring-4 focus:ring-blue-500/10 text-slate-900 dark:text-white text-sm font-medium shadow-sm transition-all"
+            />
+          </div>
+
+          {isAdmin && (
+            <button
+              onClick={() => {
+                setCreateStep(1);
+                setIsCreating(true);
+              }}
+              className={cn(
+                "py-3.5 px-6 rounded-2xl text-sm font-black text-white flex items-center justify-center gap-2 transition-all shrink-0",
+                "bg-gradient-to-r from-[#3FA9F5] to-[#2D7FEA] shadow-lg shadow-[#2D7FEA]/20 hover:shadow-xl hover:shadow-[#2D7FEA]/30 hover:scale-[1.02] active:scale-100"
+              )}
+            >
+              <Plus size={18} />
+              Buat Template Baru
+            </button>
+          )}
+        </div>
+      </header>
+
+      {/* ── Category Filters ── */}
+      <div className="px-8 pt-6 pb-2 flex flex-wrap gap-2">
+        {categories.map(cat => (
+          <button
+            key={cat}
+            onClick={() => setSelectedCategory(cat)}
+            className={cn(
+              "px-5 py-2 rounded-2xl text-xs font-black uppercase tracking-widest transition-all border",
+              selectedCategory === cat
+                ? "bg-gradient-to-r from-[#3FA9F5] to-[#2D7FEA] text-white border-none shadow-lg shadow-[#2D7FEA]/20"
+                : darkMode
+                  ? "bg-slate-800 text-slate-400 border-slate-700 hover:border-slate-500"
+                  : "bg-white text-slate-500 border-slate-200 hover:border-slate-300"
+            )}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
+
+      {/* ── Success Toast ── */}
+      <AnimatePresence>
+        {successMsg && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className={cn(
+              "mx-8 mt-4 px-6 py-4 rounded-2xl text-sm font-semibold",
+              successMsg.startsWith('✅')
+                ? "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20"
+                : "bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20"
+            )}
+          >
+            {successMsg}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Grid ── */}
+      <div className="px-8 pt-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        {loading ? (
+          [...Array(6)].map((_, i) => (
+            <div key={i} className={cn(
+              "rounded-[2.5rem] p-8 animate-pulse h-72",
+              darkMode ? "bg-slate-800" : "bg-slate-100"
+            )} />
+          ))
+        ) : filtered.length === 0 ? (
+          <div className="col-span-3 flex flex-col items-center justify-center py-24 gap-4">
+            <div className="w-20 h-20 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+              <LayoutTemplate size={36} className="text-slate-400" />
+            </div>
+            <p className="text-slate-400 font-medium">Tidak ada template ditemukan</p>
+          </div>
+        ) : filtered.map((template, i) => (
+          <motion.div
+            key={template.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.06 }}
+            className={cn(
+              "group relative rounded-[2.5rem] overflow-hidden border transition-all cursor-pointer",
+              "hover:shadow-2xl hover:shadow-blue-500/10 hover:-translate-y-1",
+              darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-100 shadow-sm"
+            )}
+            onClick={() => setPreviewTemplate(template)}
+          >
+            {/* Gradient header */}
+            <div className={cn("h-2 w-full bg-gradient-to-r", getCategoryGradient(template.kategori))} />
+
+            <div className="p-7">
+              {/* Icon + Category */}
+              <div className="flex items-start justify-between mb-5">
+                <div className={cn(
+                  "w-14 h-14 rounded-2xl flex items-center justify-center border-2 shrink-0",
+                  getCategoryBg(template.kategori, darkMode)
+                )}>
+                  {getCategoryIcon(template.kategori, 24)}
+                </div>
+
+                {/* Admin controls */}
+                {isAdmin && (
+                  <button
+                    onClick={e => { e.stopPropagation(); handleDelete(template.id); }}
+                    className="opacity-0 group-hover:opacity-100 p-2.5 bg-slate-50 dark:bg-slate-900 text-slate-400 hover:text-rose-500 rounded-xl border border-slate-100 dark:border-slate-700 transition-all"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                )}
               </div>
-              <button 
-                onClick={handleCreateNew}
-                className="px-10 py-4 bg-blue-600 text-white rounded-3xl text-sm font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-xl shadow-blue-500/20 flex items-center justify-center gap-3 active:scale-95 whitespace-nowrap"
+
+              {/* Name */}
+              <h3 className={cn(
+                "text-lg font-black tracking-tight leading-[1.2] mb-2 group-hover:text-blue-600 transition-colors",
+                darkMode ? "text-white" : "text-slate-900"
+              )}>
+                {template.name}
+              </h3>
+
+              {/* Category badge */}
+              <span className={cn(
+                "inline-block text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border mb-3",
+                getCategoryBg(template.kategori, darkMode)
+              )}>
+                {template.kategori}
+              </span>
+
+              {/* Description */}
+              <p className={cn(
+                "text-xs font-medium leading-relaxed line-clamp-2 mb-5",
+                darkMode ? "text-slate-400" : "text-slate-500"
+              )}>
+                {template.description}
+              </p>
+
+              {/* Stats */}
+              <div className="flex items-center gap-4 mb-5">
+                <div className={cn(
+                  "flex items-center gap-2 text-[11px] font-bold px-3 py-1.5 rounded-xl",
+                  darkMode ? "bg-slate-700 text-slate-300" : "bg-slate-50 text-slate-600"
+                )}>
+                  <ListChecks size={13} />
+                  <span>{totalTugas(template)} Tugas</span>
+                </div>
+                <div className={cn(
+                  "flex items-center gap-2 text-[11px] font-bold px-3 py-1.5 rounded-xl",
+                  darkMode ? "bg-slate-700 text-slate-300" : "bg-slate-50 text-slate-600"
+                )}>
+                  <CheckSquare size={13} />
+                  <span>{totalChecklist(template)} Checklist</span>
+                </div>
+              </div>
+
+              {/* Preview tasks (first 3) */}
+              <div className="space-y-1.5 mb-6">
+                {(template.tasks ?? []).slice(0, 3).map((task, idx) => (
+                  <div key={idx} className={cn(
+                    "flex items-center gap-2 text-xs font-medium py-1.5 px-3 rounded-xl",
+                    darkMode ? "bg-slate-700/50 text-slate-400" : "bg-slate-50 text-slate-500"
+                  )}>
+                    <CheckCircle2 size={11} className="text-blue-400 shrink-0" />
+                    <span className="truncate">{task.title}</span>
+                  </div>
+                ))}
+                {(template.tasks ?? []).length > 3 && (
+                  <p className={cn("text-[10px] font-bold pl-3", darkMode ? "text-slate-500" : "text-slate-400")}>
+                    +{template.tasks.length - 3} tugas lainnya...
+                  </p>
+                )}
+              </div>
+
+              {/* CTA */}
+              <button
+                onClick={e => {
+                  e.stopPropagation();
+                  setProjectName(template.name);
+                  setApplyTemplate(template);
+                }}
+                className={cn(
+                  "w-full py-3.5 rounded-2xl text-sm font-black flex items-center justify-center gap-2 transition-all",
+                  "bg-gradient-to-r from-[#3FA9F5] to-[#2D7FEA] text-white shadow-lg shadow-[#2D7FEA]/20 hover:shadow-xl hover:shadow-[#2D7FEA]/30 hover:scale-[1.02] active:scale-100"
+                )}
               >
-                <Plus size={20} strokeWidth={3} />
-                {t('createTemplate')}
+                <Sparkles size={16} />
+                Terapkan Template
+                <ArrowRight size={16} />
               </button>
             </div>
-          </header>
+          </motion.div>
+        ))}
+      </div>
 
-          <div className="px-8 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-            {filteredTemplates.map((template, i) => (
-              <motion.div
-                key={template.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
-                className="bg-white dark:bg-slate-800 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-2xl hover:shadow-blue-500/10 transition-all group relative overflow-hidden"
-              >
-                <div className="absolute top-0 right-0 p-6 flex gap-2 translate-x-10 group-hover:translate-x-0 opacity-0 group-hover:opacity-100 transition-all">
-                  <button 
-                    onClick={() => { setEditingTemplate(template); setActiveView('builder'); }}
-                    className="p-3 bg-slate-50 dark:bg-slate-900 text-slate-400 hover:text-blue-600 rounded-2xl border border-slate-100 dark:border-slate-700 transition-all"
-                  >
-                    <Settings size={18} />
-                  </button>
-                  <button 
-                    onClick={async () => {
-                      if (confirm('Are you sure?')) {
-                        setTemplates(templates.filter(tm => tm.id !== template.id));
-                        await fetch(`/api/templates/${template.id}`, { method: 'DELETE' }).catch(console.error);
-                      }
-                    }}
-                    className="p-3 bg-slate-50 dark:bg-slate-900 text-slate-400 hover:text-rose-600 rounded-2xl border border-slate-100 dark:border-slate-700 transition-all"
-                  >
-                    <Trash2 size={18} />
-                  </button>
-                </div>
-
-                <div className="flex items-start gap-4 mb-6">
-                  <div className={cn(
-                    "w-16 h-16 shrink-0 rounded-[1.5rem] flex items-center justify-center border-2",
-                    getCategoryColor(template.category)
-                  )}>
-                    {getCategoryIcon(template.category)}
-                  </div>
-                  <div className="pt-1 flex-1 min-w-0">
-                    <h3 className="text-xl font-black tracking-tight text-slate-900 dark:text-white leading-[1.2] truncate group-hover:text-blue-600 transition-colors">{template.name}</h3>
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 block mt-1">{t(template.category.toLowerCase().replace(' ', '')) || template.category}</span>
-                  </div>
-                </div>
-
-                <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mb-8 leading-relaxed line-clamp-2 h-10">
-                  {template.description || "No description provided for this template."}
-                </p>
-
-                <div className="grid grid-cols-2 gap-3 mb-8">
-                  <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-700 flex flex-col justify-between">
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">{t('priority')}</p>
-                    <p className="text-sm font-black text-slate-700 dark:text-slate-200">{t(template.priority.toLowerCase())}</p>
-                  </div>
-                  <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-700 flex flex-col justify-between">
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">{t('checklist')}</p>
-                    <p className="text-sm font-black text-slate-700 dark:text-slate-200">{template.checklist.length} {t('item')}</p>
-                  </div>
-                </div>
-
-                <button 
-                  onClick={() => handleUseTemplate(template)}
-                  className="w-full py-5 bg-slate-900 dark:bg-slate-700 text-white rounded-[1.5rem] font-black uppercase tracking-[0.15em] text-[10px] hover:bg-blue-600 transition-all flex items-center justify-center gap-3 shadow-xl shadow-slate-900/10 group/btn active:scale-[0.98]"
-                >
-                  {t('useTemplate')}
-                  <ChevronRight size={18} className="group-hover/btn:translate-x-1 transition-transform" />
-                </button>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      ) : activeView === 'builder' ? (
-        <div className="max-w-5xl mx-auto p-10 space-y-10">
-          <header className="flex items-center justify-between">
-            <button 
-              onClick={() => setActiveView('list')}
-              className="flex items-center gap-2 text-slate-500 font-bold hover:text-blue-600 transition-all"
-            >
-              <X size={20} />
-              {t('backToList')}
-            </button>
-            <button 
-              onClick={saveTemplate}
-              className="px-8 py-4 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 shadow-xl shadow-blue-500/20 transition-all"
-            >
-              {t('saveTemplate')}
-            </button>
-          </header>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-            {/* Left Column: Core Info */}
-            <div className="lg:col-span-2 space-y-10">
-              <section className="bg-white dark:bg-slate-800 p-10 rounded-[3rem] border border-slate-100 dark:border-slate-700 shadow-sm space-y-8">
-                <div className="flex items-center gap-4 text-blue-600 mb-2">
-                  <FileText size={24} />
-                  <h2 className="text-2xl font-bold tracking-tight">{t('templateName')} & {t('desc')}</h2>
-                </div>
-                
-                <div className="space-y-6">
-                  <div className="space-y-3">
-                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest">{t('templateName')}</label>
-                    <input 
-                      type="text"
-                      value={editingTemplate?.name}
-                      onChange={(e) => setEditingTemplate({...editingTemplate!, name: e.target.value})}
-                      placeholder="e.g. Daily Review"
-                      className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-2xl outline-none focus:ring-4 focus:ring-blue-500/10 font-bold text-xl"
-                    />
-                  </div>
-                  <div className="space-y-3">
-                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest">{t('desc')}</label>
-                    <textarea 
-                      value={editingTemplate?.description}
-                      onChange={(e) => setEditingTemplate({...editingTemplate!, description: e.target.value})}
-                      rows={3}
-                      className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-2xl outline-none focus:ring-4 focus:ring-blue-500/10 font-medium text-slate-600 dark:text-slate-300 resize-none"
-                    />
-                  </div>
-                </div>
-              </section>
-
-              {/* Checklist Builder */}
-              <section className="bg-white dark:bg-slate-800 p-10 rounded-[3rem] border border-slate-100 dark:border-slate-700 shadow-sm space-y-8">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4 text-blue-600">
-                    <CheckCircle2 size={24} />
-                    <h2 className="text-2xl font-bold tracking-tight">{t('checklistItems')}</h2>
-                  </div>
-                  <button 
-                    onClick={() => setEditingTemplate({...editingTemplate!, checklist: [...editingTemplate!.checklist, { id: Date.now().toString(), text: '', completed: false }]})}
-                    className="p-3 bg-blue-50 dark:bg-blue-500/10 text-blue-600 rounded-2xl font-bold flex items-center gap-2 hover:bg-blue-600 hover:text-white transition-all shadow-sm"
-                  >
-                    <Plus size={18} />
-                    {t('addItem')}
-                  </button>
-                </div>
-
-                <div className="space-y-4">
-                  {editingTemplate?.checklist.map((item, idx) => (
-                    <motion.div 
-                      layout
-                      key={item.id} 
-                      className="flex items-center gap-4 p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-700 group"
-                    >
-                      <GripVertical size={20} className="text-slate-300 cursor-grab" />
-                      <input 
-                        type="text"
-                        value={item.text}
-                        onChange={(e) => {
-                          const newChecklist = [...editingTemplate.checklist];
-                          newChecklist[idx].text = e.target.value;
-                          setEditingTemplate({...editingTemplate, checklist: newChecklist});
-                        }}
-                        className="flex-1 bg-transparent border-none outline-none font-bold text-slate-700 dark:text-slate-200"
-                        placeholder="..."
-                      />
-                      <button 
-                        onClick={() => setEditingTemplate({...editingTemplate, checklist: editingTemplate.checklist.filter((_, i) => i !== idx)})}
-                        className="p-2 text-slate-300 hover:text-rose-500 transition-colors opacity-0 group-hover:opacity-100"
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </motion.div>
-                  ))}
-                  {editingTemplate?.checklist.length === 0 && (
-                    <div className="text-center py-10 border-2 border-dashed border-slate-100 dark:border-slate-700 rounded-[2rem]">
-                      <p className="text-slate-400 font-bold">{t('templateItemEmpty')}</p>
-                    </div>
-                  )}
-                </div>
-              </section>
-
-              {/* Custom Fields Builder */}
-              <section className="bg-white dark:bg-slate-800 p-10 rounded-[3rem] border border-slate-100 dark:border-slate-700 shadow-sm space-y-8">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4 text-blue-600">
-                    <Layers size={24} />
-                    <h2 className="text-2xl font-bold tracking-tight">{t('additionalFields')}</h2>
-                  </div>
-                  <button 
-                    onClick={() => setEditingTemplate({...editingTemplate!, customFields: [...editingTemplate!.customFields, { id: Date.now().toString(), label: '', type: 'text', required: true }]})}
-                    className="p-3 bg-blue-50 dark:bg-blue-500/10 text-blue-600 rounded-2xl font-bold flex items-center gap-2 hover:bg-blue-600 hover:text-white transition-all shadow-sm"
-                  >
-                    <Plus size={18} />
-                    {t('addField')}
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {editingTemplate?.customFields.map((field, idx) => (
-                    <div key={field.id} className="p-6 bg-slate-50 dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-700 space-y-4 relative group">
-                      <button 
-                        onClick={() => setEditingTemplate({...editingTemplate, customFields: editingTemplate.customFields.filter((_, i) => i !== idx)})}
-                        className="absolute top-4 right-4 p-2 text-slate-300 hover:text-rose-500 transition-colors opacity-0 group-hover:opacity-100"
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('fieldLabel')}</label>
-                        <input 
-                          type="text"
-                          value={field.label}
-                          onChange={(e) => {
-                            const newFields = [...editingTemplate!.customFields];
-                            newFields[idx].label = e.target.value;
-                            setEditingTemplate({...editingTemplate!, customFields: newFields});
-                          }}
-                          className="w-full bg-white dark:bg-slate-800 border-none rounded-xl px-4 py-2 font-bold outline-none ring-1 ring-slate-100 dark:ring-slate-700 focus:ring-blue-500/30"
-                        />
-                      </div>
-                      <div className="flex gap-4">
-                        <div className="flex-1 space-y-2">
-                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('fieldType')}</label>
-                          <select 
-                            value={field.type}
-                            onChange={(e) => {
-                              const newFields = [...editingTemplate!.customFields];
-                              newFields[idx].type = e.target.value as any;
-                              setEditingTemplate({...editingTemplate!, customFields: newFields});
-                            }}
-                            className="w-full bg-white dark:bg-slate-800 border-none rounded-xl px-4 py-2 font-bold outline-none ring-1 ring-slate-100 dark:ring-slate-700"
-                          >
-                            <option value="text">{t('textType')}</option>
-                            <option value="number">{t('numberType')}</option>
-                            <option value="image">{t('imageType')}</option>
-                            <option value="location">{t('locationType')}</option>
-                            <option value="date">{t('dateType')}</option>
-                          </select>
-                        </div>
-                        <div className="mt-8">
-                           <label className="flex items-center gap-2 cursor-pointer">
-                              <input 
-                                type="checkbox" 
-                                checked={field.required}
-                                onChange={(e) => {
-                                  const newFields = [...editingTemplate!.customFields];
-                                  newFields[idx].required = e.target.checked;
-                                  setEditingTemplate({...editingTemplate!, customFields: newFields});
-                                }}
-                                className="w-5 h-5 rounded-lg border-slate-200 text-blue-600 focus:ring-blue-500"
-                              />
-                              <span className="text-xs font-bold text-slate-500">{t('fieldRequired')}</span>
-                           </label>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            </div>
-
-            {/* Right Column: Config & Meta */}
-            <div className="space-y-10">
-              <section className="bg-white dark:bg-slate-800 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-700 shadow-sm space-y-6 text-slate-900 dark:text-white">
-                <div className="flex items-center gap-3 text-blue-600">
-                  <Clock size={20} />
-                  <h3 className="font-bold">{t('defaultPriority')} & SLA</h3>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('category')}</label>
-                    <select 
-                      value={editingTemplate?.category}
-                      onChange={(e) => setEditingTemplate({...editingTemplate!, category: e.target.value as TaskType})}
-                      className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-2xl font-bold"
-                    >
-                      <option value="Maintenance">{t('maintenance')}</option>
-                      <option value="Bug Fix">{t('bugFix')}</option>
-                      <option value="Development">{t('development')}</option>
-                      <option value="Infrastructure">{t('infrastructure')}</option>
-                      <option value="API Service">{t('apiService')}</option>
-                      <option value="Security">{t('security')}</option>
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('defaultPriority')}</label>
-                    <div className="flex gap-2">
-                      {(['Low', 'Medium', 'High'] as Priority[]).map(p => (
-                        <button 
-                          key={p}
-                          onClick={() => setEditingTemplate({...editingTemplate!, priority: p})}
-                          className={cn(
-                            "flex-1 py-3 rounded-xl font-bold text-xs border transition-all",
-                            editingTemplate?.priority === p 
-                              ? "bg-slate-900 text-white border-slate-900 dark:bg-blue-600 dark:border-blue-600" 
-                              : "bg-slate-50 dark:bg-slate-900 text-slate-400 border-slate-100 dark:border-slate-700 hover:bg-slate-100"
-                          )}
-                        >
-                          {t(p.toLowerCase())}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('estHoursLabel')}</label>
-                      <input 
-                        type="number"
-                        value={editingTemplate?.estimatedHours}
-                        onChange={(e) => setEditingTemplate({...editingTemplate!, estimatedHours: parseInt(e.target.value)})}
-                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-2xl font-bold"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('slaDaysLabel')}</label>
-                      <input 
-                        type="number"
-                        value={editingTemplate?.slaDays}
-                        onChange={(e) => setEditingTemplate({...editingTemplate!, slaDays: parseInt(e.target.value)})}
-                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-2xl font-bold"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </section>
-
-              <section className="bg-white dark:bg-slate-800 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-700 shadow-sm space-y-6 text-slate-900 dark:text-white">
-                <div className="flex items-center gap-3 text-blue-600">
-                  <Shield size={20} />
-                  <h3 className="font-bold text-slate-900 dark:text-white">{t('automation')}</h3>
-                </div>
-                <div className="space-y-4">
-                   <div className="p-4 bg-blue-50/50 dark:bg-blue-500/5 rounded-2xl border border-blue-100 dark:border-blue-500/20">
-                      <label className="flex items-center gap-3 cursor-pointer group">
-                        <div className="relative flex items-center">
-                          <input 
-                            type="checkbox"
-                            checked={editingTemplate?.automationRules.some(r => r.action === 'require_photo')}
-                            onChange={(e) => {
-                              let newRules = [...editingTemplate!.automationRules];
-                              if (e.target.checked) {
-                                newRules.push({ trigger: 'status_change', action: 'require_photo' });
-                              } else {
-                                newRules = newRules.filter(r => r.action !== 'require_photo');
-                              }
-                              setEditingTemplate({...editingTemplate!, automationRules: newRules});
-                            }}
-                            className="w-6 h-6 rounded-lg text-blue-600 border-slate-200"
-                          />
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="text-sm font-bold text-slate-700 dark:text-slate-200">{t('requirePhoto')}</span>
-                          <span className="text-[10px] text-slate-400">{t('whenTaskCompleted')}</span>
-                        </div>
-                        <Camera size={14} className="ml-auto text-blue-600" />
-                      </label>
-                   </div>
-                   <div className="p-4 bg-blue-50/50 dark:bg-blue-500/5 rounded-2xl border border-blue-100 dark:border-blue-500/20">
-                      <label className="flex items-center gap-3 cursor-pointer group">
-                        <input 
-                          type="checkbox"
-                          checked={editingTemplate?.automationRules.some(r => r.action === 'require_notes')}
-                          onChange={(e) => {
-                            let newRules = [...editingTemplate!.automationRules];
-                            if (e.target.checked) {
-                              newRules.push({ trigger: 'status_change', action: 'require_notes' });
-                            } else {
-                              newRules = newRules.filter(r => r.action !== 'require_notes');
-                            }
-                            setEditingTemplate({...editingTemplate!, automationRules: newRules});
-                          }}
-                          className="w-6 h-6 rounded-lg text-blue-600 border-slate-200"
-                        />
-                        <div className="flex flex-col">
-                          <span className="text-sm font-bold text-slate-700 dark:text-slate-200">{t('requireNotes')}</span>
-                          <span className="text-[10px] text-slate-400">{t('forEveryVerification')}</span>
-                        </div>
-                        <FileText size={14} className="ml-auto text-blue-600" />
-                      </label>
-                   </div>
-                </div>
-              </section>
-
-              <section className="bg-white dark:bg-slate-800 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-700 shadow-sm space-y-6 text-slate-900 dark:text-white">
-                <div className="flex items-center gap-3 text-blue-600">
-                  <MessageSquare size={20} />
-                  <h3 className="font-bold text-slate-900 dark:text-white">{t('whatsappNotification')}</h3>
-                </div>
-                <div className="grid grid-cols-1 gap-3">
-                   {[
-                     { key: 'onCreate', label: t('onTaskCreated') },
-                     { key: 'onAssign', label: t('onAssigned') },
-                     { key: 'onDone', label: t('onCompleted') },
-                     { key: 'onOverdue', label: t('onOverdue') },
-                   ].map(trigger => (
-                     <label key={trigger.key} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-all border border-slate-100 dark:border-transparent">
-                        <span className="text-xs font-bold text-slate-600 dark:text-slate-300">{trigger.label}</span>
-                        <div className="relative inline-flex items-center">
-                          <input 
-                            type="checkbox"
-                            checked={(editingTemplate?.whatsappTrigger as any)[trigger.key]}
-                            onChange={(e) => setEditingTemplate({
-                              ...editingTemplate!, 
-                              whatsappTrigger: { ...editingTemplate!.whatsappTrigger, [trigger.key]: e.target.checked }
-                            })}
-                            className="sr-only peer"
-                          />
-                          <div className="w-10 h-6 bg-slate-200 rounded-full dark:bg-slate-700 peer peer-checked:bg-blue-500 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
-                        </div>
-                     </label>
-                   ))}
-                </div>
-              </section>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div className="max-w-3xl mx-auto p-10 space-y-10 pb-40">
-          <header className="flex items-center justify-between mb-10">
-            <button 
-              onClick={() => setActiveView('list')}
-              className="flex items-center gap-2 text-slate-500 font-bold hover:text-blue-600 transition-all"
-            >
-              <X size={20} />
-              {t('backToList')}
-            </button>
-            <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white capitalize">{templateToUse?.name}</h2>
-          </header>
-
-          <form onSubmit={(e) => { e.preventDefault(); confirmUseTemplate(); }} className="space-y-8">
-            <section className="bg-white dark:bg-slate-800 p-8 rounded-[2rem] border border-slate-100 dark:border-slate-700 shadow-sm space-y-6">
-              <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 border-b border-slate-50 dark:border-slate-700 pb-4">
-                <Target size={16} className="text-blue-500" /> {t('completeInfo')}
-              </h3>
-              
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('selectProject')}</label>
-                  <select 
-                    required
-                    value={useData.projectId}
-                    onChange={(e) => setUseData({...useData, projectId: e.target.value})}
-                    className="w-full px-5 py-3.5 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-2xl font-bold outline-none focus:ring-4 focus:ring-blue-500/10"
-                  >
-                    <option value="">{t('selectProject')}</option>
-                    {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                  </select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('name')}</label>
-                  <input 
-                    type="text"
-                    required
-                    value={useData.title}
-                    onChange={(e) => setUseData({...useData, title: e.target.value})}
-                    className="w-full px-5 py-3.5 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-2xl font-bold outline-none focus:ring-4 focus:ring-blue-500/10"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('desc')}</label>
-                  <textarea 
-                    rows={3}
-                    value={useData.description}
-                    onChange={(e) => setUseData({...useData, description: e.target.value})}
-                    className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-2xl font-medium outline-none focus:ring-4 focus:ring-blue-500/10 resize-none text-sm"
-                  />
-                </div>
-              </div>
-            </section>
-
-            {useData.checklist && useData.checklist.length > 0 && (
-              <section className="bg-white dark:bg-slate-800 p-8 rounded-[2rem] border border-slate-100 dark:border-slate-700 shadow-sm space-y-6">
-                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 border-b border-slate-50 dark:border-slate-700 pb-4">
-                  <CheckCircle2 size={16} className="text-blue-500" /> Checklist
-                </h3>
-                <div className="space-y-3">
-                  {useData.checklist.map((item, idx) => (
-                    <div key={item.id} className="flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-900 rounded-xl">
-                       <CheckCircle2 size={16} className="text-slate-300" />
-                       <span className="text-sm font-bold text-slate-600 dark:text-slate-300">{item.text}</span>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {useData.customFields && useData.customFields.length > 0 && (
-              <section className="bg-white dark:bg-slate-800 p-8 rounded-[2rem] border border-slate-100 dark:border-slate-700 shadow-sm space-y-6">
-                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 border-b border-slate-50 dark:border-slate-700 pb-4">
-                  <Layers size={16} className="text-blue-500" /> {t('operationalData')}
-                </h3>
-                <div className="space-y-6">
-                  {useData.customFields.map((field, idx) => (
-                    <div key={field.id} className="space-y-2">
-                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                         {field.label} {field.required && <span className="text-rose-500">*</span>}
-                       </label>
-                       {field.type === 'text' && <input type="text" required={field.required} className="w-full px-5 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-xl font-bold" />}
-                       {field.type === 'location' && <div className="p-4 bg-slate-900 rounded-xl flex items-center justify-between text-white"><span className="text-xs font-bold">{t('autoDetectLocation')}</span><MapPin size={16} /></div>}
-                       {field.type === 'image' && <div className="p-4 border-2 border-dashed border-slate-100 rounded-xl flex flex-col items-center gap-2 text-slate-300"><Camera size={24} /><span className="text-[8px] font-black uppercase">{t('clickToCaptureProof')}</span></div>}
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            <button type="submit" className="w-full py-5 bg-blue-600 text-white rounded-3xl font-black uppercase tracking-widest text-sm hover:bg-blue-700 shadow-2xl shadow-blue-500/30 transition-all flex items-center justify-center gap-3">
-              <Plus size={20} strokeWidth={3} />
-              {t('confirmUse')}
-            </button>
-          </form>
-        </div>
-      )}
-
-      {/* Modal for Selecting Project when using Template */}
+      {/* ══ MODAL: Preview Template ══ */}
       <AnimatePresence>
-        {showUseTemplateModal && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowUseTemplateModal(false)}
-              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
-            />
-            <motion.div 
+        {previewTemplate && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+            <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-md bg-white dark:bg-slate-800 rounded-[2.5rem] shadow-2xl p-10"
+              className={cn(
+                "w-full max-w-3xl max-h-[90vh] rounded-[3rem] overflow-hidden flex flex-col",
+                darkMode ? "bg-slate-800 border border-slate-700" : "bg-white border border-slate-100",
+                "shadow-2xl shadow-blue-900/10"
+              )}
             >
-              <h2 className="text-2xl font-bold tracking-tight mb-2 text-slate-900 dark:text-white">
-                {t('useThisTemplate')}
-              </h2>
-              <p className="text-slate-500 dark:text-slate-400 font-medium mb-8">
-                {t('selectProjectToAddTask')}
-              </p>
-              
-              <div className="space-y-3 mb-10 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
-                {projects.map(project => (
-                  <button 
-                    key={project.id}
-                    onClick={() => confirmUseTemplate(project.id)}
-                    className="w-full text-left p-5 bg-slate-50 dark:bg-slate-900 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-2xl border border-slate-100 dark:border-slate-700 hover:border-blue-500/30 transition-all font-bold text-slate-700 dark:text-slate-200 group"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span>{project.name}</span>
-                      <ChevronRight size={18} className="text-slate-300 group-hover:text-blue-500 transition-all" />
+              {/* Modal Header */}
+              <div className={cn("p-8 border-b flex items-start justify-between gap-4 shrink-0", darkMode ? "border-slate-700" : "border-slate-100")}>
+                <div className="flex items-center gap-4">
+                  <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center border-2 shrink-0", getCategoryBg(previewTemplate.kategori, darkMode))}>
+                    {getCategoryIcon(previewTemplate.kategori, 24)}
+                  </div>
+                  <div>
+                    <h2 className={cn("text-2xl font-black", darkMode ? "text-white" : "text-slate-900")}>{previewTemplate.name}</h2>
+                    <p className={cn("text-sm mt-0.5", darkMode ? "text-slate-400" : "text-slate-500")}>{previewTemplate.description}</p>
+                  </div>
+                </div>
+                <button onClick={() => setPreviewTemplate(null)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-2xl transition-colors">
+                  <X size={22} className="text-slate-400" />
+                </button>
+              </div>
+
+              {/* Stats */}
+              <div className={cn("px-8 py-4 flex gap-6 border-b shrink-0", darkMode ? "border-slate-700 bg-slate-900/30" : "border-slate-100 bg-slate-50/80")}>
+                <div className="flex items-center gap-2">
+                  <ListChecks size={16} className="text-blue-500" />
+                  <span className={cn("text-sm font-bold", darkMode ? "text-white" : "text-slate-700")}>{totalTugas(previewTemplate)} Tugas</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckSquare size={16} className="text-emerald-500" />
+                  <span className={cn("text-sm font-bold", darkMode ? "text-white" : "text-slate-700")}>{totalChecklist(previewTemplate)} Item Checklist</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Layers size={16} className="text-indigo-500" />
+                  <span className={cn("text-sm font-bold", darkMode ? "text-white" : "text-slate-700")}>Mode {previewTemplate.mode}</span>
+                </div>
+              </div>
+
+              {/* Tasks List */}
+              <div className="flex-1 overflow-y-auto p-8 space-y-4">
+                {(previewTemplate.tasks ?? []).map((task, idx) => (
+                  <div key={idx} className={cn(
+                    "rounded-2xl border p-5",
+                    darkMode ? "bg-slate-900/50 border-slate-700" : "bg-slate-50 border-slate-100"
+                  )}>
+                    <div className="flex items-center gap-3 mb-3">
+                      <span className={cn(
+                        "w-7 h-7 rounded-xl flex items-center justify-center text-xs font-black shrink-0 bg-gradient-to-br",
+                        getCategoryGradient(previewTemplate.kategori),
+                        "text-white"
+                      )}>
+                        {idx + 1}
+                      </span>
+                      <div>
+                        <h4 className={cn("font-bold text-sm", darkMode ? "text-white" : "text-slate-900")}>{task.title}</h4>
+                        <p className={cn("text-xs mt-0.5 line-clamp-1", darkMode ? "text-slate-500" : "text-slate-400")}>{task.description}</p>
+                      </div>
+                      <span className={cn("ml-auto text-[10px] font-black uppercase px-2.5 py-1 rounded-lg shrink-0", getPriorityColor(task.priority))}>
+                        {task.priority}
+                      </span>
                     </div>
-                  </button>
+                    <div className="flex flex-wrap gap-1.5 pl-10">
+                      {(task.checklist ?? []).map((cl, ci) => (
+                        <span key={ci} className={cn(
+                          "flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-xl",
+                          darkMode ? "bg-slate-800 text-slate-400" : "bg-white text-slate-500 border border-slate-100"
+                        )}>
+                          <CheckCircle2 size={9} className="text-blue-400" />
+                          {cl.text}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
 
-              <button 
-                onClick={() => setShowUseTemplateModal(false)}
-                className="w-full py-4 bg-slate-100 dark:bg-slate-900 text-slate-500 rounded-2xl font-bold hover:bg-slate-200 dark:hover:bg-slate-800 transition-all"
-              >
-                {t('cancel')}
-              </button>
+              {/* Footer */}
+              <div className={cn("p-8 border-t shrink-0", darkMode ? "border-slate-700" : "border-slate-100")}>
+                <button
+                  onClick={() => {
+                    setProjectName(previewTemplate.name);
+                    setApplyTemplate(previewTemplate);
+                    setPreviewTemplate(null);
+                  }}
+                  className="w-full py-4 bg-gradient-to-r from-[#3FA9F5] to-[#2D7FEA] text-white rounded-2xl font-black text-sm flex items-center justify-center gap-3 hover:shadow-xl hover:shadow-[#2D7FEA]/30 transition-all hover:scale-[1.01] active:scale-100"
+                >
+                  <Sparkles size={18} />
+                  Terapkan Template Ini
+                  <ArrowRight size={18} />
+                </button>
+              </div>
             </motion.div>
           </div>
         )}
       </AnimatePresence>
 
-      {/* Success SuccessMessage */}
+      {/* ══ MODAL: Konfirmasi Terapkan ══ */}
       <AnimatePresence>
-        {successMessage && (
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 50 }}
-            className="fixed bottom-8 right-8 z-[110] bg-slate-900 dark:bg-blue-600 text-white px-8 py-5 rounded-3xl shadow-2xl flex items-center gap-4 border border-slate-800 dark:border-blue-500"
-          >
-            <div className="w-10 h-10 bg-blue-500 dark:bg-white rounded-full flex items-center justify-center">
-              <CheckCircle2 size={24} className="dark:text-blue-600" />
-            </div>
-            <span className="font-bold text-lg">{successMessage}</span>
-          </motion.div>
+        {applyTemplate && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className={cn(
+                "w-full max-w-md rounded-[2.5rem] p-10 shadow-2xl shadow-blue-900/10",
+                darkMode ? "bg-slate-800 border border-slate-700" : "bg-white border border-slate-100"
+              )}
+            >
+              {/* Icon */}
+              <div className={cn("w-16 h-16 rounded-3xl flex items-center justify-center mb-6 bg-gradient-to-br", getCategoryGradient(applyTemplate.kategori), "shadow-xl")}>
+                {getCategoryIcon(applyTemplate.kategori, 28)}
+              </div>
+
+              <h2 className={cn("text-2xl font-black mb-2", darkMode ? "text-white" : "text-slate-900")}>
+                Buat Proyek Baru
+              </h2>
+              <p className={cn("text-sm mb-8 font-medium leading-relaxed", darkMode ? "text-slate-400" : "text-slate-500")}>
+                Template <strong className={darkMode ? "text-white" : "text-slate-800"}>{applyTemplate.name}</strong> akan membuat proyek dengan <strong className="text-blue-500">{totalTugas(applyTemplate)} tugas</strong> dan <strong className="text-emerald-500">{totalChecklist(applyTemplate)} checklist</strong>.
+              </p>
+
+              {/* Name Input */}
+              <div className="space-y-2 mb-8">
+                <label className={cn("text-[10px] font-black uppercase tracking-widest", darkMode ? "text-slate-400" : "text-slate-500")}>
+                  Nama Proyek
+                </label>
+                <input
+                  type="text"
+                  value={projectName}
+                  onChange={e => setProjectName(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleApply()}
+                  placeholder="Masukkan nama proyek..."
+                  autoFocus
+                  className={cn(
+                    "w-full px-5 py-4 rounded-2xl font-bold outline-none transition-all text-slate-900 dark:text-white border",
+                    "bg-slate-50 dark:bg-slate-900/50 border-slate-100 dark:border-slate-700",
+                    "focus:border-blue-500/50 focus:bg-white dark:focus:bg-slate-900",
+                    "placeholder:text-slate-300 dark:placeholder:text-slate-600"
+                  )}
+                />
+              </div>
+
+              {/* Buttons */}
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  onClick={() => { setApplyTemplate(null); setProjectName(''); }}
+                  className={cn(
+                    "py-4 rounded-2xl font-bold text-sm border transition-all",
+                    darkMode ? "bg-slate-900 text-slate-400 border-slate-700 hover:bg-slate-700" : "bg-slate-50 text-slate-500 border-slate-100 hover:bg-slate-100"
+                  )}
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={handleApply}
+                  disabled={!projectName.trim() || isApplying}
+                  className={cn(
+                    "py-4 rounded-2xl font-black text-sm text-white flex items-center justify-center gap-2 transition-all",
+                    "bg-gradient-to-r from-[#3FA9F5] to-[#2D7FEA] shadow-lg shadow-[#2D7FEA]/20",
+                    "hover:shadow-xl hover:shadow-[#2D7FEA]/30 hover:scale-[1.02] active:scale-100",
+                    "disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100"
+                  )}
+                >
+                  {isApplying ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Membuat...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCheck size={18} />
+                      Buat Proyek
+                    </>
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ══ MODAL: Buat Template Baru (Admin Only) ══ */}
+      <AnimatePresence>
+        {isCreating && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className={cn(
+                "w-full max-w-2xl max-h-[90vh] rounded-[3rem] overflow-hidden flex flex-col shadow-2xl shadow-blue-900/10",
+                darkMode ? "bg-slate-800 border border-slate-700" : "bg-white border border-slate-100"
+              )}
+            >
+              {/* Modal Header */}
+              <div className={cn("p-8 border-b flex items-center justify-between gap-4 shrink-0", darkMode ? "border-slate-700" : "border-slate-100")}>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#3FA9F5] to-[#2D7FEA] flex items-center justify-center text-white">
+                    <Sparkles size={18} />
+                  </div>
+                  <h2 className={cn("text-2xl font-black", darkMode ? "text-white" : "text-slate-900")}>
+                    {createStep === 1 ? 'Rancang Template Baru' : 'Tinjau Hasil Rancangan AI'}
+                  </h2>
+                </div>
+                <button
+                  onClick={() => {
+                    setIsCreating(false);
+                    setNewTemplateName('');
+                    setNewTemplateDesc('');
+                    setGeneratedTasks([]);
+                    setCreateStep(1);
+                  }}
+                  className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-2xl transition-colors"
+                >
+                  <X size={22} className="text-slate-400" />
+                </button>
+              </div>
+
+              {createStep === 1 ? (
+                /* Step 1: Info Input Form */
+                <div className="flex-1 overflow-y-auto p-8 space-y-6">
+                  <div className="space-y-2">
+                    <label className={cn("text-[10px] font-black uppercase tracking-widest", darkMode ? "text-slate-400" : "text-slate-500")}>
+                      Nama Template
+                    </label>
+                    <input
+                      type="text"
+                      value={newTemplateName}
+                      onChange={e => setNewTemplateName(e.target.value)}
+                      placeholder="Contoh: Audit Keamanan Sistem"
+                      className={cn(
+                        "w-full px-5 py-4 rounded-2xl font-bold outline-none border transition-all text-slate-900 dark:text-white",
+                        darkMode ? "bg-slate-900/50 border-slate-700 focus:border-blue-500/50 focus:bg-slate-900" : "bg-slate-50 border-slate-200 focus:border-blue-500/50 focus:bg-white"
+                      )}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className={cn("text-[10px] font-black uppercase tracking-widest", darkMode ? "text-slate-400" : "text-slate-500")}>
+                      Deskripsi Template
+                    </label>
+                    <textarea
+                      value={newTemplateDesc}
+                      onChange={e => setNewTemplateDesc(e.target.value)}
+                      placeholder="Jelaskan tujuan dan ruang lingkup template ini..."
+                      rows={3}
+                      className={cn(
+                        "w-full px-5 py-4 rounded-2xl font-bold outline-none border transition-all text-slate-900 dark:text-white",
+                        darkMode ? "bg-slate-900/50 border-slate-700 focus:border-blue-500/50 focus:bg-slate-900" : "bg-slate-50 border-slate-200 focus:border-blue-500/50 focus:bg-white"
+                      )}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className={cn("text-[10px] font-black uppercase tracking-widest", darkMode ? "text-slate-400" : "text-slate-500")}>
+                      Kategori
+                    </label>
+                    <select
+                      value={newTemplateCat}
+                      onChange={e => {
+                        setNewTemplateCat(e.target.value);
+                        setNewTemplateType(e.target.value);
+                      }}
+                      className={cn(
+                        "w-full px-5 py-4 rounded-2xl font-bold outline-none border transition-all text-slate-900 dark:text-white",
+                        darkMode ? "bg-slate-900 border-slate-700" : "bg-slate-50 border-slate-200"
+                      )}
+                    >
+                      <option value="Development">Development</option>
+                      <option value="Infrastructure">Infrastructure</option>
+                      <option value="API Service">API Service</option>
+                      <option value="Security">Security</option>
+                      <option value="Maintenance">Maintenance</option>
+                      <option value="Bug Fix">Bug Fix</option>
+                    </select>
+                  </div>
+                </div>
+              ) : (
+                /* Step 2: Review/Edit tasks (AI generated or manually created) */
+                <div className="flex-1 overflow-y-auto p-8 space-y-6">
+                  <p className={cn("text-xs font-semibold px-4 py-2.5 rounded-xl bg-sky-50/50 text-sky-600 dark:bg-sky-900/10 dark:text-sky-400")}>
+                    ✍️ Rancang template Anda secara manual dengan menambahkan tugas di bawah.
+                  </p>
+
+                  <div className="space-y-6">
+                    {generatedTasks.map((task, idx) => (
+                      <div key={task.id || idx} className={cn(
+                        "rounded-[2rem] border p-6 space-y-4 shadow-sm",
+                        darkMode ? "bg-slate-900/30 border-slate-750" : "bg-slate-50/50 border-slate-100"
+                      )}>
+                        {/* Task Card Header */}
+                        <div className="flex items-center justify-between border-b border-slate-150 dark:border-slate-800 pb-3">
+                          <div className="flex items-center gap-2">
+                            <span className="w-7 h-7 rounded-xl bg-blue-500 text-white flex items-center justify-center text-xs font-black shadow-md shadow-blue-500/15">
+                              {idx + 1}
+                            </span>
+                            <span className="text-xs font-black tracking-wide text-slate-400 uppercase">Tugas Blueprint</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setGeneratedTasks(generatedTasks.filter((_, i) => i !== idx));
+                            }}
+                            className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-xl transition-all"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+
+                        {/* Title input */}
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Judul Tugas</label>
+                          <input
+                            type="text"
+                            value={task.title}
+                            onChange={e => {
+                              const updated = [...generatedTasks];
+                              updated[idx].title = e.target.value;
+                              setGeneratedTasks(updated);
+                            }}
+                            placeholder="Masukkan judul tugas..."
+                            className={cn(
+                              "w-full px-4 py-3 rounded-xl font-bold outline-none border transition-all text-sm text-slate-900 dark:text-white focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/5",
+                              darkMode ? "bg-slate-900 border-slate-700" : "bg-white border-slate-200"
+                            )}
+                          />
+                        </div>
+
+                        {/* Description textarea */}
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Deskripsi Tugas</label>
+                          <textarea
+                            value={task.description}
+                            onChange={e => {
+                              const updated = [...generatedTasks];
+                              updated[idx].description = e.target.value;
+                              setGeneratedTasks(updated);
+                            }}
+                            placeholder="Deskripsi pekerjaan..."
+                            rows={2}
+                            className={cn(
+                              "w-full px-4 py-3 rounded-xl font-medium outline-none border transition-all text-xs text-slate-900 dark:text-white resize-none focus:border-blue-500/50",
+                              darkMode ? "bg-slate-900 border-slate-700" : "bg-white border-slate-200"
+                            )}
+                          />
+                        </div>
+
+                        {/* Priority and Type Grid */}
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Prioritas</label>
+                            <select
+                              value={task.priority}
+                              onChange={e => {
+                                const updated = [...generatedTasks];
+                                updated[idx].priority = e.target.value as Priority;
+                                setGeneratedTasks(updated);
+                              }}
+                              className={cn(
+                                "w-full px-4 py-3 rounded-xl font-bold outline-none border text-xs text-slate-900 dark:text-white",
+                                darkMode ? "bg-slate-900 border-slate-700" : "bg-white border-slate-200"
+                              )}
+                            >
+                              <option value="Low">Low</option>
+                              <option value="Medium">Medium</option>
+                              <option value="High">High</option>
+                            </select>
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Tipe Tugas</label>
+                            <select
+                              value={task.type}
+                              onChange={e => {
+                                const updated = [...generatedTasks];
+                                updated[idx].type = e.target.value as TaskType;
+                                setGeneratedTasks(updated);
+                              }}
+                              className={cn(
+                                "w-full px-4 py-3 rounded-xl font-bold outline-none border text-xs text-slate-900 dark:text-white",
+                                darkMode ? "bg-slate-900 border-slate-700" : "bg-white border-slate-200"
+                              )}
+                            >
+                              <option value="Development">Development</option>
+                              <option value="Bug Fix">Bug Fix</option>
+                              <option value="Maintenance">Maintenance</option>
+                              <option value="Infrastructure">Infrastructure</option>
+                              <option value="API Service">API Service</option>
+                              <option value="Security">Security</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        {/* Checklist Section */}
+                        <div className="space-y-2 pt-3 border-t border-slate-150 dark:border-slate-800">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 block">Checklist Langkah Kerja</label>
+                          <div className="flex flex-wrap gap-2">
+                            {(task.checklist ?? []).map((cl, ci) => (
+                              <span
+                                key={cl.id || ci}
+                                className={cn(
+                                  "flex items-center gap-1.5 text-[10px] font-bold px-3 py-1.5 rounded-full border shadow-sm",
+                                  darkMode 
+                                    ? "bg-slate-800 text-slate-300 border-slate-700" 
+                                    : "bg-white text-slate-600 border-slate-200"
+                                )}
+                              >
+                                <CheckSquare size={12} className="text-blue-400 shrink-0" />
+                                <span>{cl.text}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const updated = [...generatedTasks];
+                                    updated[idx].checklist = updated[idx].checklist.filter((_, i) => i !== ci);
+                                    setGeneratedTasks(updated);
+                                  }}
+                                  className="text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-500/15 p-0.5 rounded-full transition-colors font-black text-xs leading-none shrink-0"
+                                  style={{ width: '14px', height: '14px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                                >
+                                  ×
+                                </button>
+                              </span>
+                            ))}
+                            {(task.checklist ?? []).length === 0 && (
+                              <span className="text-[10px] text-slate-400 italic">Belum ada langkah kerja. Tulis dan tambahkan di bawah.</span>
+                            )}
+                          </div>
+                          {/* Input to add checklist */}
+                          <div className="flex gap-2 mt-2">
+                            <input
+                              type="text"
+                              id={`new-cl-${idx}`}
+                              placeholder="Tulis langkah kerja lalu tekan Enter..."
+                              onKeyDown={e => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  const val = (e.target as HTMLInputElement).value.trim();
+                                  if (val) {
+                                    const updated = [...generatedTasks];
+                                    updated[idx].checklist = [
+                                      ...(updated[idx].checklist || []),
+                                      { id: `c-${Date.now()}-${Math.random()}`, text: val, completed: false }
+                                    ];
+                                    setGeneratedTasks(updated);
+                                    (e.target as HTMLInputElement).value = '';
+                                  }
+                                }
+                              }}
+                              className={cn(
+                                "flex-1 px-4 py-2.5 rounded-xl text-xs outline-none border transition-all focus:border-blue-500/50",
+                                darkMode ? "bg-slate-900 border-slate-700" : "bg-white border-slate-200"
+                              )}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const inputEl = document.getElementById(`new-cl-${idx}`) as HTMLInputElement;
+                                const val = inputEl?.value.trim();
+                                if (val) {
+                                  const updated = [...generatedTasks];
+                                  updated[idx].checklist = [
+                                    ...(updated[idx].checklist || []),
+                                    { id: `c-${Date.now()}-${Math.random()}`, text: val, completed: false }
+                                  ];
+                                  setGeneratedTasks(updated);
+                                  inputEl.value = '';
+                                }
+                              }}
+                              className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm shadow-blue-500/10 transition-all active:scale-95"
+                            >
+                              Tambah
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Add New Task Button */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setGeneratedTasks([
+                        ...generatedTasks,
+                        {
+                          id: `task-${Date.now()}-${Math.random()}`,
+                          title: '',
+                          description: '',
+                          priority: 'Medium',
+                          type: (newTemplateCat as any) || 'Development',
+                          checklist: []
+                        }
+                      ]);
+                    }}
+                    className={cn(
+                      "w-full py-5 border-2 border-dashed rounded-[2rem] flex items-center justify-center gap-3 transition-all font-bold text-sm shadow-sm",
+                      darkMode 
+                        ? "border-slate-700 bg-slate-900/20 text-slate-400 hover:border-blue-500/50 hover:bg-slate-900/40 hover:text-blue-400" 
+                        : "border-slate-200 bg-slate-50/50 text-slate-500 hover:border-blue-500/50 hover:bg-white hover:text-blue-600"
+                    )}
+                  >
+                    <Plus size={18} />
+                    Tambah Tugas Baru
+                  </button>
+                </div>
+              )}
+
+              {/* Modal Footer */}
+              <div className={cn("p-8 border-t shrink-0 flex gap-4 justify-between", darkMode ? "border-slate-700" : "border-slate-100")}>
+                {createStep === 1 ? (
+                  <>
+                    <button
+                      onClick={() => {
+                        setIsCreating(false);
+                        setNewTemplateName('');
+                        setNewTemplateDesc('');
+                        setGeneratedTasks([]);
+                        setCreateStep(1);
+                      }}
+                      className={cn(
+                        "px-6 py-4 rounded-2xl font-bold text-sm border transition-all flex-1",
+                        darkMode ? "bg-slate-900 text-slate-400 border-slate-700 hover:bg-slate-700" : "bg-slate-50 text-slate-500 border-slate-100 hover:bg-slate-100"
+                      )}
+                    >
+                      Batal
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsAiGenerated(false);
+                        setGeneratedTasks([
+                          {
+                            id: `task-${Date.now()}-${Math.random()}`,
+                            title: '',
+                            description: '',
+                            priority: 'Medium',
+                            type: (newTemplateCat as any) || 'Development',
+                            checklist: []
+                          }
+                        ]);
+                        setCreateStep(2);
+                      }}
+                      disabled={!newTemplateName.trim()}
+                      className={cn(
+                        "px-6 py-4 rounded-2xl font-black text-sm text-white flex items-center justify-center gap-2 transition-all flex-1",
+                        "bg-gradient-to-r from-[#3FA9F5] to-[#2D7FEA] shadow-lg shadow-[#2D7FEA]/20",
+                        "hover:shadow-xl hover:shadow-[#2D7FEA]/30 hover:scale-[1.02] active:scale-100",
+                        "disabled:opacity-50 disabled:cursor-not-allowed"
+                      )}
+                    >
+                      Rancang Template
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => setCreateStep(1)}
+                      className={cn(
+                        "px-6 py-4 rounded-2xl font-bold text-sm border transition-all flex-1",
+                        darkMode ? "bg-slate-900 text-slate-400 border-slate-700 hover:bg-slate-700" : "bg-slate-50 text-slate-500 border-slate-100 hover:bg-slate-100"
+                      )}
+                    >
+                      Kembali
+                    </button>
+                    <button
+                      onClick={handleSaveTemplate}
+                      disabled={generatedTasks.length === 0 || generatedTasks.some(t => !t.title.trim())}
+                      className={cn(
+                        "px-8 py-4 rounded-2xl font-black text-sm text-white flex items-center justify-center gap-2 transition-all flex-1",
+                        "bg-gradient-to-r from-[#3FA9F5] to-[#2D7FEA] shadow-lg shadow-[#2D7FEA]/20",
+                        "hover:shadow-xl hover:shadow-[#2D7FEA]/30 hover:scale-[1.02] active:scale-100",
+                        "disabled:opacity-50 disabled:cursor-not-allowed"
+                      )}
+                    >
+                      <CheckCheck size={16} />
+                      Simpan Template
+                    </button>
+                  </>
+                )}
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>
   );
 };
-

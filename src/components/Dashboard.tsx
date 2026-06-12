@@ -166,8 +166,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
         {[
           { label: t('totalTasks'), value: tasks.length, icon: LayoutGrid, gradient: 'from-[#3FA9F5] to-[#2D7FEA]', glow: 'shadow-[#3FA9F5]/20' },
           { label: t('activeProjects'), value: allProjectsCount, icon: Trello, gradient: 'from-[#67C6FF] to-[#3FA9F5]', glow: 'shadow-[#67C6FF]/20' },
-          { label: t('systemHealth'), value: `${globalOnTimeRate}%`, icon: Zap, gradient: 'from-[#F59E0B] to-[#D97706]', glow: 'shadow-amber-400/20' },
-          { label: t('teamPerformance'), value: '94%', icon: TrendingUp, gradient: 'from-[#8B5CF6] to-[#7C3AED]', glow: 'shadow-violet-400/20' },
+          { label: t('systemHealth'), value: `${globalOnTimeRate}%`, icon: Zap, gradient: 'from-[#3FA9F5] to-[#1E3A8A]', glow: 'shadow-[#3FA9F5]/20' },
+          { label: t('teamPerformance'), value: '94%', icon: TrendingUp, gradient: 'from-[#2D7FEA] to-[#1E40AF]', glow: 'shadow-[#2D7FEA]/20' },
         ].map((stat, i) => (
           <motion.div 
             key={i}
@@ -445,7 +445,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           {[
             { label: t('completedTasks'), value: myDoneTasks.length, icon: CheckCircle2, gradient: 'from-[#3FA9F5] to-[#2D7FEA]', glow: 'rgba(63,169,245,0.25)' },
             { label: t('avgCompletionTime'), value: t('avgCompletionTimeValue'), icon: Clock, gradient: 'from-[#67C6FF] to-[#3FA9F5]', glow: 'rgba(103,198,255,0.25)' },
-            { label: t('onTimeRate'), value: `${myOnTimeRate}%`, icon: TrendingUp, gradient: 'from-[#8B5CF6] to-[#7C3AED]', glow: 'rgba(139,92,246,0.25)' },
+            { label: t('onTimeRate'), value: `${myOnTimeRate}%`, icon: TrendingUp, gradient: 'from-[#2D7FEA] to-[#1E40AF]', glow: 'rgba(45,127,234,0.25)' },
             { label: t('overdueTasks'), value: myOverdueTasks.length, icon: AlertTriangle, gradient: 'from-[#EF4444] to-[#DC2626]', glow: 'rgba(239,68,68,0.25)' },
           ].map((kpi, i) => (
             <div key={i} className={cn("p-5 rounded-3xl border shadow-sm flex items-center gap-4 hover:-translate-y-0.5 transition-all", C.card, C.cardBorder)}>

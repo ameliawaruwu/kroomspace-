@@ -105,7 +105,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart, language, set
         className={cn(
           "fixed top-0 left-0 right-0 z-50 transition-all duration-500",
           isScrolled 
-            ? "bg-[#0B1727]/90 backdrop-blur-xl shadow-lg shadow-[#0B1727]/10 border-b border-white/10 py-3" 
+            ? "bg-[#0B1727]/90 backdrop-blur-xl py-3" 
             : "bg-transparent py-5"
         )}
       >
@@ -113,8 +113,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart, language, set
           {/* Logo */}
           <div className="flex items-center gap-3 group cursor-pointer" onClick={() => setActiveMenu('Beranda')}>
             <div className="relative">
-              <div className="absolute inset-0 bg-[#3498DB] blur-md opacity-50 rounded-full group-hover:opacity-100 transition-opacity" />
-              <img src="https://i.ibb.co.com/Fk4YB1cM/logo-ks.png" alt="KroomSpace Logo" className={cn("relative object-contain transition-all duration-300", isScrolled ? "h-[35px]" : "h-[45px]")} />
+              <div className={cn("absolute inset-0 blur-xl rounded-full transition-all duration-500", isScrolled ? "bg-white opacity-60" : "bg-transparent opacity-0")} />
+              <img src="https://i.ibb.co.com/Fk4YB1cM/logo-ks.png" alt="KroomSpace Logo" className={cn("relative object-contain transition-all duration-300", isScrolled ? "h-[45px]" : "h-[60px]")} />
             </div>
             <span className={cn("text-xl md:text-2xl font-black tracking-tight uppercase transition-colors duration-500", isScrolled ? "text-white" : "text-[#0B1727]")}>KROOMSPACE</span>
           </div>
@@ -152,6 +152,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart, language, set
 
           {/* Desktop CTA */}
           <div className="hidden lg:flex items-center gap-6">
+            <button 
+              onClick={onStart}
+              className={cn(
+                "text-[14px] font-bold transition-colors",
+                isScrolled ? "text-blue-100/70 hover:text-white" : "text-[#4B5563] hover:text-[#0B1727]"
+              )}
+            >
+              Login
+            </button>
             <button 
               onClick={onStart}
               className="relative overflow-hidden group bg-gradient-to-r from-[#1E3A8A] to-[#3498DB] text-white px-7 py-2.5 rounded-full text-[14px] font-bold tracking-wide transition-all shadow-[0_0_20px_rgba(52,152,219,0.4)] hover:shadow-[0_0_30px_rgba(52,152,219,0.6)] active:scale-95 border border-blue-400/20"

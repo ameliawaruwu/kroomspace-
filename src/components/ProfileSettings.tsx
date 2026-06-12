@@ -74,7 +74,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                   className="w-32 h-32 rounded-full border-4 border-white dark:border-slate-700 shadow-xl object-cover hover:brightness-90 transition-all" 
                   alt="Avatar" 
                 />
-                <div className="absolute bottom-0 right-0 p-2 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-all">
+                <div className="absolute bottom-0 right-0 p-2 bg-[#2D7FEA] text-white rounded-full shadow-lg hover:bg-[#1C6ED9] transition-all">
                   <Camera size={16} />
                 </div>
               </label>
@@ -88,7 +88,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
           <form onSubmit={handleSubmit} className="bg-white dark:bg-slate-800 p-10 rounded-[2.5rem] border border-slate-100 dark:border-slate-700 shadow-sm space-y-8">
             <section className="space-y-6">
               <h3 className="text-lg font-bold flex items-center gap-2 border-b border-slate-50 dark:border-slate-700 pb-4">
-                <User size={20} className="text-blue-500" />
+                <User size={20} className="text-[#2D7FEA]" />
                 {t('personalInfo')}
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -100,7 +100,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                       type="text" 
                       value={formData.name}
                       onChange={(e) => setFormData({...formData, name: e.target.value})}
-                      className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20" 
+                      className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-[#3FA9F5]/20" 
                     />
                   </div>
                 </div>
@@ -112,7 +112,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                       type="email" 
                       value={formData.email}
                       onChange={(e) => setFormData({...formData, email: e.target.value})}
-                      className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20" 
+                      className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-[#3FA9F5]/20" 
                     />
                   </div>
                 </div>
@@ -125,7 +125,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                       value={formData.whatsapp}
                       onChange={(e) => setFormData({...formData, whatsapp: e.target.value})}
                       placeholder="+62..."
-                      className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20" 
+                      className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-[#3FA9F5]/20" 
                     />
                   </div>
                 </div>
@@ -142,7 +142,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('currentPass')}</label>
                   <input 
                     type="password" 
-                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20" 
+                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-[#3FA9F5]/20" 
                   />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -150,14 +150,14 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('newPass')}</label>
                     <input 
                       type="password" 
-                      className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20" 
+                      className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-[#3FA9F5]/20" 
                     />
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('confirmPass')}</label>
                     <input 
                       type="password" 
-                      className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20" 
+                      className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-[#3FA9F5]/20" 
                     />
                   </div>
                 </div>
@@ -166,7 +166,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
 
             <button 
               type="submit"
-              className="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20"
+              className="w-full py-4 bg-[#2D7FEA] text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-[#1C6ED9] transition-all shadow-lg shadow-[#2D7FEA]/20"
             >
               <Save size={18} />
               {t('saveChanges')}

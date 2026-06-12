@@ -5,8 +5,9 @@ import {
   Info, 
   Check, 
   Trash2,
-  Smartphone,
-  ExternalLink
+  Mail,
+  ExternalLink,
+  Send
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { mockNotifications } from '../services/apiService';
@@ -32,6 +33,8 @@ export const Notifications: React.FC<NotificationsProps> = ({
   onUpdateTask
 }) => {
   const { t } = useLanguage();
+  const [clientEmail, setClientEmail] = useState('');
+  const [isSending, setIsSending] = useState(false);
   // Filter notifications for the current user
   const userNotifications = notifications.filter(n => !n.userId || n.userId === user.id);
 
@@ -67,11 +70,16 @@ export const Notifications: React.FC<NotificationsProps> = ({
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-10 relative">
-      <header className="flex flex-col md:flex-row justify-between items-start md:items-end sticky top-0 z-20 py-4 -mt-4 mb-4 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-md transition-colors gap-4">
+    <div className="space-y-8 animate-in fade-in duration-700">
+      <header className={cn(
+        "flex flex-col md:flex-row justify-between items-start md:items-center sticky top-0 z-30 px-8 py-6 backdrop-blur-xl border-b transition-all gap-4",
+        darkMode 
+          ? "bg-[#0D1B35]/90 border-[#1E3A5F]/40" 
+          : "bg-[#F4F8FC]/90 border-[#BFDFFF]/30"
+      )}>
         <div>
-          <h1 className="text-4xl font-bold tracking-tight">{t('notifHeader')}</h1>
-          <p className="text-slate-500 mt-2 font-medium">{t('notifSubHeader')}</p>
+          <h1 className={cn("text-3xl font-black tracking-tight", darkMode ? "text-white" : "text-slate-800")}>{t('notifHeader')}</h1>
+          <p className={cn("mt-1 font-medium text-sm", darkMode ? "text-slate-400" : "text-slate-500")}>{t('notifSubHeader')}</p>
         </div>
         <button 
           onClick={() => {
@@ -85,13 +93,13 @@ export const Notifications: React.FC<NotificationsProps> = ({
               }).catch(console.error);
             });
           }}
-          className="px-6 py-2.5 bg-slate-900 dark:bg-slate-800 text-white dark:text-slate-200 text-sm font-bold rounded-2xl hover:bg-blue-600 transition-all shadow-lg shadow-blue-500/10"
+          className="px-6 py-2.5 bg-slate-900 dark:bg-slate-800 text-white dark:text-slate-200 text-sm font-bold rounded-2xl hover:bg-[#2D7FEA] transition-all shadow-lg shadow-[#2D7FEA]/10"
         >
           {t('markAllRead')}
         </button>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 px-8 pb-10">
         <div className="lg:col-span-2 space-y-4">
           {userNotifications.length === 0 && (
             <div className="text-center py-20 bg-white dark:bg-slate-800/40 rounded-[2.5rem] border border-dashed border-slate-200 dark:border-slate-700">
@@ -113,13 +121,13 @@ export const Notifications: React.FC<NotificationsProps> = ({
                     : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 shadow-xl shadow-slate-200/50 dark:shadow-none"
                 )}
               >
-                {!n.read && <div className="absolute top-0 left-0 w-1.5 h-full bg-blue-500" />}
+                {!n.read && <div className="absolute top-0 left-0 w-1.5 h-full bg-[#3FA9F5]" />}
                 
                 <div className={cn(
                   "w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-sm border",
                   n.type === 'Alert' ? "bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-100 dark:border-rose-500/20" :
                   n.type === 'Warning' ? "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-500/20" :
-                  "bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-500/20"
+                  "bg-[#EBF5FF] dark:bg-[#3FA9F5]/10 text-[#2D7FEA] dark:text-[#3FA9F5] border-[#BFDFFF]/50 dark:border-[#3FA9F5]/20"
                 )}>
                   {n.type === 'Alert' ? <AlertCircle size={28} /> : 
                    n.type === 'Warning' ? <AlertCircle size={28} /> : 
@@ -135,7 +143,7 @@ export const Notifications: React.FC<NotificationsProps> = ({
                              "px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest",
                              n.badge === 'URGENT' ? "bg-rose-500 text-white" :
                              n.badge === 'OVERDUE' ? "bg-amber-500 text-white" :
-                             "bg-blue-500 text-white"
+                             "bg-[#3FA9F5] text-white"
                            )}>
                              {n.badge}
                            </span>
@@ -158,7 +166,7 @@ export const Notifications: React.FC<NotificationsProps> = ({
                       {n.actionRequired && (
                         <button 
                           onClick={() => handleAction(n)}
-                          className="px-6 py-2 bg-blue-600 dark:bg-blue-500 text-white text-[11px] font-black uppercase tracking-widest rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20"
+                           className="px-6 py-2 bg-[#2D7FEA] dark:bg-[#3FA9F5] text-white text-[11px] font-black uppercase tracking-widest rounded-xl hover:bg-[#1C6ED9] transition-all shadow-lg shadow-[#2D7FEA]/20"
                         >
                           {t(n.actionRequired === 'complete' ? 'done' : n.actionRequired)}
                         </button>
@@ -167,7 +175,7 @@ export const Notifications: React.FC<NotificationsProps> = ({
                       {!n.read && (
                         <button 
                           onClick={() => markAsRead(n.id)}
-                          className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-blue-600 transition-colors"
+                           className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-[#2D7FEA] transition-colors"
                         >
                           {t('markRead')}
                         </button>
@@ -187,20 +195,7 @@ export const Notifications: React.FC<NotificationsProps> = ({
           </AnimatePresence>
         </div>
 
-        <div className="space-y-6">
-          <div className="bg-white dark:bg-slate-800 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-700 shadow-sm">
-             <div className="flex items-center gap-3 mb-6">
-                <Smartphone size={20} className="text-blue-500" />
-                <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">{t('waAlertTitle')}</h3>
-             </div>
-             <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed mb-8">
-               {t('waAlertSub')}
-             </p>
-             <button className="w-full py-4 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-blue-100 transition-all border border-blue-100 dark:border-blue-500/20">
-               {t('waSettingsBtn')}
-             </button>
-          </div>
-        </div>
+
       </div>
     </div>
   );

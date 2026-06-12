@@ -20,6 +20,9 @@ model Pengguna {
   kontributor_tugas  KontributorTugas[]
   komentar           Komentar[]
   notifikasi         Notifikasi[]
+  dokumentasi        DokumentasiTugas[]
+  proyek             Proyek[]
+  anggota_proyek     AnggotaProyek[]
 }
 
 model Proyek {
@@ -32,6 +35,21 @@ model Proyek {
   
   kolom_papan  KolomPapan[]
   tugas        Tugas[]
+  
+  id_pengguna  String?
+  pengguna     Pengguna? @relation(fields: [id_pengguna], references: [id_pengguna], onDelete: Cascade)
+  
+  anggota      AnggotaProyek[]
+}
+
+model AnggotaProyek {
+  id_proyek   String
+  id_pengguna String
+  
+  proyek      Proyek   @relation(fields: [id_proyek], references: [id_proyek], onDelete: Cascade)
+  pengguna    Pengguna @relation(fields: [id_pengguna], references: [id_pengguna], onDelete: Cascade)
+
+  @@id([id_proyek, id_pengguna])
 }
 
 model KolomPapan {
@@ -48,7 +66,6 @@ model Tugas {
   id_tugas             String   @id
   id_proyek            String
   id_penanggung_jawab  String?
-  id_template          String?
   
   judul_tugas          String
   deskripsi            String?  @db.Text
@@ -59,18 +76,20 @@ model Tugas {
   apakah_diblokir      Boolean  @default(false)
   alasan_diblokir      String?  @db.Text
   catatan_selesai      String?  @db.Text
+  tanggal_mulai        DateTime?
+  tanggal_selesai      DateTime?
   dibuat_pada          DateTime @default(now())
   diperbarui_pada      DateTime @updatedAt
 
   proyek               Proyek            @relation(fields: [id_proyek], references: [id_proyek], onDelete: Cascade)
   penanggung_jawab     Pengguna?         @relation("PenanggungJawab", fields: [id_penanggung_jawab], references: [id_pengguna], onDelete: SetNull)
-  template             TemplateTugas?    @relation(fields: [id_template], references: [id_template], onDelete: SetNull)
 
   kontributor          KontributorTugas[]
   komentar             Komentar[]
   lampiran             Lampiran[]
   daftar_periksa       DaftarPeriksa[]
   notifikasi           Notifikasi[]
+  dokumentasi          DokumentasiTugas[]
 }
 
 model KontributorTugas {
@@ -110,11 +129,11 @@ model DaftarPeriksa {
   id_tugas        String
   teks_periksa    String
   apakah_selesai  Boolean @default(false)
+  tanggal_mulai   DateTime?
+  tanggal_selesai DateTime?
 
   tugas           Tugas   @relation(fields: [id_tugas], references: [id_tugas], onDelete: Cascade)
 }
-
-
 
 model Notifikasi {
   id_notifikasi    String   @id
@@ -131,13 +150,28 @@ model Notifikasi {
   tugas            Tugas?   @relation(fields: [id_tugas], references: [id_tugas], onDelete: SetNull)
 }
 
-model TemplateTugas {
-  id_template   String   @id
-  nama_template String
-  kategori      String
-  deskripsi     String?  @db.Text
-  prioritas     String
-  estimasi_jam  Int
+model DokumentasiTugas {
+  id_dokumentasi   String   @id
+  id_tugas         String
+  id_pengguna      String
+  catatan_selesai  String   @db.Text
+  kendala          String?  @db.Text
+  solusi           String?  @db.Text
+  dibuat_pada      DateTime @default(now())
 
-  tugas         Tugas[]
+  tugas            Tugas    @relation(fields: [id_tugas], references: [id_tugas], onDelete: Cascade)
+  pengguna         Pengguna @relation(fields: [id_pengguna], references: [id_pengguna], onDelete: Cascade)
+}
+
+// Template Proyek: Blueprint proyek lengkap (tugas + checklist) yang bisa langsung diterapkan
+model TemplateProyek {
+  id_template    String   @id
+  nama_template  String
+  deskripsi      String?  @db.Text
+  kategori       String   @default("Development")
+  tipe_tugas     String
+  mode_kanban    String
+  kolom_papan    String?  @db.Text  // JSON: BoardColumn[]
+  tugas          String?  @db.Text  // JSON: TemplateTask[] dengan checklist
+  dibuat_pada    DateTime @default(now())
 }

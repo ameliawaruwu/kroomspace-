@@ -19,6 +19,7 @@ export interface Project {
   type: TaskType;
   mode: KanbanMode;
   columns?: BoardColumn[];
+  anggota?: any[];
 }
 
 export interface Comment {
@@ -51,6 +52,7 @@ export interface Task {
   contributors?: string[];
   comments?: Comment[];
   attachments?: Attachment[];
+  startDate?: string;
   deadline?: string;
   createdAt: string;
   updatedAt?: string;
@@ -92,6 +94,7 @@ export interface ChecklistItem {
   id: string;
   text: string;
   completed: boolean;
+  startDate?: string;
 }
 
 export interface CustomField {
@@ -107,6 +110,32 @@ export interface AutomationRule {
   action: 'require_photo' | 'require_notes' | 'send_whatsapp' | 'notify_admin';
 }
 
+
+// Satu tugas di dalam template proyek (bukan tugas mandiri)
+export interface TemplateTask {
+  id: string;
+  title: string;
+  description: string;
+  status: TaskStatus;
+  priority: Priority;
+  type: TaskType;
+  checklist: ChecklistItem[];
+}
+
+// Template Proyek: blueprint proyek lengkap siap pakai
+export interface ProjectTemplate {
+  id: string;
+  name: string;
+  description: string;
+  kategori: string;           // Development | Maintenance | Infrastructure | Security | API Service
+  type: TaskType;             // tipe_tugas
+  mode: KanbanMode;           // mode_kanban
+  columns: BoardColumn[];
+  tasks: TemplateTask[];      // tugas-tugas + checklist yang sudah di-generate AI
+  createdAt?: string;
+}
+
+// Tetap ada untuk backward compat (tidak digunakan di UI baru)
 export interface TaskTemplate {
   id: string;
   name: string;
@@ -127,6 +156,7 @@ export interface TaskTemplate {
   };
 }
 
+
 export interface TeamKPI {
   name: string;
   value: number;
@@ -143,3 +173,24 @@ export interface ActivityLog {
   timestamp: string;
 }
 
+export interface DocumentationAttachment {
+  id: string;
+  name: string;
+  url: string;
+  type: 'image' | 'file';
+}
+
+export interface Documentation {
+  id: string;
+  taskId: string;           // relasi ke task
+  projectId?: string;
+  completionNotes: string;  // catatan penyelesaian
+  obstacles: string;        // kendala yang ditemukan
+  solutions: string;        // solusi yang dilakukan
+  attachments: DocumentationAttachment[];
+  authorId: string;
+  authorName: string;
+  authorAvatar?: string;
+  createdAt: string;
+  updatedAt?: string;
+}

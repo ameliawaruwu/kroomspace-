@@ -42,7 +42,8 @@ export default function App() {
     const saved = localStorage.getItem('currentUser');
     return saved ? JSON.parse(saved) : initialUsers[0];
   });
-  const [tasks, setTasks] = useState<Task[]>(mockTasks);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [isLoadingData, setIsLoadingData] = useState(true);
   const [successToast, setSuccessToast] = useState<{message: string, show: boolean}>({ message: '', show: false });
   const [notifications, setNotifications] = useState<any[]>(() => {
     return [
@@ -59,8 +60,8 @@ export default function App() {
       }
     ];
   });
-  const [projects, setProjects] = useState<Project[]>(mockProjects);
-  const [currentProjectId, setCurrentProjectId] = useState<string>(mockProjects[0].id);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [currentProjectId, setCurrentProjectId] = useState<string>('');
   const [isBoardOpen, setIsBoardOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
     return localStorage.getItem('darkMode') === 'true';
@@ -78,6 +79,7 @@ export default function App() {
   useEffect(() => {
     if (isLoggedIn) {
       setShowLanding(false);
+      setIsLoadingData(true);
       
       // Fetch users
       fetch('/api/users')
@@ -87,8 +89,8 @@ export default function App() {
         })
         .catch(console.error);
 
-      // Fetch projects
-      fetch('/api/proyek')
+      // Fetch projects and tasks in parallel, then mark loading as done
+      const projFetch = fetch('/api/proyek?userId=' + currentUser.id)
         .then(res => res.json())
         .then(data => {
            if (Array.isArray(data)) {
@@ -99,25 +101,21 @@ export default function App() {
                 createdAt: p.dibuat_pada,
                 type: p.tipe_tugas,
                 mode: p.mode_kanban,
-                columns: p.kolom_papan?.map((c:any) => ({ id: c.id_kolom, title: c.judul_kolom, status: c.status_tugas, order: c.urutan }))
+                columns: p.kolom_papan?.map((c:any) => ({ id: c.id_kolom, title: c.judul_kolom, status: c.status_tugas, order: c.urutan })),
+                anggota: p.anggota,
+                id_pengguna: p.id_pengguna
              }));
+             setProjects(mappedProjects);
              if (mappedProjects.length > 0) {
-               setProjects(mappedProjects);
                setCurrentProjectId(mappedProjects[0].id);
+             } else {
+               setCurrentProjectId('');
              }
            }
         })
         .catch(console.error);
-    }
-  }, [isLoggedIn]);
-
-  // Polling for tasks and notifications every 5 seconds for real-time monitoring
-  useEffect(() => {
-    if (!isLoggedIn) return;
-
-    const fetchUpdates = () => {
-      // Fetch tasks
-      fetch('/api/tugas')
+      
+      const taskFetch = fetch('/api/tugas?userId=' + currentUser.id)
         .then(res => res.json())
         .then(data => {
            if (Array.isArray(data)) {
@@ -131,12 +129,66 @@ export default function App() {
                 projectId: t.id_proyek,
                 assignee: t.id_penanggung_jawab,
                 createdAt: t.dibuat_pada,
-                checklist: t.daftar_periksa?.map((c:any) => ({ id: c.id_periksa, text: c.teks_periksa, completed: c.apakah_selesai })) || [],
+                startDate: t.tanggal_mulai ? new Date(t.tanggal_mulai).toISOString().split('T')[0] : undefined,
+                deadline: t.batas_waktu ? new Date(t.batas_waktu).toISOString().split('T')[0] : undefined,
+                endDate: t.tanggal_selesai ? new Date(t.tanggal_selesai).toISOString().split('T')[0] : undefined,
+                checklist: t.daftar_periksa?.map((c:any) => ({ 
+                  id: c.id_periksa, 
+                  text: c.teks_periksa, 
+                  completed: c.apakah_selesai,
+                  startDate: c.tanggal_mulai ? new Date(c.tanggal_mulai).toISOString().split('T')[0] : undefined,
+                  endDate: c.tanggal_selesai ? new Date(c.tanggal_selesai).toISOString().split('T')[0] : undefined
+                })) || [],
                 comments: t.komentar?.map((c:any) => ({ id: c.id_komentar, userId: c.id_pengguna, text: c.isi_komentar, timestamp: c.dibuat_pada })) || [],
                 attachments: t.lampiran?.map((a:any) => ({ id: a.id_lampiran, name: a.nama_file, url: a.tautan_url, type: a.tipe_lampiran, createdAt: a.dibuat_pada })) || [],
                 contributors: t.kontributor?.map((c:any) => c.id_pengguna) || [],
-                notes: t.catatan_selesai,
-                deadline: t.batas_waktu ? new Date(t.batas_waktu).toISOString().split('T')[0] : undefined
+                notes: t.catatan_selesai
+             }));
+             setTasks(mappedTasks);
+           }
+        })
+        .catch(console.error);
+
+      Promise.allSettled([projFetch, taskFetch]).finally(() => {
+        setIsLoadingData(false);
+      });
+    }
+  }, [isLoggedIn]);
+
+  // Polling for tasks and notifications every 5 seconds for real-time monitoring
+  useEffect(() => {
+    if (!isLoggedIn) return;
+
+    const fetchUpdates = () => {
+      // Fetch tasks
+      fetch('/api/tugas?userId=' + currentUser.id)
+        .then(res => res.json())
+        .then(data => {
+           if (Array.isArray(data)) {
+              const mappedTasks = data.map((t:any) => ({
+                id: t.id_tugas,
+                title: t.judul_tugas,
+                description: t.deskripsi,
+                status: t.status,
+                priority: t.prioritas,
+                type: t.tipe,
+                projectId: t.id_proyek,
+                assignee: t.id_penanggung_jawab,
+                createdAt: t.dibuat_pada,
+                startDate: t.tanggal_mulai ? new Date(t.tanggal_mulai).toISOString().split('T')[0] : undefined,
+                deadline: t.batas_waktu ? new Date(t.batas_waktu).toISOString().split('T')[0] : undefined,
+                endDate: t.tanggal_selesai ? new Date(t.tanggal_selesai).toISOString().split('T')[0] : undefined,
+                checklist: t.daftar_periksa?.map((c:any) => ({ 
+                  id: c.id_periksa, 
+                  text: c.teks_periksa, 
+                  completed: c.apakah_selesai,
+                  startDate: c.tanggal_mulai ? new Date(c.tanggal_mulai).toISOString().split('T')[0] : undefined,
+                  endDate: c.tanggal_selesai ? new Date(c.tanggal_selesai).toISOString().split('T')[0] : undefined
+                })) || [],
+                comments: t.komentar?.map((c:any) => ({ id: c.id_komentar, userId: c.id_pengguna, text: c.isi_komentar, timestamp: c.dibuat_pada })) || [],
+                attachments: t.lampiran?.map((a:any) => ({ id: a.id_lampiran, name: a.nama_file, url: a.tautan_url, type: a.tipe_lampiran, createdAt: a.dibuat_pada })) || [],
+                contributors: t.kontributor?.map((c:any) => c.id_pengguna) || [],
+                notes: t.catatan_selesai
              }));
               setTasks(mappedTasks);
            }
@@ -144,7 +196,7 @@ export default function App() {
         .catch(console.error);
 
       // Fetch notifications
-      fetch('/api/notifikasi')
+      fetch('/api/notifikasi?userId=' + currentUser.id)
         .then(res => res.json())
         .then(data => {
            if (Array.isArray(data)) {
@@ -289,14 +341,16 @@ export default function App() {
       );
       case 'board': return (
         <KanbanBoard 
-          tasks={tasks.filter(t => t.projectId === currentProjectId)} 
+          tasks={tasks.filter(t => t.projectId === currentProjectId)}
           setTasks={(newTasks) => {
+            // newTasks contains only the current project's tasks (from KanbanBoard's internal state)
+            // We need to merge them back into global tasks without losing other projects' tasks
             const prevProjectTasks = tasks.filter(t => t.projectId === currentProjectId);
             
             newTasks.forEach(task => {
               const oldTask = prevProjectTasks.find(t => t.id === task.id);
               if (oldTask) {
-                // Update task if anything changed
+                // Task exists in DB - only PUT if something changed  
                 if (JSON.stringify(oldTask) !== JSON.stringify(task)) {
                   fetch(`/api/tugas/${task.id}`, {
                     method: 'PUT',
@@ -328,8 +382,9 @@ export default function App() {
                     );
                   }
                 }
-              } else {
-                // New task added from Kanban Board
+              } else if (task.id.startsWith('t')) {
+                if (!task.title || task.title.trim() === '') return; // Wait for user to enter title
+                // Brand new task (temp ID) - POST to create in DB
                 fetch('/api/tugas', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
@@ -348,19 +403,35 @@ export default function App() {
                     batas_waktu: task.deadline
                   })
                 }).then(res => res.json()).then(dbTask => {
-                   setTasks(prev => prev.map(t => t.id === task.id ? { ...t, id: dbTask.id_tugas } : t));
-                }).catch(console.error);
+                  if (dbTask.id_tugas) {
+                    // Replace temp ID with real DB ID
+                    setTasks(prev => prev.map(t => t.id === task.id ? { ...t, id: dbTask.id_tugas } : t));
+                  } else {
+                    console.error('POST task failed, removing temp task:', dbTask);
+                    // Remove failed temp task so polling will show correct state
+                    setTasks(prev => prev.filter(t => t.id !== task.id));
+                  }
+                }).catch(err => {
+                  console.error('Network error creating task:', err);
+                  setTasks(prev => prev.filter(t => t.id !== task.id));
+                });
               }
             });
 
+            // Merge: keep other projects' tasks, replace current project with newTasks
+            // Make sure newTasks all have the correct projectId
+            const newTasksWithProject = newTasks.map(t => ({
+              ...t,
+              projectId: t.projectId || currentProjectId
+            }));
             setTasks(prevTasks => {
               const otherTasks = prevTasks.filter(t => t.projectId !== currentProjectId);
-              // Note: new tasks from board still have their temp IDs here until the fetch promise resolves
-              return [...otherTasks, ...newTasks];
+              return [...otherTasks, ...newTasksWithProject];
             });
             showSuccess(t('success'));
           }} 
           projects={projects}
+          setProjects={setProjects}
           currentProjectId={currentProjectId}
           setCurrentProjectId={setCurrentProjectId}
           isBoardOpen={isBoardOpen}
@@ -379,7 +450,8 @@ export default function App() {
                   tipe_tugas: project.type,
                   mode_kanban: project.mode,
                   deskripsi: project.description || '',
-                  columns: project.columns
+                  columns: project.columns,
+                  userId: currentUser.id
                 })
               });
               const newP = await res.json();
@@ -388,9 +460,9 @@ export default function App() {
                 name: newP.nama_proyek,
                 description: newP.deskripsi,
                 type: newP.tipe_tugas,
-                mode: newP.mode_kanban,
+                members: newP.anggota?.map((a:any) => a.id_pengguna) || [],
                 createdAt: newP.dibuat_pada || project.createdAt,
-                columns: project.columns
+                columns: typeof newP.columns === 'string' ? JSON.parse(newP.columns) : newP.columns
               };
 
               setProjects(prev => {
@@ -435,38 +507,22 @@ export default function App() {
       );
       case 'templates': return (
         <TaskTemplates 
-          onAddTask={async (task) => {
-            try {
-              const res = await fetch('/api/tugas', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  id_proyek: task.projectId || currentProjectId,
-                  judul_tugas: task.title,
-                  deskripsi: task.description || '',
-                  status: task.status,
-                  prioritas: task.priority,
-                  tipe: task.type,
-                  id_penanggung_jawab: task.assignee || null,
-                  checklist: task.checklist,
-                  comments: task.comments,
-                  attachments: task.attachments,
-                  contributors: task.contributors
-                })
-              });
-              const newT = await res.json();
-              setTasks(prev => [...prev, { ...task, id: newT.id_tugas } as Task]);
-              showSuccess(t('success'));
-            } catch (e) { console.error(e); }
-          }}
           onAddProject={(project, projectTasks) => {
-            setProjects([...projects, project]);
-            setTasks([...tasks, ...projectTasks]);
+            // Project dan tasks sudah dibuat oleh server via /api/proyek-templates/:id/terapkan
+            // Kita hanya perlu update state lokal
+            setProjects(prev => {
+              const exists = prev.find(p => p.id === project.id);
+              if (exists) return prev;
+              return [...prev, project];
+            });
+            if (projectTasks && projectTasks.length > 0) {
+              setTasks(prev => [...prev, ...projectTasks]);
+            }
             setCurrentProjectId(project.id);
             setIsBoardOpen(true);
             setActiveTab('board');
-            showSuccess(t('success'));
-          }} 
+            showSuccess(`Proyek "${project.name}" berhasil dibuat dari template!`);
+          }}
           projects={projects}
           darkMode={darkMode}
           user={currentUser}
