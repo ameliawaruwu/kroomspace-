@@ -51,7 +51,6 @@ const templateProyek = [
     nama_template: 'Pengembangan Sistem Informasi',
     deskripsi: 'Template lengkap siklus hidup pengembangan sistem informasi: dari analisis kebutuhan, desain, implementasi, pengujian, hingga go-live. Cocok untuk proyek SI berbasis web maupun desktop.',
     kategori: 'Development',
-    tipe_tugas: 'Development',
     mode_kanban: 'Project',
     kolom_papan: JSON.stringify(kolomProyek),
     tugas: JSON.stringify([
@@ -163,7 +162,6 @@ const templateProyek = [
     nama_template: 'Audit Keamanan Sistem',
     deskripsi: 'Template proyek audit keamanan komprehensif: penetration testing, vulnerability assessment, review konfigurasi, dan penyusunan laporan keamanan beserta rekomendasi perbaikan.',
     kategori: 'Security',
-    tipe_tugas: 'Security',
     mode_kanban: 'Project',
     kolom_papan: JSON.stringify(kolomProyek),
     tugas: JSON.stringify([
@@ -247,7 +245,6 @@ const templateProyek = [
     nama_template: 'Migrasi Database & Server',
     deskripsi: 'Template proyek migrasi infrastruktur lengkap: pemindahan database, aplikasi, dan layanan dari server lama ke infrastruktur baru dengan zero downtime atau downtime minimal.',
     kategori: 'Infrastructure',
-    tipe_tugas: 'Infrastructure',
     mode_kanban: 'Project',
     kolom_papan: JSON.stringify(kolomProyek),
     tugas: JSON.stringify([
@@ -344,7 +341,6 @@ const templateProyek = [
     nama_template: 'Pemeliharaan Infrastruktur Hosting',
     deskripsi: 'Template operasional rutin pemeliharaan server hosting: monitoring performa, patch management, backup, optimasi resource, dan penanganan insiden infrastruktur.',
     kategori: 'Maintenance',
-    tipe_tugas: 'Maintenance',
     mode_kanban: 'Operational',
     kolom_papan: JSON.stringify(kolomOperasional),
     tugas: JSON.stringify([
@@ -453,7 +449,6 @@ const templateProyek = [
     nama_template: 'Manajemen API & Integrasi',
     deskripsi: 'Template operasional untuk pengelolaan, pemeliharaan, dan monitoring API: health check rutin, pembaruan versi, penanganan error, dan manajemen integrasi dengan sistem pihak ketiga.',
     kategori: 'API Service',
-    tipe_tugas: 'API Service',
     mode_kanban: 'Operational',
     kolom_papan: JSON.stringify(kolomOperasional),
     tugas: JSON.stringify([
@@ -539,7 +534,6 @@ const templateProyek = [
     nama_template: 'Deployment & CI/CD Pipeline',
     deskripsi: 'Template proyek setup dan otomatisasi pipeline CI/CD: konfigurasi build automation, automated testing, staging/production deployment, dan monitoring pasca-deployment.',
     kategori: 'Development',
-    tipe_tugas: 'Development',
     mode_kanban: 'Project',
     kolom_papan: JSON.stringify(kolomProyek),
     tugas: JSON.stringify([
@@ -827,7 +821,17 @@ async function main() {
     totalTugas += tugasData.length;
     for (const t of tugasData) totalChecklist += (t.checklist || []).length;
 
-    await prisma.templateProyek.create({ data: tmpl });
+    await prisma.templateProyek.create({
+      data: {
+        id_template: tmpl.id_template,
+        nama_template: tmpl.nama_template,
+        deskripsi: tmpl.deskripsi,
+        kategori: tmpl.kategori,
+        mode_kanban: tmpl.mode_kanban,
+        kolom_papan_json: tmpl.kolom_papan,  // Already JSON.stringify'd
+        tugas_json: tmpl.tugas,              // Already JSON.stringify'd
+      }
+    });
   }
 
   console.log(`   ✅ ${templateProyek.length} template proyek dibuat.`);

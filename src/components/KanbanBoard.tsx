@@ -98,6 +98,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   const [showAddColumnModal, setShowAddColumnModal] = useState(false);
   const [newColName, setNewColName] = useState('');
   const [columnToDelete, setColumnToDelete] = useState<string | null>(null);
+  const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [completionNotes, setCompletionNotes] = useState('');
@@ -112,7 +113,9 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   const [docDrawerMode, setDocDrawerMode] = useState<'view' | 'add'>('view');
   const [showAddMemberModal, setShowAddMemberModal] = useState(false);
   const [memberSearchQuery, setMemberSearchQuery] = useState('');
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const attachmentFileInputRef = useRef<HTMLInputElement>(null);
+  const proofFileInputRef = useRef<HTMLInputElement>(null);
+  const draggedRecentlyRef = useRef(false);
   const currentProject = projects.find(p => p.id === currentProjectId);
   const isOperational = currentProject?.mode === 'Operational';
 
@@ -233,7 +236,9 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
         description: selectedTask.description,
         type: selectedTask.type
       });
-      setSelectedTask({ ...selectedTask, priority: suggestedPriority });
+      const updatedTask = { ...selectedTask, priority: suggestedPriority };
+      setSelectedTask(updatedTask);
+      setTasks(tasks.map(t => t.id === selectedTask.id ? updatedTask : t));
     } catch (error) {
       console.error("AI Priority Analysis failed:", error);
     } finally {
@@ -295,7 +300,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
     reader.readAsDataURL(file);
     
     // Reset input
-    if (fileInputRef.current) fileInputRef.current.value = '';
+    if (attachmentFileInputRef.current) attachmentFileInputRef.current.value = '';
   };
 
   const logActivity = (taskId: string, action: string) => {};
@@ -328,11 +333,14 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
       }
     }
 
-    const updatedTasks = tasks.map(t => t.id === taskId ? { ...t, status: newStatus } : t);
+    const updatedTask = { ...task, status: newStatus };
+    const updatedTasks = tasks.map(t => t.id === taskId ? updatedTask : t);
     setTasks(updatedTasks);
     logActivity(taskId, `${t('statusChangedTo')} ${newStatus}`);
     
     if (newStatus === 'Done') {
+      setDocDrawerTask(updatedTask);
+      setDocDrawerMode('add');
       onSuccess(t('taskCompleted'));
     }
   };
@@ -340,6 +348,11 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   const handleSaveTask = () => {
     if (!selectedTask) return;
     if (!selectedTask.title.trim()) return;
+
+    const originalTask = tasks.find(t => t.id === selectedTask.id);
+    const wasAlreadyDone = originalTask ? originalTask.status === 'Done' : false;
+    const isNowDone = selectedTask.status === 'Done';
+    const statusChangedToDone = isNowDone && !wasAlreadyDone;
 
     // Use isNewTask flag (not tasks.some) because inline editing may have
     // already inserted the task into the array with a temporary ID,
@@ -354,11 +367,19 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
       setTasks(tasks.map(t => t.id === selectedTask.id ? selectedTask : t));
       onSuccess(t('taskUpdated'));
     }
+
+    const taskToDoc = { ...selectedTask };
+
     setSelectedTask(null);
     setIsEditing(false);
     setIsNewTask(false);
     setAttachmentName('');
     setAttachmentUrl('');
+
+    if (statusChangedToDone) {
+      setDocDrawerTask(taskToDoc);
+      setDocDrawerMode('add');
+    }
   };
 
   const handleAddChecklistItem = () => {
@@ -403,7 +424,15 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
     }
   };
 
+  const onDragStart = () => {
+    draggedRecentlyRef.current = true;
+  };
+
   const onDragEnd = (result: DropResult) => {
+    draggedRecentlyRef.current = true;
+    setTimeout(() => {
+      draggedRecentlyRef.current = false;
+    }, 1000);
     const { destination, source, draggableId } = result;
 
     if (!destination) return;
@@ -477,6 +506,8 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
       // Activities & Notifications
       logActivity(draggableId, `${t('statusChangedTo')} ${destStatus}`);
       if (destStatus === 'Done') {
+        setDocDrawerTask(updatedTask);
+        setDocDrawerMode('add');
         onSuccess(t('taskCompleted'));
       }
     }
@@ -518,6 +549,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
               return (
                 <motion.div
                   key={project.id}
+                  id={`project-card-${project.name.toLowerCase().replace(/\s+/g, '-')}`}
                   whileHover={{ y: -8 }}
                   onClick={() => {
                     setCurrentProjectId(project.id);
@@ -566,38 +598,28 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                       {t('openBoard')} <ChevronRight size={14} />
                     </div>
                     
-                    <div className="absolute -top-12 right-0 flex gap-2 translate-x-4 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all">
+                    <div className="absolute -top-12 right-0 flex gap-2 transition-all opacity-80 hover:opacity-100">
                       <button 
                         onClick={(e) => { 
                           e.stopPropagation(); 
-                          setNewProjectName(project.name);
-                          setNewProjectDesc(project.description);
-                          setNewProjectMode(project.mode);
-                          setCurrentProjectId(project.id); // Or use a separate state like editingProjectId
-                          setShowCreateModal(true); 
+                           setNewProjectName(project.name);
+                           setNewProjectDesc(project.description);
+                           setNewProjectMode(project.mode);
+                           setEditingProjectId(project.id); // Set the editing ID correctly!
+                           setShowCreateModal(true); 
                         }}
                         className="p-2 bg-white dark:bg-slate-900 text-slate-400 hover:text-blue-600 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm transition-all"
+                        id="btn_edit_proyek"
                       >
                         <Settings size={16} />
                       </button>
                       <button 
-                        onClick={async (e) => { 
+                        onClick={(e) => { 
                           e.stopPropagation(); 
-                          if (confirm('Apakah Anda yakin ingin menghapus proyek ini? Semua tugas di dalamnya juga akan terhapus.')) {
-                            try {
-                              const res = await fetch(`/api/proyek/${project.id}`, { method: 'DELETE' });
-                              if (res.ok) {
-                                if (setProjects) setProjects(projects.filter(p => p.id !== project.id));
-                                onSuccess('Proyek berhasil dihapus');
-                              } else {
-                                alert('Gagal menghapus proyek');
-                              }
-                            } catch (e) {
-                              console.error(e);
-                            }
-                          }
+                          setProjectToDelete(project);
                         }}
                         className="p-2 bg-white dark:bg-slate-900 text-slate-400 hover:text-rose-600 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm transition-all"
+                        id="btn-hapus-proyek"
                       >
                         <Trash2 size={16} />
                       </button>
@@ -616,6 +638,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                 setShowCreateModal(true);
               }}
               className="h-full min-h-[320px] bg-white/50 dark:bg-slate-800/50 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-[2.5rem] flex flex-col items-center justify-center gap-4 text-slate-400 hover:text-blue-500 hover:bg-white dark:hover:bg-slate-800 hover:border-blue-200 transition-all group shadow-sm hover:shadow-xl hover:shadow-blue-500/5"
+              id="btn_create_project"
             >
               <div className="w-16 h-16 rounded-full bg-white dark:bg-slate-700 flex items-center justify-center group-hover:shadow-lg transition-all border border-slate-100 dark:border-slate-600">
                 <Plus size={32} />
@@ -629,12 +652,13 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
           <header className="px-4 md:px-8 py-4 md:py-5 border-b border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl sticky top-0 z-30 transition-all">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
               <div className="flex items-start gap-4">
-                <button 
-                  onClick={() => setIsBoardOpen(false)}
-                  className="mt-1 p-2.5 bg-white dark:bg-slate-800 text-slate-400 hover:text-blue-600 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-all shrink-0"
-                >
-                  <ChevronLeft size={20} />
-                </button>
+                 <button 
+                   onClick={() => setIsBoardOpen(false)}
+                   className="mt-1 p-2.5 bg-white dark:bg-slate-800 text-slate-400 hover:text-blue-600 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-all shrink-0"
+                   id="btn_back_to_project_list"
+                 >
+                   <ChevronLeft size={20} />
+                 </button>
                 <div className="space-y-1">
                   <div className="flex flex-wrap items-center gap-3">
                     <div className="relative group">
@@ -815,6 +839,36 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                               <FileText size={18} className="text-blue-500" />
                               {t('useTemplate')}
                             </button>
+                            {currentProject && (
+                              <>
+                                <button 
+                                  onClick={() => {
+                                    setNewProjectName(currentProject.name);
+                                    setNewProjectDesc(currentProject.description);
+                                    setNewProjectMode(currentProject.mode);
+                                    setEditingProjectId(currentProject.id);
+                                    setShowCreateModal(true);
+                                    setActiveMenu(null);
+                                  }}
+                                  className="w-full px-5 py-3 text-left text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-blue-600 flex items-center gap-3 transition-all"
+                                  id="btn_edit_proyek_board"
+                                >
+                                  <Settings size={18} className="text-blue-500" />
+                                  Edit Proyek
+                                </button>
+                                <button 
+                                  onClick={() => {
+                                    setProjectToDelete(currentProject);
+                                    setActiveMenu(null);
+                                  }}
+                                  className="w-full px-5 py-3 text-left text-sm font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 flex items-center gap-3 transition-all"
+                                  id="btn_delete_proyek_board"
+                                >
+                                  <Trash2 size={18} className="text-rose-500" />
+                                  Hapus Proyek
+                                </button>
+                              </>
+                            )}
                           </motion.div>
                         </>
                       )}
@@ -838,7 +892,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
               </p>
             </div>
           ) : (
-            <DragDropContext onDragEnd={onDragEnd}>
+            <DragDropContext onDragStart={onDragStart} onDragEnd={onDragEnd}>
               <div className="flex-1 flex gap-4 md:gap-5 overflow-x-auto pb-8 px-4 md:px-6 pt-6 scrollbar-hide items-start" style={{ background: 'transparent' }}>
                 {boardColumns.map((column, index) => (
                   <div key={column.id} className="flex flex-shrink-0">
@@ -995,10 +1049,15 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                                 <DraggableAny key={task.id} draggableId={task.id} index={index}>
                                   {(provided: any, snapshot: any) => (
                                     <div
+                                      id={`task-card-${task.id}`}
                                       ref={provided.innerRef}
                                       {...provided.draggableProps}
                                       {...provided.dragHandleProps}
-                                      onClick={() => setSelectedTask(task)}
+                                      onClick={() => {
+                                        if (!draggedRecentlyRef.current) {
+                                          setSelectedTask(task);
+                                        }
+                                      }}
                                       className={cn(
                                         "rounded-xl border cursor-pointer mb-3 transition-all duration-200 overflow-hidden",
                                         darkMode
@@ -1011,7 +1070,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                                       <div className="p-4 space-y-3">
                                         {/* Row 1: Status badge + more menu */}
                                         <div className="flex items-center justify-between">
-                                          <span className={cn(
+                                          <span id={`task-status-badge-${task.id}`} className={cn(
                                             "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold border",
                                             darkMode
                                               ? task.status === 'Done' ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30' :
@@ -1032,7 +1091,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                                         </div>
 
                                         {/* Row 2: Title */}
-                                        <h4 className={cn("font-bold text-[14px] leading-snug line-clamp-2", darkMode ? "text-white" : "text-slate-800")}>
+                                        <h4 id={`task-title-${task.id}`} className={cn("font-bold text-[14px] leading-snug line-clamp-2", darkMode ? "text-white" : "text-slate-800")}>
                                           {task.title}
                                         </h4>
 
@@ -1113,6 +1172,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                                           darkMode ? "border-[#1E3A5F]/50" : "border-slate-100"
                                         )}>
                                           <button
+                                            id={`btn-lihat-dok-${task.id}`}
                                             onClick={(e) => {
                                               e.stopPropagation();
                                               setDocDrawerTask(task);
@@ -1134,12 +1194,13 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                                             )}
                                           </button>
                                           <button
+                                            id={`btn-tambah-dok-${task.id}`}
                                             onClick={(e) => {
                                               e.stopPropagation();
                                               setDocDrawerTask(task);
                                               setDocDrawerMode('add');
                                             }}
-                                            className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-[10px] font-bold text-white transition-all hover:scale-[1.02] shadow-sm"
+                                            className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-[10px] font-bold text-white transition-all hover:scale-[1.02] shadow-sm btn-tambah-dok"
                                             style={{ background: 'linear-gradient(135deg, #3FA9F5, #2D7FEA)', boxShadow: '0 2px 10px rgba(63,169,245,0.25)' }}
                                           >
                                             <FilePlus size={11} />
@@ -1324,8 +1385,10 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                     type="text"
                     value={newProjectName}
                     onChange={(e) => setNewProjectName(e.target.value)}
+                    onFocus={(e) => e.target.select()}
                     placeholder="Contoh: Redesign Website"
                     className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700 focus:border-blue-500/50 focus:bg-white dark:focus:bg-slate-900 text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-300 dark:placeholder:text-slate-600 font-bold"
+                    id="input_project_name"
                   />
                 </div>
                 <div className="space-y-2">
@@ -1333,8 +1396,10 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   <textarea 
                     value={newProjectDesc}
                     onChange={(e) => setNewProjectDesc(e.target.value)}
+                    onFocus={(e) => e.target.select()}
                     placeholder="Apa tujuan dari proyek ini?"
                     className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700 focus:border-blue-500/50 focus:bg-white dark:focus:bg-slate-900 text-slate-900 dark:text-white outline-none transition-all h-32 resize-none placeholder:text-slate-300 dark:placeholder:text-slate-600 font-medium"
+                    id="textarea_project_desc"
                   />
                 </div>
                 
@@ -1408,6 +1473,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                     setEditingProjectId(null);
                   }}
                   className="py-4 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 transition-all shadow-xl shadow-blue-600/30"
+                  id="btn_submit_project"
                 >
                   {editingProjectId ? t('edit') : t('create')}
                 </button>
@@ -1438,6 +1504,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   <div className="flex-1 min-w-0">
                     <input
                       type="text"
+                      id="input_task_title"
                       value={selectedTask.title}
                       onChange={(e) => {
                         const updatedTask = { ...selectedTask, title: e.target.value };
@@ -1447,6 +1514,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                           setTasks(tasks.map(t => t.id === selectedTask.id ? updatedTask : t));
                         }
                       }}
+                      onFocus={(e) => e.target.select()}
                       placeholder="Judul Tugas..."
                       className="text-lg font-bold text-slate-900 dark:text-white bg-transparent border-none outline-none focus:ring-2 focus:ring-blue-500/20 rounded-xl px-2 py-1 w-full"
                     />
@@ -1501,6 +1569,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                       <FileText size={14} className="text-blue-500" /> {t('desc')}
                     </h4>
                     <textarea
+                      id="textarea_task_desc"
                       value={selectedTask.description || ''}
                       onChange={(e) => {
                         const updatedTask = { ...selectedTask, description: e.target.value };
@@ -1510,6 +1579,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                           setTasks(tasks.map(t => t.id === selectedTask.id ? updatedTask : t));
                         }
                       }}
+                      onFocus={(e) => e.target.select()}
                       placeholder="Tambahkan deskripsi lengkap tugas ini di sini..."
                       className="w-full text-xs text-slate-700 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-slate-900/50 p-5 rounded-2xl border border-slate-100 dark:border-slate-700 outline-none focus:border-blue-500/50 focus:bg-white dark:focus:bg-slate-900 transition-all min-h-[120px] resize-none font-medium"
                     />
@@ -1733,14 +1803,22 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                       ))}
                       {attachmentType === 'file' && (
                         <button 
-                          onClick={() => fileInputRef.current?.click()}
+                          type="button"
+                          onClick={() => attachmentFileInputRef.current?.click()}
                           className="aspect-square bg-white dark:bg-slate-800 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl flex flex-col items-center justify-center gap-2 text-slate-400 hover:text-blue-600 hover:border-blue-200 transition-all group"
                         >
                           <Plus size={24} className="group-hover:scale-110 transition-transform" />
                           <span className="text-[10px] font-black uppercase tracking-widest">{t('addAttachment')}</span>
-                          <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
                         </button>
                       )}
+                      <input 
+                        id="input_file_upload"
+                        name="input_file_upload"
+                        type="file" 
+                        ref={attachmentFileInputRef} 
+                        onChange={handleFileChange} 
+                        style={{ opacity: 0, width: 0, height: 0, position: 'absolute', zIndex: -1 }}
+                      />
                     </div>
                   </div>
 
@@ -1824,34 +1902,48 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                       </select>
                     </div>
 
-                    {/* AI Priority Badge - replaces manual priority selection */}
+                    {/* Priority Selector with AI assistant button */}
                     <div className="space-y-2">
                       <label className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-1.5">
                         <Sparkles size={10} className="text-blue-500" /> Prioritas
                       </label>
-                      <div className="w-full px-4 py-3 rounded-xl border border-blue-200 dark:border-blue-500/30 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-500/10 dark:to-indigo-500/10 flex items-center justify-between shadow-sm">
-                        <div className="flex items-center gap-2">
-                          <div className={cn(
-                            "w-2.5 h-2.5 rounded-full",
-                            selectedTask.priority === 'High' ? "bg-rose-500 shadow-[0_0_6px_rgba(239,68,68,0.5)]" :
-                            selectedTask.priority === 'Medium' ? "bg-amber-500 shadow-[0_0_6px_rgba(245,158,11,0.5)]" :
-                            "bg-blue-500 shadow-[0_0_6px_rgba(59,130,246,0.5)]"
-                          )} />
-                          <span className={cn(
-                            "text-xs font-black",
-                            selectedTask.priority === 'High' ? "text-rose-600 dark:text-rose-400" :
-                            selectedTask.priority === 'Medium' ? "text-amber-600 dark:text-amber-400" :
-                            "text-blue-600 dark:text-blue-400"
-                          )}>
-                            {selectedTask.priority} Priority
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-500 text-white rounded-lg text-[9px] font-black uppercase tracking-wider">
-                          <Sparkles size={9} /> AI Priority
-                        </div>
+                      <div className="flex gap-2">
+                        <select
+                          id="select_priority"
+                          value={selectedTask.priority}
+                          onChange={(e) => {
+                            const updatedTask = { ...selectedTask, priority: e.target.value as Priority };
+                            setSelectedTask(updatedTask);
+                            setTasks(tasks.map(t => t.id === selectedTask.id ? updatedTask : t));
+                          }}
+                          className="flex-1 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white text-xs font-bold focus:border-blue-500 outline-none transition-all shadow-sm cursor-pointer"
+                        >
+                          <option value="Low">Low</option>
+                          <option value="Medium">Medium</option>
+                          <option value="High">High</option>
+                        </select>
+                        <button
+                          type="button"
+                          id="btn_ai_priority"
+                          onClick={handleAISuggest}
+                          disabled={isAnalyzing}
+                          className="px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:from-blue-400 disabled:to-indigo-400 text-white rounded-xl text-xs font-black flex items-center gap-1.5 transition-all shadow-md shadow-blue-500/10 hover:shadow-lg hover:shadow-blue-500/20 active:scale-95 whitespace-nowrap"
+                        >
+                          {isAnalyzing ? (
+                            <>
+                              <Loader2 size={12} className="animate-spin" />
+                              <span>Analisis...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Sparkles size={12} />
+                              <span>AI Priority</span>
+                            </>
+                          )}
+                        </button>
                       </div>
                       <p className="text-[9px] text-slate-400 dark:text-slate-500 font-medium ml-1 flex items-center gap-1">
-                        <BrainCircuit size={9} className="text-blue-400" /> Auto Ranked by AI berdasarkan deadline &amp; urgency
+                        <BrainCircuit size={9} className="text-blue-400" /> Gunakan AI untuk merekomendasikan prioritas tugas
                       </p>
                     </div>
 
@@ -1880,6 +1972,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                       <label className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Tanggal Mulai</label>
                       <input 
                         type="date"
+                        id="input_task_start_date"
                         value={selectedTask.startDate || ''}
                         onChange={(e) => {
                           const updatedTask = { ...selectedTask, startDate: e.target.value };
@@ -1896,6 +1989,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                       <div className="relative">
                         <input
                           type="date"
+                          id="input_task_due_date"
                           value={selectedTask.deadline || ''}
                           onChange={(e) => {
                             const updatedTask = { ...selectedTask, deadline: e.target.value || undefined };
@@ -1911,6 +2005,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                     <div className="space-y-2">
                       <label className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Penanggung Jawab</label>
                       <select
+                        id="select_task_assignee"
                         value={selectedTask.assignee || ''}
                         onChange={(e) => {
                           const updatedTask = { ...selectedTask, assignee: e.target.value || undefined };
@@ -2033,6 +2128,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
               <div className="p-6 bg-slate-50/20 dark:bg-slate-900/10 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3 transition-colors">
                 <button 
                   onClick={handleSaveTask}
+                  id="btn_submit_task"
                   className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-blue-500/20"
                 >
                   Selesai
@@ -2070,7 +2166,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('uploadProof')}</label>
                   <input 
                     type="file" 
-                    ref={fileInputRef}
+                    ref={proofFileInputRef}
                     accept="image/*"
                     className="hidden" 
                     onChange={(e) => {
@@ -2085,7 +2181,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                     }}
                   />
                   <div 
-                    onClick={() => fileInputRef.current?.click()}
+                    onClick={() => proofFileInputRef.current?.click()}
                     className="p-10 border-2 border-dashed border-blue-100 dark:border-slate-700 rounded-3xl flex flex-col items-center gap-3 hover:border-blue-500 transition-all cursor-pointer bg-blue-50/10 group"
                   >
                     {proofFile ? (
@@ -2146,8 +2242,9 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
 
       {/* AI Maintenance Assistant Toggle Button */}
       {(hasCriticalWarnings) && (
-        <div className="fixed bottom-8 right-8 z-[100]">
+        <div className="fixed bottom-8 right-8 z-40">
           <motion.button
+            id="btn_toggle_ai_chat"
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={() => {
@@ -2241,6 +2338,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                 <form onSubmit={handleAIChat} className="p-6 border-t border-slate-100 dark:border-slate-700">
                   <div className="relative">
                     <input
+                      id="input_ai_chat"
                       value={chatInput}
                       onChange={(e) => setChatInput(e.target.value)}
                       placeholder={(t('aiAssistant.placeholder') as any)}
@@ -2248,6 +2346,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                     />
                     <button
                       type="submit"
+                      id="btn_send_ai_chat"
                       disabled={!chatInput.trim() || isTyping}
                       className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-all shadow-lg shadow-blue-500/20"
                     >
@@ -2446,6 +2545,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                 .then(dbDoc => {
                   const savedDoc = { ...newDoc, id: dbDoc.id_dokumentasi, createdAt: dbDoc.dibuat_pada };
                   setDocumentations(prev => [savedDoc, ...prev]);
+                  updateTaskStatus(newDoc.taskId, 'Done');
                   onSuccess('Dokumentasi berhasil disimpan ke database!');
                 })
                 .catch(err => {
@@ -2553,6 +2653,64 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                     setColumnToDelete(null);
                   }}
                   className="px-4 py-2 font-bold bg-rose-500 text-white rounded-xl shadow-lg shadow-rose-500/20 hover:bg-rose-600 transition-all"
+                >
+                  Hapus
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Delete Project Modal */}
+      <AnimatePresence>
+        {projectToDelete && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-white dark:bg-slate-800 w-full max-w-sm rounded-[2rem] shadow-2xl overflow-hidden p-8 border border-slate-100 dark:border-slate-700"
+            >
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Hapus Proyek?</h3>
+              <p className="text-slate-500 text-sm mb-6">Apakah Anda yakin ingin menghapus proyek "{projectToDelete.name}"? Semua tugas di dalamnya juga akan terhapus secara permanen.</p>
+              <div className="flex gap-3 justify-end">
+                <button 
+                  onClick={() => setProjectToDelete(null)}
+                  className="px-4 py-2 font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-all"
+                  id="btn-cancel-delete-project"
+                >
+                  Batal
+                </button>
+                <button 
+                  onClick={async () => {
+                    try {
+                      const res = await fetch(`/api/proyek/${projectToDelete.id}`, { method: 'DELETE' });
+                      if (res.ok) {
+                        const remainingProjects = projects.filter(p => p.id !== projectToDelete.id);
+                        if (setProjects) setProjects(remainingProjects);
+                        
+                        // Redirect if deleted project was currently selected
+                        if (currentProjectId === projectToDelete.id) {
+                          if (remainingProjects.length > 0) {
+                            setCurrentProjectId(remainingProjects[0].id);
+                          } else {
+                            setCurrentProjectId('');
+                          }
+                        }
+                        
+                        onSuccess('Proyek berhasil dihapus');
+                      } else {
+                        alert('Gagal menghapus proyek');
+                      }
+                    } catch (e) {
+                      console.error(e);
+                    } finally {
+                      setProjectToDelete(null);
+                    }
+                  }}
+                  className="px-4 py-2 font-bold bg-rose-500 text-white rounded-xl shadow-lg shadow-rose-500/20 hover:bg-rose-600 transition-all"
+                  id="btn-confirm-delete"
                 >
                   Hapus
                 </button>

@@ -1,0 +1,232 @@
+LAPORAN PENGUJIAN PERANGKAT LUNAK
+“<<nama perangkat lunak>>”
+Disusun untuk Memenuhi Tugas 
+Matakuliah Pengujian Perangkat Lunak (GCK2KAB2)
+Semester Genap Tahun Ajaran 2025-2026
+
+
+Oleh:
+Tim Penguji Perangkat Lunak
+<<607012400052>>
+<<Amelia Waruwu>>
+
+
+
+
+
+
+Program Studi D3 Sistem Informasi
+Fakultas Ilmu Terapan
+Universitas Telkom
+
+DAFTAR ISI
+ TOC \o "1-3" \h \z \u DAFTAR ISI PAGEREF _Toc166856674 \h i
+DAFTAR GAMBAR PAGEREF _Toc166856675 \h ii
+DAFTAR TABEL PAGEREF _Toc166856676 \h iii
+1Perencanaan Pengujian PAGEREF _Toc166856677 \h 1
+1.1Instalasi Sistem PAGEREF _Toc166856678 \h 1
+1.1.1System Requirements PAGEREF _Toc166856679 \h 1
+1.1.2System Deployment PAGEREF _Toc166856680 \h 1
+1.2Instalasi Tools Pengujian PAGEREF _Toc166856681 \h 2
+1.3Cakupan Pengujian PAGEREF _Toc166856682 \h 2
+1.3.1Fungsionalitas Sistem PAGEREF _Toc166856683 \h 2
+1.3.2Teknik Pengujian PAGEREF _Toc166856684 \h 3
+1.3.3Jadwal dan Pengawakan PAGEREF _Toc166856685 \h 3
+2Perancangan Pengujian PAGEREF _Toc166856686 \h 4
+3Hasil Pengujian PAGEREF _Toc166856687 \h 5
+4Kesimpulan PAGEREF _Toc166856688 \h 7
+
+
+DAFTAR GAMBAR
+
+ TOC \h \z \c "Gambar" Gambar 11 Langkah-Langkah Instalasi PAGEREF _Toc166856624 \h 2
+
+
+DAFTAR TABEL
+ TOC \h \z \c "Tabel" Tabel 11 Kebutuhan Perangkat Keras PAGEREF _Toc166856645 \h 1
+Tabel 12 Kebutuhan Perangkat Lunak PAGEREF _Toc166856646 \h 1
+Tabel 21 Rancangan Pengujian Fungsionalitas Login PAGEREF _Toc166856647 \h 4
+Tabel 31 Hasil Pengujian Fungsionalitas Login PAGEREF _Toc166856648 \h 5
+
+
+Perencanaan Pengujian
+Bab 1 laporan pengujian perangkat lunak ini menjelaskan secara rinci tahapan perencanaan pengujian yang dilakukan oleh tim penguji. Pada bab ini, tim penguji akan menyusun dan menyiapkan Software Under Test (SUT), yaitu sistem aplikasi manajemen proyek dan maintenance KroomSpace, serta perangkat lunak pendukung yang diperlukan untuk menjalankan eksekusi test case secara otomatis. Langkah-langkah instalasi sistem dan alat-alat pengujian akan dijabarkan secara lengkap, termasuk persiapan lingkungan pengujian dan konfigurasi yang dibutuhkan. Selain itu, cakupan pengujian yang mencakup fungsionalitas yang akan diuji, teknik pengujian yang digunakan, serta penjadwalan pelaksanaan pengujian akan menjelaskan secara komprehensif seluruh modul pelaporan kendala. Dengan demikian, bab ini memberikan fondasi yang kuat untuk memastikan bahwa seluruh proses pengujian berjalan sesuai rencana dan dapat menghasilkan evaluasi yang akurat serta terpercaya terhadap sistem KroomSpace yang diuji.
+Instalasi Sistem
+Dalam proses instalasi sistem aplikasi manajemen proyek dan maintenance KroomSpace, penting bagi tim penguji untuk menetapkan dan menjelaskan kebutuhan minimum yang diperlukan untuk menjalankan sistem secara optimal. Sub bab ini akan menguraikan persyaratan perangkat lunak dan perangkat keras yang harus disediakan, memastikan bahwa semua komponen sistem dapat berfungsi dengan baik dan mendukung setiap fungsionalitas pelacakan tugas serta penanganan bug/maintenance yang ditawarkan. Selain itu, sub bab ini juga akan memberikan panduan langkah demi langkah untuk proses instalasi sistem, mencakup persiapan lingkungan server lokal, instalasi komponen utama backend, serta konfigurasi awal database yang diperlukan. Dengan mengikuti panduan ini, diharapkan proses instalasi dapat dilakukan dengan lancar dan sistem dapat berjalan sesuai dengan yang diharapkan.
+System Requirements 
+Tabel 11 Kebutuhan Perangkat Keras
+Perangkat Keras
+Spesifikasi Minimal
+Processor
+Intel Core i5 / AMD Ryzen 3 (Dual-core 2.0 GHz) atau setara
+RAM
+4 GB (Disarankan 8 GB untuk kelancaran Katalon Studio)
+Storage
+500 MB ruang penyimpanan kosong (SSD/HDD)
+Tabel 12 Kebutuhan Perangkat Lunak
+Perangkat Lunak
+Spesifikasi Minimal
+Bahasa Pemrograman
+TypeScript / JavaScript (Node.js v18+)
+DBMS
+MySQL v8.0
+Framework
+React v18+ (Vite) & Express.js (Prisma ORM)
+Web Browser
+Google Chrome (versi terbaru) / Microsoft Edge
+System Deployment
+Pada sub bab ini, tim penguji perangkat lunak akan menjelaskan tahapan-tahapan yang dilakukan untuk melakukan instalasi sistem di lingkungan pengujian. Penjelasan ini akan mencakup langkah-langkah detail yang harus diikuti, mulai dari persiapan awal hingga konfigurasi akhir, untuk memastikan bahwa sistem dapat berfungsi dengan baik di lingkungan pengujian. Untuk memberikan ilustrasi yang lengkap dan memudahkan pembaca dalam memahami proses instalasi, sub bab ini akan dilengkapi dengan gambar, diagram, dan penjelasan deskriptif. Dengan demikian, pembaca laporan akan dapat mengulangi langkah-langkah tersebut dengan tepat jika ingin melakukan instalasi sistem sendiri.
+
+Gambar 11 Langkah-Langkah Instalasi
+
+Mengunduh Source Code Aplikasi KroomSpace
+Unduh source code aplikasi KroomSpace dari link berikut ini Unduhan
+
+
+Mengekstrak source code yang telah diunduh 
+• Buka file zip source code yang telah diunduh. 
+• Ekstrak seluruh isi file zip. 
+
+
+Memasang Runtime Environment dan Dependensi Proyek
+Sebelum menjalankan proyek, penguji harus memasang Node.js sebagai runtime engine dan menginstal semua paket pustaka/dependensi yang diperlukan:
+Instal Node.js versi 20.14.0 (LTS) pada sistem operasi Anda.
+Buka terminal/command prompt pada folder root proyek KroomSpace, lalu jalankan perintah: npm install
+Perintah ini akan secara otomatis mengunduh semua pustaka (React, Express, Prisma, TailwindCSS, dll.) ke dalam folder node_modules.
+
+Mengonfigurasi Database dan Environment (.env)
+Aplikasi KroomSpace menggunakan database MySQL lokal untuk menyimpan data dinamis. Langkah konfigurasi meliputi:
+Buka dan jalankan Laragon v6.0.0, lalu klik tombol Start All untuk mengaktifkan database server MySQL. Gambar 1-4 Menjalankan Database MySQL pada Laragon
+Buka phpMyAdmin di browser Anda (http://localhost/phpmyadmin/), lalu buat database kosong baru dengan nama kroomspace. Gambar 1-5 Membuat Database kroomspace Baru di phpMyAdmin
+Kembali ke direktori root proyek KroomSpace, salin file .env.example menjadi .env, kemudian isikan kredensial koneksi database MySQL Laragon Anda serta API Key Gemini:
+Terapkan skema basis data dengan mengeksekusi perintah migrasi Prisma ORM di terminal: npx prisma db push. Gambar 1-6 Sinkronisasi Skema Database Menggunakan npx prisma db push
+
+
+
+
+
+1.2 Instalasi Tools Pengujian
+Tools pengujian otomatis yang digunakan oleh tim penguji adalah Katalon Studio. Katalon Studio adalah perangkat lunak automation testing berbasis desktop yang komprehensif, tangguh, dan dirancang untuk menguji aplikasi berbasis Web, Mobile, maupun API. Katalon Studio dilengkapi dengan fitur Record and Playback yang memungkinkan penguji untuk merekam setiap interaksi antarmuka pada peramban secara otomatis tanpa memerlukan pengetahuan pemrograman yang sangat mendalam. Dengan antarmuka yang intuitif (user-friendly), menyediakan pandangan manual (Manual View) dan pandangan skrip (Script View), Katalon Studio sangat mumpuni dalam menangani pengujian fungsionalitas yang dinamis seperti fitur drag and drop pada Papan Kanban serta integrasi modul maintenance pada sistem KroomSpace.
+Langkah-langkah instalasi dan penyiapan Katalon Studio adalah sebagai berikut.
+1. Mengunduh Katalon Studio 
+Buka peramban (web browser) dan kunjungi situs web resmi Katalon pada tautan https://katalon.com/.
+
+Lakukan pendaftaran akun (sign up) terlebih dahulu, kemudian akses halaman unduhan (download page).
+
+
+
+Unduh berkas instalasi Katalon Studio yang sesuai dengan sistem operasi perangkat keras (Windows/macOS).
+
+Setelah pengunduhan selesai, ekstrak berkas .zip atau jalankan berkas .exe / .dmg untuk menginstal aplikasi Katalon Studio di perangkat penguji.
+2. Aktivasi dan Inisialisasi Proyek Baru
+Buka aplikasi Katalon Studio yang telah terpasang di perangkat.
+
+Masukkan email dan password akun Katalon yang telah didaftarkan sebelumnya untuk menyelesaikan proses aktivasi aplikasi.
+Setelah masuk ke halaman utama, buat proyek pengujian baru dengan mengklik menu File ->New -> Project.
+Isi nama proyek (misalkan: KroomSpace_Testing) dan pilih tipe proyek berupa Web (atau Mobile jika menguji versi perangkat bergerak), lalu klik OK.
+
+1.3 Cakupan Pengujian
+Untuk membatasi proses pengujian, tim penguji perlu menentukan fungsionalitas yang akan diuji, teknik pengujian, serta penentuan jadwal pelaksanaan pengujian. Pada sub bab ini tim peneliti menjelaskan semua cakupan proses pengujian.
+Fungsionalitas Sistem 
+Tim penguji harus mendeskripsikan semua fungsionalitas yang terdapat pada sistem. Deskripsi yang disampaikan setidaknya mencakup: kemampuan utama fitur, skema data input dan output, serta kriteria keberhasilan fitur. Setiap fungsionalitas yang dideskripsikan dapat dibuat dalam bentuk numbering.
+Fungsionalitas Login
+Fungsionalitas login digunakan untuk memeriksa (autentikasi) pengguna yang berhak mengakses sistem. Pada fungsionalitas login, pengguna diharuskan mengisikan username dan password. Autentikasi pengguna dilakukan dengan memeriksa kesesuaian username dan password yang diisikan dengan data yang tersimpan pada tabel user. Sistem akan mengembalikan pesan error jika hasil pemeriksaan dinyatakan gagal (FALSE). Sebaliknya, jika pemeriksaan dinyatakan berhasil (TRUE), maka pengguna akan diarahkan ke halaman dashboard.
+Teknik Pengujian
+Pada proses pengujian, tim penguji harus menentukan pendekatan dan teknik yang digunakan untuk menyusun test case dan menentukan test data. Pada sub bab ini, tim penguji menjelaskan pendekatan dan teknik pengujian yang digunakan.
+Jadwal dan Pengawakan 
+Pembuatan rancangan (test case) dan pelaksanaan pengujian harus dijadwalkan dengan melibatkan seluruh anggota tim penguji sebagai perancang dan pelaksana pengujian. Pada sub bab ini tim penguji menentukan jadwal pelaksanaan pengujian sekaligus memetakan anggota tim dengan fungsionalitas-fungsionalitas yang akan diujinya.
+
+Perancangan Pengujian 
+Bab 2 pada laporan pengujian berisi deskripsi test case yang dirancang untuk menguji setiap fungsionalitas yang tersedia pada sistem. Test case yang dibuat harus mengimplementasikan pendekatan dan teknik pengujian yang telah dijelaskan pada bab 1.
+Tabel 21 Rancangan Pengujian Fungsionalitas Login
+Fungsionalitas
+ID Test Case
+Deskripsi/Skenario
+Pra Kondisi
+Langkah Pengujian
+Data Pengujian
+Hasil yang Diharapkan
+Login
+TC1.1
+Pengguna tidak mengisikan username dan password 
+Pengguna berada pada homepage
+Klik link Log in
+Klik tombol Login
+username = null
+password = null
+Login gagal, disampaikan pesan error
+
+TC1.2
+User mengisikan password yang salah
+Pengguna berada pada homepage
+Klik link Log in
+Isikan username
+Isikan password
+Klik tombol Login
+username = admin
+password = rahasia
+Login gagal, disampaikan pesan error
+
+TC 1.3
+User mengisikan username dan password yang benar
+Pengguna berada pada homepage
+Klik link Log in
+Isikan username
+Isikan password
+Klik tombol Login
+username = admin
+password = m3Rdek@
+Login berhasil, diarahkan ke halaman dashboard
+
+Hasil Pengujian 
+Rancangan pengujian yang telah dirinci pada bab 2 selanjutnya dieksekusi menggunakan tools pengujian yang telah dipilih. Pada bab 3, tim penguji melaporkan hasil eksekusi langkah pengujian dan data pengujian sehingga dapat membandingkan hasil aktual sistem dengan hasil yang diharapkan. Jika hasil aktual sistem sama dengan hasil yang diharapkan, maka test case dapat dinyatakan pass. Sebaliknya, jika hasil aktual sistem tidak sama dengan hasil yang diharapkan, maka test case dapat dinyatakan failed. 
+Tabel 31 Hasil Pengujian Fungsionalitas Login
+Fungsionalitas
+ID Test Case
+Command
+Hasil Aktual
+Kesimpulan
+Login
+TC1.1
+self.driver.get("http://localhost/")
+self.driver.set_window_size(1114, 674)
+self.driver.find_element(By.LINK_TEXT, "Log in").click()
+self.driver.find_element(By.ID, "loginbtn").click()
+self.driver.find_element(By.CSS_SELECTOR, ".alert").click()
+assert self.driver.find_element(By.ID, "loginerrormessage").text == "Invalid login, please try again"
+Sistem menampilkan pesan error “Invalid login, please try again”
+pass
+
+TC1.2
+self.driver.get("http://localhost/")
+self.driver.set_window_size(1114, 674)
+self.driver.find_element(By.LINK_TEXT, "Log in").click()
+self.driver.find_element(By.ID, "username").click()
+self.driver.find_element(By.ID, "username").send_keys("admin")
+self.driver.find_element(By.ID, "password").click()
+self.driver.find_element(By.ID, "password").send_keys("rahasia")
+self.driver.find_element(By.ID, "loginbtn").click()
+self.driver.find_element(By.CSS_SELECTOR, ".alert").click()
+assert self.driver.find_element(By.ID, "loginerrormessage").text == "Invalid login, please try again"
+self.driver.close()
+Sistem menampilkan pesan error “Invalid login, please try again”
+pass
+
+TC 1.3
+self.driver.get("http://localhost/")
+self.driver.set_window_size(1114, 674)
+self.driver.find_element(By.LINK_TEXT, "Log in").click()
+self.driver.find_element(By.ID, "username").click()
+self.driver.find_element(By.ID, "username").send_keys("admin")
+self.driver.find_element(By.ID, "password").click()
+self.driver.find_element(By.ID, "password").send_keys("pplD3SI@2023")
+self.driver.find_element(By.CSS_SELECTOR, ".login-form-submit").click()
+self.driver.find_element(By.ID, "loginbtn").click()
+assert self.driver.find_element(By.LINK_TEXT, "Dashboard").text == "Dashboard"
+Sistem mengarahkan pengguna ke halaman dashboard
+Pass
+Persentase keberhasilan (pass)
+100%
+
+Kesimpulan
+Pada bab ini, tim penguji membuat kesimpulan hasil pengujian. Setidaknya, tim penguji dapat menyampaikan persentase fungsionalitas yang telah melewati proses pengujian dan defect yang ditemukan. Lebih rinci, tim penguji dapat memberikan analisis hasil pengujian dengan menyampaikan saran-saran perbaikan sistem yang dapat menjadi umpan balik bagi tim pengembang,

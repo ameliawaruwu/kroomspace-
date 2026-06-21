@@ -35,14 +35,12 @@ export const DocumentationDrawer: React.FC<DocumentationDrawerProps> = ({
   const [mode, setMode] = useState<'view' | 'add' | 'detail'>(defaultMode === 'add' ? 'add' : taskDocs.length === 0 ? 'add' : 'view');
   const [selectedDoc, setSelectedDoc] = useState<Documentation | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(taskDocs[0]?.id || null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Form state
   const [form, setForm] = useState({
     completionNotes: '',
     obstacles: '',
-    solutions: '',
-    attachments: [] as DocumentationAttachment[]
+    solutions: ''
   });
   const [isSaving, setIsSaving] = useState(false);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState<string | null>(null);
@@ -128,24 +126,6 @@ export const DocumentationDrawer: React.FC<DocumentationDrawerProps> = ({
       : 'bg-[#F0F9FF] border-[#BFDFFF]/70 text-slate-700 placeholder:text-slate-400 focus:border-[#3FA9F5]/50 focus:ring-[#3FA9F5]/10 focus:bg-white',
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files ?? []) as File[];
-    files.forEach((file: File) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const att: DocumentationAttachment = {
-          id: `att-${Date.now()}-${Math.random()}`,
-          name: file.name,
-          url: reader.result as string,
-          type: file.type.startsWith('image/') ? 'image' : 'file'
-        };
-        setForm(f => ({ ...f, attachments: [...f.attachments, att] }));
-      };
-      reader.readAsDataURL(file);
-    });
-    e.target.value = '';
-  };
-
   const handleSave = async () => {
     if (!form.completionNotes.trim()) return;
     setIsSaving(true);
@@ -156,7 +136,7 @@ export const DocumentationDrawer: React.FC<DocumentationDrawerProps> = ({
       completionNotes: form.completionNotes,
       obstacles: form.obstacles,
       solutions: form.solutions,
-      attachments: form.attachments,
+      attachments: [],
       authorId: user.id,
       authorName: user.name,
       authorAvatar: user.avatar,
@@ -164,7 +144,7 @@ export const DocumentationDrawer: React.FC<DocumentationDrawerProps> = ({
     };
     await new Promise(r => setTimeout(r, 400));
     onSave(newDoc);
-    setForm({ completionNotes: '', obstacles: '', solutions: '', attachments: [] });
+    setForm({ completionNotes: '', obstacles: '', solutions: '' });
     setIsSaving(false);
     setMode('view');
     setExpandedId(newDoc.id);
@@ -282,6 +262,7 @@ export const DocumentationDrawer: React.FC<DocumentationDrawerProps> = ({
                     Catatan Penyelesaian <span className="text-rose-400">*</span>
                   </label>
                   <textarea
+                    id="textarea_notes"
                     value={form.completionNotes}
                     onChange={e => setForm(f => ({ ...f, completionNotes: e.target.value }))}
                     placeholder="Jelaskan apa yang telah diselesaikan pada task ini..."
@@ -300,6 +281,7 @@ export const DocumentationDrawer: React.FC<DocumentationDrawerProps> = ({
                     Kendala yang Ditemukan
                   </label>
                   <textarea
+                    id="textarea_obstacles"
                     value={form.obstacles}
                     onChange={e => setForm(f => ({ ...f, obstacles: e.target.value }))}
                     placeholder="Tuliskan hambatan atau masalah yang ditemukan selama pengerjaan..."
@@ -318,6 +300,7 @@ export const DocumentationDrawer: React.FC<DocumentationDrawerProps> = ({
                     Solusi yang Dilakukan
                   </label>
                   <textarea
+                    id="textarea_solutions"
                     value={form.solutions}
                     onChange={e => setForm(f => ({ ...f, solutions: e.target.value }))}
                     placeholder="Bagaimana kendala tersebut diatasi? Tuliskan solusi yang diterapkan..."
@@ -327,51 +310,6 @@ export const DocumentationDrawer: React.FC<DocumentationDrawerProps> = ({
                       C.input
                     )}
                   />
-                </div>
-
-                {/* Lampiran */}
-                <div className="space-y-3">
-                  <label className={cn("flex items-center gap-2 text-[10px] font-black uppercase tracking-widest", C.sub)}>
-                    <Paperclip size={11} style={{ color: '#3FA9F5' }} />
-                    Lampiran File / Foto
-                  </label>
-                  <input ref={fileInputRef} type="file" multiple accept="image/*,.pdf,.doc,.docx" className="hidden" onChange={handleFileUpload} />
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    className={cn(
-                      "w-full border-2 border-dashed rounded-2xl py-5 flex flex-col items-center justify-center gap-2 transition-all group",
-                      darkMode
-                        ? "border-[#1E3A5F] hover:border-[#3FA9F5]/50 hover:bg-[#3FA9F5]/5"
-                        : "border-[#BFDFFF] hover:border-[#3FA9F5]/50 hover:bg-[#EBF5FF]/50"
-                    )}
-                  >
-                    <Upload size={22} style={{ color: '#3FA9F5' }} className="group-hover:scale-110 transition-transform" />
-                    <span className="text-[11px] font-bold" style={{ color: '#3FA9F5' }}>Klik untuk upload file atau foto</span>
-                    <span className={cn("text-[10px]", C.sub)}>PNG, JPG, PDF, DOCX</span>
-                  </button>
-
-                  {form.attachments.length > 0 && (
-                    <div className="grid grid-cols-2 gap-2">
-                      {form.attachments.map(att => (
-                        <div key={att.id} className={cn("relative rounded-xl overflow-hidden border group", C.border)}>
-                          {att.type === 'image' ? (
-                            <img src={att.url} alt={att.name} className="w-full h-24 object-cover" />
-                          ) : (
-                            <div className={cn("w-full h-24 flex flex-col items-center justify-center gap-1", C.cardBg)}>
-                              <FileText size={24} style={{ color: '#3FA9F5' }} />
-                              <span className={cn("text-[10px] font-bold truncate px-2 max-w-full", C.sub)}>{att.name}</span>
-                            </div>
-                          )}
-                          <button
-                            onClick={() => setForm(f => ({ ...f, attachments: f.attachments.filter(a => a.id !== att.id) }))}
-                            className="absolute top-1 right-1 p-1 bg-rose-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <Trash2 size={10} />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </div>
 
                 {/* Author info */}
@@ -399,6 +337,7 @@ export const DocumentationDrawer: React.FC<DocumentationDrawerProps> = ({
                     </button>
                   )}
                   <button
+                    id="btn_simpan_selesai"
                     onClick={handleSave}
                     disabled={!form.completionNotes.trim() || isSaving}
                     className={cn(
@@ -469,11 +408,6 @@ export const DocumentationDrawer: React.FC<DocumentationDrawerProps> = ({
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
-                            {doc.attachments.length > 0 && (
-                              <span className={cn("flex items-center gap-1 text-[10px] font-bold", C.sub)}>
-                                <Paperclip size={10} /> {doc.attachments.length}
-                              </span>
-                            )}
                             {expandedId === doc.id
                               ? <ChevronUp size={16} style={{ color: '#3FA9F5' }} />
                               : <ChevronDown size={16} className={cn(C.sub)} />
@@ -523,29 +457,6 @@ export const DocumentationDrawer: React.FC<DocumentationDrawerProps> = ({
                                   </div>
                                 )}
 
-                                {/* Lampiran */}
-                                {doc.attachments.length > 0 && (
-                                  <div className="space-y-2">
-                                    <div className="flex items-center gap-2">
-                                      <Paperclip size={12} style={{ color: '#3FA9F5' }} />
-                                      <span className={cn("text-[10px] font-black uppercase tracking-widest", C.sub)}>Lampiran ({doc.attachments.length})</span>
-                                    </div>
-                                    <div className="grid grid-cols-3 gap-2 pl-5">
-                                      {doc.attachments.map(att => (
-                                        <a key={att.id} href={att.url} target="_blank" rel="noreferrer" className={cn("rounded-xl overflow-hidden border block hover:opacity-80 transition-opacity", C.border)}>
-                                          {att.type === 'image' ? (
-                                            <img src={att.url} alt={att.name} className="w-full h-20 object-cover" />
-                                          ) : (
-                                            <div className={cn("w-full h-20 flex flex-col items-center justify-center gap-1", C.cardBg)}>
-                                              <FileText size={20} style={{ color: '#3FA9F5' }} />
-                                              <span className={cn("text-[9px] font-bold px-1 truncate max-w-full text-center", C.sub)}>{att.name}</span>
-                                            </div>
-                                          )}
-                                        </a>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
 
                                 {/* Footer actions */}
                                 <div className={cn("flex items-center justify-between pt-2 border-t", C.border)}>

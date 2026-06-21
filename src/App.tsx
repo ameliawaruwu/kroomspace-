@@ -85,7 +85,13 @@ export default function App() {
       fetch('/api/users')
         .then(res => res.json())
         .then(data => {
-          if (Array.isArray(data)) setUsers(data);
+          if (Array.isArray(data)) {
+            setUsers(data);
+            const freshUser = data.find(u => u.id === currentUser.id);
+            if (freshUser) {
+              setCurrentUser(freshUser);
+            }
+          }
         })
         .catch(console.error);
 
@@ -142,7 +148,6 @@ export default function App() {
                 comments: t.komentar?.map((c:any) => ({ id: c.id_komentar, userId: c.id_pengguna, text: c.isi_komentar, timestamp: c.dibuat_pada })) || [],
                 attachments: t.lampiran?.map((a:any) => ({ id: a.id_lampiran, name: a.nama_file, url: a.tautan_url, type: a.tipe_lampiran, createdAt: a.dibuat_pada })) || [],
                 contributors: t.kontributor?.map((c:any) => c.id_pengguna) || [],
-                notes: t.catatan_selesai
              }));
              setTasks(mappedTasks);
            }
@@ -188,7 +193,6 @@ export default function App() {
                 comments: t.komentar?.map((c:any) => ({ id: c.id_komentar, userId: c.id_pengguna, text: c.isi_komentar, timestamp: c.dibuat_pada })) || [],
                 attachments: t.lampiran?.map((a:any) => ({ id: a.id_lampiran, name: a.nama_file, url: a.tautan_url, type: a.tipe_lampiran, createdAt: a.dibuat_pada })) || [],
                 contributors: t.kontributor?.map((c:any) => c.id_pengguna) || [],
-                notes: t.catatan_selesai
              }));
               setTasks(mappedTasks);
            }
@@ -250,10 +254,40 @@ export default function App() {
     setTimeout(() => setSuccessToast({ message: '', show: false }), 3000);
   };
 
-  const handleUpdateProfile = (updatedUser: User) => {
-    setUsers(users.map(u => u.id === updatedUser.id ? updatedUser : u));
-    setCurrentUser(updatedUser);
-    showSuccess(t('success'));
+  const handleUpdateProfile = async (updatedUser: User, currentPassword?: string, newPassword?: string) => {
+    try {
+      const res = await fetch(`/api/users/${updatedUser.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: updatedUser.name,
+          email: updatedUser.email,
+          whatsapp: updatedUser.whatsapp,
+          avatar: updatedUser.avatar,
+          currentPassword,
+          newPassword
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        return { success: false, error: data.error || 'Gagal memperbarui profil' };
+      }
+
+      const syncedUser = {
+        ...updatedUser,
+        password: data.password,
+        whatsapp: data.whatsapp
+      };
+
+      setUsers(prev => prev.map(u => u.id === syncedUser.id ? syncedUser : u));
+      setCurrentUser(syncedUser);
+      showSuccess(t('success'));
+      return { success: true };
+    } catch (error) {
+      console.error(error);
+      return { success: false, error: 'Terjadi kesalahan jaringan' };
+    }
   };
 
   if (showLanding && !isLoggedIn) {
@@ -329,7 +363,6 @@ export default function App() {
                   judul_tugas: updatedTask.title,
                   prioritas: updatedTask.priority,
                   id_penanggung_jawab: updatedTask.assignee || null,
-                  catatan_selesai: updatedTask.notes,
                   batas_waktu: updatedTask.deadline
                 })
               });
@@ -365,7 +398,6 @@ export default function App() {
                       comments: task.comments,
                       attachments: task.attachments,
                       contributors: task.contributors,
-                      catatan_selesai: task.notes,
                       batas_waktu: task.deadline
                     })
                   }).catch(console.error);
@@ -471,7 +503,7 @@ export default function App() {
                 return [...prev, formattedP];
               });
               
-              if (projectTasks && projectTasks.length > 0) {
+              if (!exists && projectTasks && projectTasks.length > 0) {
                  for (const t of projectTasks) {
                     const taskRes = await fetch('/api/tugas', {
                       method: 'POST',
@@ -571,6 +603,35 @@ export default function App() {
       default: return <Dashboard tasks={tasks} users={users} user={currentUser} darkMode={darkMode} />;
     }
   };
+
+  if (isLoadingData) {
+    return (
+      <div className={cn(
+        "min-h-screen w-screen flex flex-col items-center justify-center relative overflow-hidden",
+        darkMode ? "bg-[#0D1B35] text-slate-100" : "bg-[#F4F8FC] text-slate-900"
+      )}>
+        <div className="absolute inset-0 bg-gradient-to-tr from-[#3FA9F5]/10 via-transparent to-[#2D7FEA]/10 animate-pulse" />
+        <div className={cn(
+          "p-10 rounded-[2.5rem] border backdrop-blur-xl flex flex-col items-center justify-center gap-6 shadow-2xl relative z-10",
+          darkMode ? "bg-[#1C2B45]/80 border-[#1E3A5F]/60" : "bg-white/80 border-[#BFDFFF]/40 shadow-slate-200/60"
+        )}>
+          <div className="relative w-20 h-20">
+            <div className="absolute inset-0 rounded-full border-4 border-slate-200 dark:border-slate-800" />
+            <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-[#3FA9F5] border-r-[#3FA9F5] animate-spin" />
+            <div className="absolute inset-2 rounded-full border-4 border-transparent border-b-[#2D7FEA] border-l-[#2D7FEA] animate-spin [animation-duration:1.5s] [animation-direction:reverse]" />
+          </div>
+          <div className="text-center space-y-2">
+            <h3 className={cn("text-xl font-black tracking-tight", darkMode ? "text-white" : "text-slate-800")}>
+              Menghubungkan ke KroomSpace...
+            </h3>
+            <p className="text-xs text-slate-400 dark:text-slate-500 font-medium italic">
+              Menyiapkan workspace interaktif Anda
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={cn(

@@ -24,6 +24,7 @@ import {
   LayoutTemplate,
   AlertTriangle,
   CheckCheck,
+  Users,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
@@ -53,30 +54,33 @@ const getCategoryIcon = (kategori: string, size = 24) => {
 
 const getCategoryGradient = (kategori: string) => {
   switch (kategori) {
-    case 'Infrastructure': return 'from-[#3FA9F5] to-[#2D7FEA]';
-    case 'API Service':    return 'from-[#2D7FEA] to-[#1E40AF]';
-    case 'Security':       return 'from-[#67C6FF] to-[#3FA9F5]';
-    case 'Maintenance':    return 'from-[#3FA9F5] to-[#1E3A8A]';
-    default:               return 'from-[#3FA9F5] to-[#2D7FEA]';  // Development
+    case 'Infrastructure': return 'from-emerald-400 to-emerald-600';
+    case 'API Service':    return 'from-indigo-400 to-indigo-600';
+    case 'Security':       return 'from-purple-400 to-purple-600';
+    case 'Maintenance':    return 'from-amber-400 to-amber-600';
+    case 'Bug Fix':        return 'from-rose-400 to-rose-600';
+    default:               return 'from-[#3FA9F5] to-[#2D7FEA]';  // Development / Blue
   }
 };
 
 const getCategoryBg = (kategori: string, dark: boolean) => {
   if (dark) {
     switch (kategori) {
-      case 'Infrastructure': return 'bg-[#3FA9F5]/10 text-[#3FA9F5] border-[#3FA9F5]/20';
-      case 'API Service':    return 'bg-[#2D7FEA]/10 text-[#60A5FA] border-[#2D7FEA]/20';
-      case 'Security':       return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
-      case 'Maintenance':    return 'bg-sky-500/10 text-sky-400 border-sky-500/20';
-      default:               return 'bg-[#3FA9F5]/10 text-[#3FA9F5] border-[#3FA9F5]/20';
+      case 'Infrastructure': return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+      case 'API Service':    return 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20';
+      case 'Security':       return 'bg-purple-500/10 text-purple-400 border-purple-500/20';
+      case 'Maintenance':    return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+      case 'Bug Fix':        return 'bg-rose-500/10 text-rose-400 border-rose-500/20';
+      default:               return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
     }
   }
   switch (kategori) {
-    case 'Infrastructure': return 'bg-[#EBF5FF] text-[#2D7FEA] border-[#BFDFFF]/50';
-    case 'API Service':    return 'bg-blue-50 text-blue-600 border-blue-100';
-    case 'Security':       return 'bg-sky-50 text-sky-600 border-sky-100';
-    case 'Maintenance':    return 'bg-blue-50 text-[#2D7FEA] border-blue-100';
-    default:               return 'bg-[#EBF5FF] text-[#2D7FEA] border-[#BFDFFF]/50';
+    case 'Infrastructure': return 'bg-emerald-50 text-emerald-600 border-emerald-100';
+    case 'API Service':    return 'bg-indigo-50 text-indigo-600 border-indigo-100';
+    case 'Security':       return 'bg-purple-50 text-purple-600 border-purple-100';
+    case 'Maintenance':    return 'bg-amber-50 text-amber-700 border-amber-100';
+    case 'Bug Fix':        return 'bg-rose-50 text-rose-600 border-rose-100';
+    default:               return 'bg-blue-50 text-blue-600 border-blue-100';
   }
 };
 
@@ -86,6 +90,81 @@ const getPriorityColor = (priority: string) => {
     case 'Medium': return 'text-amber-500 bg-amber-50 dark:bg-amber-500/10';
     default:       return 'text-slate-500 bg-slate-50 dark:bg-slate-500/10';
   }
+};
+
+interface TemplateMetadata {
+  duration: string;
+  teamSize: string;
+  complexity: 'Mudah' | 'Sedang' | 'Tinggi';
+  badge?: 'Paling Populer' | 'Direkomendasikan' | 'Baru';
+}
+
+const getTemplateMetadata = (id: string, kategori: string, taskCount: number): TemplateMetadata => {
+  switch (id) {
+    case 'TP001':
+      return {
+        duration: '14-21 Hari',
+        teamSize: '3-5 Orang',
+        complexity: 'Tinggi',
+        badge: 'Direkomendasikan'
+      };
+    case 'TP002':
+      return {
+        duration: '7-14 Hari',
+        teamSize: '2-3 Orang',
+        complexity: 'Tinggi',
+        badge: 'Baru'
+      };
+    case 'TP003':
+      return {
+        duration: '10-15 Hari',
+        teamSize: '3-4 Orang',
+        complexity: 'Tinggi',
+        badge: 'Paling Populer'
+      };
+    case 'TP004':
+      return {
+        duration: '3-5 Hari',
+        teamSize: '1-2 Orang',
+        complexity: 'Sedang',
+        badge: 'Direkomendasikan'
+      };
+    case 'TP005':
+      return {
+        duration: '5-7 Hari',
+        teamSize: '2-3 Orang',
+        complexity: 'Sedang',
+        badge: 'Baru'
+      };
+  }
+
+  // Fallback for user custom-created templates
+  let duration = '5-7 Hari';
+  let teamSize = '1-2 Orang';
+  let complexity: 'Mudah' | 'Sedang' | 'Tinggi' = 'Sedang';
+  let badge: 'Paling Populer' | 'Direkomendasikan' | 'Baru' | undefined;
+
+  if (taskCount > 8) {
+    duration = '14-30 Hari';
+    teamSize = '4-6 Orang';
+    complexity = 'Tinggi';
+    badge = 'Direkomendasikan';
+  } else if (taskCount >= 5) {
+    duration = '7-14 Hari';
+    teamSize = '2-4 Orang';
+    complexity = 'Sedang';
+    badge = 'Baru';
+  } else {
+    duration = '3-5 Hari';
+    teamSize = '1-2 Orang';
+    complexity = 'Mudah';
+  }
+
+  if (kategori === 'Security' || kategori === 'Infrastructure') {
+    complexity = 'Tinggi';
+  }
+
+  return { duration, teamSize, complexity, badge };
 };
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -333,6 +412,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
 
           {isAdmin && (
             <button
+              id="btn_tambah_template"
               onClick={() => {
                 setCreateStep(1);
                 setIsCreating(true);
@@ -350,23 +430,48 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
       </header>
 
       {/* ── Category Filters ── */}
-      <div className="px-8 pt-6 pb-2 flex flex-wrap gap-2">
-        {categories.map(cat => (
-          <button
-            key={cat}
-            onClick={() => setSelectedCategory(cat)}
-            className={cn(
-              "px-5 py-2 rounded-2xl text-xs font-black uppercase tracking-widest transition-all border",
-              selectedCategory === cat
-                ? "bg-gradient-to-r from-[#3FA9F5] to-[#2D7FEA] text-white border-none shadow-lg shadow-[#2D7FEA]/20"
-                : darkMode
-                  ? "bg-slate-800 text-slate-400 border-slate-700 hover:border-slate-500"
-                  : "bg-white text-slate-500 border-slate-200 hover:border-slate-300"
-            )}
-          >
-            {cat}
-          </button>
-        ))}
+      <div className="px-8 pt-6 pb-2">
+        <div className={cn(
+          "inline-flex p-1.5 rounded-2xl gap-1.5 border transition-all max-w-full overflow-x-auto scrollbar-none",
+          darkMode 
+            ? "bg-slate-900/50 border-slate-800/80" 
+            : "bg-slate-100/80 border-slate-200/60"
+        )}>
+          {categories.map(cat => {
+            const count = cat === 'Semua' 
+              ? templates.length 
+              : templates.filter(t => t.kategori === cat).length;
+            
+            const isActive = selectedCategory === cat;
+            
+            return (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className={cn(
+                  "relative px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 select-none shrink-0",
+                  isActive
+                    ? "bg-[#2D7FEA] text-white shadow-lg shadow-[#2D7FEA]/20"
+                    : darkMode
+                      ? "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
+                      : "text-slate-500 hover:text-slate-800 hover:bg-white/60"
+                )}
+              >
+                <span>{cat}</span>
+                <span className={cn(
+                  "px-2 py-0.5 rounded-md text-[10px] font-black tracking-normal transition-all",
+                  isActive
+                    ? "bg-white/20 text-white"
+                    : darkMode
+                      ? "bg-slate-800 text-slate-400"
+                      : "bg-slate-200/70 text-slate-500"
+                )}>
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* ── Success Toast ── */}
@@ -404,122 +509,213 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
             </div>
             <p className="text-slate-400 font-medium">Tidak ada template ditemukan</p>
           </div>
-        ) : filtered.map((template, i) => (
-          <motion.div
-            key={template.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.06 }}
-            className={cn(
-              "group relative rounded-[2.5rem] overflow-hidden border transition-all cursor-pointer",
-              "hover:shadow-2xl hover:shadow-blue-500/10 hover:-translate-y-1",
-              darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-100 shadow-sm"
-            )}
-            onClick={() => setPreviewTemplate(template)}
-          >
-            {/* Gradient header */}
-            <div className={cn("h-2 w-full bg-gradient-to-r", getCategoryGradient(template.kategori))} />
-
-            <div className="p-7">
-              {/* Icon + Category */}
-              <div className="flex items-start justify-between mb-5">
-                <div className={cn(
-                  "w-14 h-14 rounded-2xl flex items-center justify-center border-2 shrink-0",
-                  getCategoryBg(template.kategori, darkMode)
-                )}>
-                  {getCategoryIcon(template.kategori, 24)}
-                </div>
-
-                {/* Admin controls */}
-                {isAdmin && (
-                  <button
-                    onClick={e => { e.stopPropagation(); handleDelete(template.id); }}
-                    className="opacity-0 group-hover:opacity-100 p-2.5 bg-slate-50 dark:bg-slate-900 text-slate-400 hover:text-rose-500 rounded-xl border border-slate-100 dark:border-slate-700 transition-all"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                )}
-              </div>
-
-              {/* Name */}
-              <h3 className={cn(
-                "text-lg font-black tracking-tight leading-[1.2] mb-2 group-hover:text-blue-600 transition-colors",
-                darkMode ? "text-white" : "text-slate-900"
-              )}>
-                {template.name}
-              </h3>
-
-              {/* Category badge */}
-              <span className={cn(
-                "inline-block text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border mb-3",
-                getCategoryBg(template.kategori, darkMode)
-              )}>
-                {template.kategori}
-              </span>
-
-              {/* Description */}
-              <p className={cn(
-                "text-xs font-medium leading-relaxed line-clamp-2 mb-5",
-                darkMode ? "text-slate-400" : "text-slate-500"
-              )}>
-                {template.description}
-              </p>
-
-              {/* Stats */}
-              <div className="flex items-center gap-4 mb-5">
-                <div className={cn(
-                  "flex items-center gap-2 text-[11px] font-bold px-3 py-1.5 rounded-xl",
-                  darkMode ? "bg-slate-700 text-slate-300" : "bg-slate-50 text-slate-600"
-                )}>
-                  <ListChecks size={13} />
-                  <span>{totalTugas(template)} Tugas</span>
-                </div>
-                <div className={cn(
-                  "flex items-center gap-2 text-[11px] font-bold px-3 py-1.5 rounded-xl",
-                  darkMode ? "bg-slate-700 text-slate-300" : "bg-slate-50 text-slate-600"
-                )}>
-                  <CheckSquare size={13} />
-                  <span>{totalChecklist(template)} Checklist</span>
-                </div>
-              </div>
-
-              {/* Preview tasks (first 3) */}
-              <div className="space-y-1.5 mb-6">
-                {(template.tasks ?? []).slice(0, 3).map((task, idx) => (
-                  <div key={idx} className={cn(
-                    "flex items-center gap-2 text-xs font-medium py-1.5 px-3 rounded-xl",
-                    darkMode ? "bg-slate-700/50 text-slate-400" : "bg-slate-50 text-slate-500"
+        ) : filtered.map((template, i) => {
+          const meta = getTemplateMetadata(template.id, template.kategori, totalTugas(template));
+          return (
+            <motion.div
+              key={template.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.06 }}
+              className={cn(
+                "group relative rounded-[2rem] overflow-hidden border transition-all duration-300 flex flex-col justify-between cursor-pointer",
+                darkMode 
+                  ? "bg-slate-800/80 border-slate-700/60 hover:border-[#2D7FEA]/30 hover:bg-slate-800/100" 
+                  : "bg-white border-slate-200/50 shadow-sm hover:shadow-xl hover:shadow-blue-500/5 hover:border-[#2D7FEA]/20",
+                "hover:-translate-y-1.5"
+              )}
+              onClick={() => setPreviewTemplate(template)}
+            >
+              {/* Absolute Badge */}
+              {meta.badge && (
+                <div className="absolute top-4 right-4 z-10 select-none">
+                  <span className={cn(
+                    "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider shadow-sm border",
+                    meta.badge === 'Paling Populer'
+                      ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white border-transparent"
+                      : meta.badge === 'Direkomendasikan'
+                        ? "bg-gradient-to-r from-blue-500 to-indigo-500 text-white border-transparent"
+                        : "bg-gradient-to-r from-emerald-500 to-teal-500 text-white border-transparent"
                   )}>
-                    <CheckCircle2 size={11} className="text-blue-400 shrink-0" />
-                    <span className="truncate">{task.title}</span>
+                    {meta.badge === 'Paling Populer' ? '🔥' : meta.badge === 'Direkomendasikan' ? '⭐' : '✨'} {meta.badge}
+                  </span>
+                </div>
+              )}
+
+              <div>
+                {/* Gradient header */}
+                <div className={cn("h-1.5 w-full bg-gradient-to-r", getCategoryGradient(template.kategori))} />
+
+                <div className="p-6">
+                  {/* Icon + Category + Title */}
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className={cn(
+                        "w-12 h-12 rounded-xl flex items-center justify-center border shrink-0",
+                        getCategoryBg(template.kategori, darkMode)
+                      )}>
+                        {getCategoryIcon(template.kategori, 20)}
+                      </div>
+                      <div className="flex flex-col min-w-0 pr-8">
+                        <span className={cn(
+                          "inline-flex w-max text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md border mb-1",
+                          getCategoryBg(template.kategori, darkMode)
+                        )}>
+                          {template.kategori}
+                        </span>
+                        <h3 className={cn(
+                          "text-base font-black tracking-tight leading-tight line-clamp-2",
+                          darkMode ? "text-white" : "text-slate-900"
+                        )}>
+                          {template.name}
+                        </h3>
+                      </div>
+                    </div>
+
+                    {/* Admin controls */}
+                    {isAdmin && (
+                      <button
+                        onClick={e => { e.stopPropagation(); handleDelete(template.id); }}
+                        className="opacity-0 group-hover:opacity-100 p-2 bg-slate-50 dark:bg-slate-900 text-slate-400 hover:text-rose-500 rounded-xl border border-slate-100 dark:border-slate-700 transition-all ml-2 shrink-0"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )}
                   </div>
-                ))}
-                {(template.tasks ?? []).length > 3 && (
-                  <p className={cn("text-[10px] font-bold pl-3", darkMode ? "text-slate-500" : "text-slate-400")}>
-                    +{template.tasks.length - 3} tugas lainnya...
+
+                  {/* Description */}
+                  <p className={cn(
+                    "text-xs font-medium leading-relaxed line-clamp-2 mb-4 min-h-[2.25rem]",
+                    darkMode ? "text-slate-400" : "text-slate-500"
+                  )}>
+                    {template.description || "Tidak ada deskripsi."}
                   </p>
-                )}
+
+                  {/* Metadata Grid */}
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-3 mb-4 pb-4 border-b border-dashed border-slate-200 dark:border-slate-700/80">
+                    <div className="flex items-center gap-2.5 text-xs">
+                      <div className="w-8 h-8 rounded-lg bg-blue-500/5 text-blue-500 dark:bg-blue-500/10 flex items-center justify-center shrink-0">
+                        <ListChecks size={14} />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-[9px] text-slate-400 font-medium leading-none mb-0.5">Tugas</span>
+                        <span className={cn("font-bold text-[11px]", darkMode ? "text-slate-200" : "text-slate-700")}>{totalTugas(template)} Tugas</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2.5 text-xs">
+                      <div className="w-8 h-8 rounded-lg bg-emerald-500/5 text-emerald-500 dark:bg-emerald-500/10 flex items-center justify-center shrink-0">
+                        <CheckSquare size={14} />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-[9px] text-slate-400 font-medium leading-none mb-0.5">Checklist</span>
+                        <span className={cn("font-bold text-[11px]", darkMode ? "text-slate-200" : "text-slate-700")}>{totalChecklist(template)} Item</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2.5 text-xs">
+                      <div className="w-8 h-8 rounded-lg bg-amber-500/5 text-amber-500 dark:bg-amber-500/10 flex items-center justify-center shrink-0">
+                        <Clock size={14} />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-[9px] text-slate-400 font-medium leading-none mb-0.5">Estimasi</span>
+                        <span className={cn("font-bold text-[11px]", darkMode ? "text-slate-200" : "text-slate-700")}>{meta.duration}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2.5 text-xs">
+                      <div className="w-8 h-8 rounded-lg bg-purple-500/5 text-purple-500 dark:bg-purple-500/10 flex items-center justify-center shrink-0">
+                        <Users size={14} />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-[9px] text-slate-400 font-medium leading-none mb-0.5">Rekomendasi</span>
+                        <span className={cn("font-bold text-[11px]", darkMode ? "text-slate-200" : "text-slate-700")}>{meta.teamSize}</span>
+                      </div>
+                    </div>
+
+                    <div className="col-span-2 flex items-center gap-2.5 text-xs pt-1">
+                      <div className="w-8 h-8 rounded-lg bg-rose-500/5 text-rose-500 dark:bg-rose-500/10 flex items-center justify-center shrink-0">
+                        <Layers size={14} />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-[9px] text-slate-400 font-medium leading-none mb-0.5">Kompleksitas</span>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <span className={cn(
+                            "px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border",
+                            meta.complexity === 'Tinggi'
+                              ? 'bg-rose-50 text-rose-600 border-rose-100 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20'
+                              : meta.complexity === 'Sedang'
+                                ? 'bg-amber-50 text-amber-600 border-amber-100 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20'
+                                : 'bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20'
+                          )}>
+                            {meta.complexity}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Preview tasks (first 2) */}
+                  <div className="space-y-2 mb-5">
+                    {(template.tasks ?? []).slice(0, 2).map((task, idx) => (
+                      <div key={idx} className={cn(
+                        "flex items-center gap-2 text-xs font-medium py-2 px-3 rounded-xl border",
+                        darkMode 
+                          ? "bg-slate-900/40 text-slate-400 border-slate-800/80" 
+                          : "bg-slate-50 text-slate-500 border-slate-100"
+                      )}>
+                        <CheckCircle2 size={12} className="text-[#2D7FEA] shrink-0" />
+                        <span className="truncate">{task.title}</span>
+                      </div>
+                    ))}
+                    {(template.tasks ?? []).length > 2 && (
+                      <p className={cn(
+                        "text-[10px] font-bold pl-2.5 flex items-center gap-1.5", 
+                        darkMode ? "text-slate-500" : "text-slate-400"
+                      )}>
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#2D7FEA]" />
+                        +{template.tasks.length - 2} tugas lainnya dalam blueprint...
+                      </p>
+                    )}
+                  </div>
+                </div>
               </div>
 
-              {/* CTA */}
-              <button
-                onClick={e => {
-                  e.stopPropagation();
-                  setProjectName(template.name);
-                  setApplyTemplate(template);
-                }}
-                className={cn(
-                  "w-full py-3.5 rounded-2xl text-sm font-black flex items-center justify-center gap-2 transition-all",
-                  "bg-gradient-to-r from-[#3FA9F5] to-[#2D7FEA] text-white shadow-lg shadow-[#2D7FEA]/20 hover:shadow-xl hover:shadow-[#2D7FEA]/30 hover:scale-[1.02] active:scale-100"
-                )}
-              >
-                <Sparkles size={16} />
-                Terapkan Template
-                <ArrowRight size={16} />
-              </button>
-            </div>
-          </motion.div>
-        ))}
+              {/* Action Buttons */}
+              <div className="p-6 pt-0 mt-auto grid grid-cols-2 gap-3">
+                <button
+                  onClick={e => {
+                    e.stopPropagation();
+                    setPreviewTemplate(template);
+                  }}
+                  className={cn(
+                    "py-3 rounded-xl text-xs font-black transition-all border flex items-center justify-center gap-1.5",
+                    darkMode
+                      ? "bg-slate-900 text-slate-300 border-slate-700 hover:bg-slate-800 hover:text-white"
+                      : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-900"
+                  )}
+                >
+                  <Search size={14} />
+                  Preview
+                </button>
+                <button
+                  onClick={e => {
+                    e.stopPropagation();
+                    setProjectName(template.name);
+                    setApplyTemplate(template);
+                  }}
+                  className={cn(
+                    "py-3 rounded-xl text-xs font-black text-white flex items-center justify-center gap-1.5 transition-all",
+                    "bg-gradient-to-r from-[#3FA9F5] to-[#2D7FEA] shadow-md shadow-[#2D7FEA]/10 hover:shadow-lg hover:shadow-[#2D7FEA]/20 hover:scale-[1.02] active:scale-100"
+                  )}
+                >
+                  <Sparkles size={14} />
+                  Terapkan
+                </button>
+              </div>
+            </motion.div>
+          );
+        })}
       </div>
 
       {/* ══ MODAL: Preview Template ══ */}
@@ -553,20 +749,46 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
               </div>
 
               {/* Stats */}
-              <div className={cn("px-8 py-4 flex gap-6 border-b shrink-0", darkMode ? "border-slate-700 bg-slate-900/30" : "border-slate-100 bg-slate-50/80")}>
-                <div className="flex items-center gap-2">
-                  <ListChecks size={16} className="text-blue-500" />
-                  <span className={cn("text-sm font-bold", darkMode ? "text-white" : "text-slate-700")}>{totalTugas(previewTemplate)} Tugas</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckSquare size={16} className="text-emerald-500" />
-                  <span className={cn("text-sm font-bold", darkMode ? "text-white" : "text-slate-700")}>{totalChecklist(previewTemplate)} Item Checklist</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Layers size={16} className="text-indigo-500" />
-                  <span className={cn("text-sm font-bold", darkMode ? "text-white" : "text-slate-700")}>Mode {previewTemplate.mode}</span>
-                </div>
-              </div>
+              {(() => {
+                const meta = getTemplateMetadata(previewTemplate.id, previewTemplate.kategori, totalTugas(previewTemplate));
+                return (
+                  <div className={cn("px-8 py-4 flex flex-wrap gap-x-6 gap-y-2 border-b shrink-0 text-xs font-bold", darkMode ? "border-slate-700 bg-slate-900/30" : "border-slate-100 bg-slate-50/80")}>
+                    <div className="flex items-center gap-2">
+                      <ListChecks size={15} className="text-blue-500" />
+                      <span className={darkMode ? "text-slate-300" : "text-slate-700"}>{totalTugas(previewTemplate)} Tugas</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckSquare size={15} className="text-emerald-500" />
+                      <span className={darkMode ? "text-slate-300" : "text-slate-700"}>{totalChecklist(previewTemplate)} Checklist</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Clock size={15} className="text-amber-500" />
+                      <span className={darkMode ? "text-slate-300" : "text-slate-700"}>{meta.duration}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Users size={15} className="text-purple-500" />
+                      <span className={darkMode ? "text-slate-300" : "text-slate-700"}>{meta.teamSize}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Layers size={15} className="text-indigo-500" />
+                      <span className={darkMode ? "text-slate-300" : "text-slate-700"}>Mode {previewTemplate.mode}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 sm:ml-auto">
+                      <span className="text-[10px] text-slate-400 font-medium">Kompleksitas:</span>
+                      <span className={cn(
+                        "px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border",
+                        meta.complexity === 'Tinggi'
+                          ? 'bg-rose-50 text-rose-600 border-rose-100 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20'
+                          : meta.complexity === 'Sedang'
+                            ? 'bg-amber-50 text-amber-600 border-amber-100 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20'
+                            : 'bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20'
+                      )}>
+                        {meta.complexity}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Tasks List */}
               <div className="flex-1 overflow-y-auto p-8 space-y-4">
@@ -661,6 +883,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                   value={projectName}
                   onChange={e => setProjectName(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleApply()}
+                  onFocus={(e) => e.target.select()}
                   placeholder="Masukkan nama proyek..."
                   autoFocus
                   className={cn(
@@ -756,6 +979,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                       Nama Template
                     </label>
                     <input
+                      id="input_template_name"
                       type="text"
                       value={newTemplateName}
                       onChange={e => setNewTemplateName(e.target.value)}
@@ -772,6 +996,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                       Deskripsi Template
                     </label>
                     <textarea
+                      id="input_template_desc"
                       value={newTemplateDesc}
                       onChange={e => setNewTemplateDesc(e.target.value)}
                       placeholder="Jelaskan tujuan dan ruang lingkup template ini..."
@@ -788,6 +1013,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                       Kategori
                     </label>
                     <select
+                      id="select_template_category"
                       value={newTemplateCat}
                       onChange={e => {
                         setNewTemplateCat(e.target.value);
@@ -1041,6 +1267,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                 {createStep === 1 ? (
                   <>
                     <button
+                      id="btn_batal_template"
                       onClick={() => {
                         setIsCreating(false);
                         setNewTemplateName('');
@@ -1056,6 +1283,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                       Batal
                     </button>
                     <button
+                      id="btn_rancang_template"
                       onClick={() => {
                         setIsAiGenerated(false);
                         setGeneratedTasks([
@@ -1084,6 +1312,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                 ) : (
                   <>
                     <button
+                      id="btn_kembali_template"
                       onClick={() => setCreateStep(1)}
                       className={cn(
                         "px-6 py-4 rounded-2xl font-bold text-sm border transition-all flex-1",
@@ -1093,6 +1322,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                       Kembali
                     </button>
                     <button
+                      id="btn_simpan_template"
                       onClick={handleSaveTemplate}
                       disabled={generatedTasks.length === 0 || generatedTasks.some(t => !t.title.trim())}
                       className={cn(

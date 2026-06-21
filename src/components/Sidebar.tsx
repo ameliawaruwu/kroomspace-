@@ -118,6 +118,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, user,
           </div>
         </div>
         <button 
+          id="btn_logout"
           onClick={onLogout}
           className={cn(
             "w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all font-bold text-sm group",
@@ -126,7 +127,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, user,
               : "text-slate-400 hover:bg-red-50 hover:text-red-500"
           )}
         >
-          <LogOut size={18} strokeWidth={2.5} className="group-hover:translate-x-[-2px] transition-transform" />
+          <LogOut size={18} strokeWidth={2.5} className="group-hover:translate-x-[-2px] transition-transform pointer-events-none" />
           <span>{t('logout')}</span>
         </button>
       </div>
@@ -137,12 +138,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, user,
     <>
       {/* Mobile hamburger button */}
       <button 
+        id="btn_menu_toggle"
         className="lg:hidden fixed top-4 left-4 z-[60] p-2.5 text-white rounded-xl transition-all shadow-lg shadow-[#2D7FEA]/30"
         style={{ background: 'linear-gradient(135deg, #3FA9F5, #2D7FEA)' }}
         onClick={() => setIsOpen(!isOpen)}
         aria-label="Toggle sidebar"
       >
-        {isOpen ? <X size={20} /> : <Menu size={20} />}
+        {isOpen ? <X size={20} className="pointer-events-none" /> : <Menu size={20} className="pointer-events-none" />}
       </button>
 
       {/* Mobile overlay */}

@@ -24,7 +24,7 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className={cn(
-      "h-16 md:h-20 flex items-center justify-between px-4 md:px-8 fixed top-0 right-0 left-0 lg:left-[300px] z-30 transition-all duration-300",
+      "h-16 md:h-20 flex items-center justify-between px-4 md:px-8 fixed top-0 right-0 left-0 lg:left-[300px] z-[35] transition-all duration-300",
       darkMode 
         ? "bg-[#0D1B35]/90 backdrop-blur-xl border-b border-[#1E3A5F]/50" 
         : "bg-white/90 backdrop-blur-xl border-b border-[#BFDFFF]/40 shadow-sm shadow-[#3FA9F5]/5"
@@ -57,6 +57,7 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="flex items-center gap-2 md:gap-4">
         {/* Dark Mode Toggle */}
         <button 
+          id="btn_dark_mode"
           onClick={() => setDarkMode(!darkMode)}
           className={cn(
             "p-3 rounded-2xl border transition-all flex items-center justify-center hover:scale-105",
@@ -65,7 +66,7 @@ export const Header: React.FC<HeaderProps> = ({
               : "bg-[#F0F9FF] border-[#BFDFFF]/60 text-[#2D7FEA] hover:bg-[#DBEEFF] hover:shadow-md hover:shadow-[#3FA9F5]/10"
           )}
         >
-          {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+          {darkMode ? <Sun size={18} className="pointer-events-none" /> : <Moon size={18} className="pointer-events-none" />}
         </button>
 
         {/* Language Switcher - hidden on mobile */}
@@ -105,6 +106,7 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Notifications */}
         <button 
+          id="btn_notification"
           onClick={onNotificationClick}
           className={cn(
             "p-3 rounded-2xl border shadow-sm transition-all relative group hover:scale-105",
@@ -113,7 +115,7 @@ export const Header: React.FC<HeaderProps> = ({
               : "bg-[#F0F9FF] border-[#BFDFFF]/60 text-slate-400 hover:text-[#2D7FEA] hover:bg-[#DBEEFF] hover:shadow-md hover:shadow-[#3FA9F5]/10"
           )}
         >
-          <Bell size={18} className="group-hover:rotate-12 transition-transform" />
+          <Bell size={18} className="group-hover:rotate-12 transition-transform pointer-events-none" />
           {unreadCount > 0 && (
             <span className="absolute -top-1 -right-1 w-5 h-5 text-white text-[9px] font-black flex items-center justify-center rounded-full border-2 border-white shadow-lg animate-in zoom-in"
               style={{ background: 'linear-gradient(135deg, #EF4444, #DC2626)' }}>

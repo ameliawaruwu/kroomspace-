@@ -75,7 +75,6 @@ model Tugas {
   batas_waktu          DateTime?
   apakah_diblokir      Boolean  @default(false)
   alasan_diblokir      String?  @db.Text
-  catatan_selesai      String?  @db.Text
   tanggal_mulai        DateTime?
   tanggal_selesai      DateTime?
   dibuat_pada          DateTime @default(now())
@@ -117,7 +116,7 @@ model Lampiran {
   id_lampiran    String   @id
   id_tugas       String
   nama_file      String
-  tautan_url     String
+  tautan_url     String   @db.LongText
   tipe_lampiran  String
   dibuat_pada    DateTime @default(now())
 
@@ -163,15 +162,14 @@ model DokumentasiTugas {
   pengguna         Pengguna @relation(fields: [id_pengguna], references: [id_pengguna], onDelete: Cascade)
 }
 
-// Template Proyek: Blueprint proyek lengkap (tugas + checklist) yang bisa langsung diterapkan
+// Template Proyek: Blueprint proyek lengkap (kolom + tugas + checklist) dalam 1 tabel
 model TemplateProyek {
-  id_template    String   @id
-  nama_template  String
-  deskripsi      String?  @db.Text
-  kategori       String   @default("Development")
-  tipe_tugas     String
-  mode_kanban    String
-  kolom_papan    String?  @db.Text  // JSON: BoardColumn[]
-  tugas          String?  @db.Text  // JSON: TemplateTask[] dengan checklist
-  dibuat_pada    DateTime @default(now())
+  id_template      String   @id
+  nama_template    String
+  deskripsi        String?  @db.Text
+  kategori         String   @default("Development")
+  mode_kanban      String
+  kolom_papan_json String   @db.LongText  // JSON array of board columns
+  tugas_json       String   @db.LongText  // JSON array of tasks + checklist
+  dibuat_pada      DateTime @default(now())
 }

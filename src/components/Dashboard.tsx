@@ -19,7 +19,11 @@ import {
   LayoutGrid,
   Activity,
   BarChart3,
-  Users
+  Users,
+  Plus,
+  MessageSquare,
+  Sparkles,
+  Paperclip
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Task, User } from '../types';
@@ -122,6 +126,31 @@ export const Dashboard: React.FC<DashboardProps> = ({
     .filter(n => !n.userId || n.userId === user.id)
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
     .slice(0, 6);
+
+  // Helper to format time ago
+  const formatTimeAgo = (timestamp: string) => {
+    const date = new Date(timestamp);
+    const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+    
+    if (seconds < 60) {
+      return language === 'en' ? 'Just now' : 'Baru saja';
+    }
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) {
+      return language === 'en' ? `${minutes}m ago` : `${minutes}m lalu`;
+    }
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) {
+      return language === 'en' ? `${hours}h ago` : `${hours} jam lalu`;
+    }
+    const days = Math.floor(hours / 24);
+    if (days < 7) {
+      return language === 'en' ? `${days}d ago` : `${days} hari lalu`;
+    }
+    return date.toLocaleDateString(language === 'en' ? 'en-US' : 'id-ID', { day: 'numeric', month: 'short' });
+  };
+
+
 
   // Color palette constants
   const C = {
@@ -498,36 +527,52 @@ export const Dashboard: React.FC<DashboardProps> = ({
               ))}
             </div>
           </section>
-        </div>
-
-        <div className="space-y-6">
-          {/* Deadlines card */}
-          <section className="p-8 rounded-[2.5rem] text-white shadow-xl overflow-hidden relative"
-            style={{ background: 'linear-gradient(135deg, #142B6F 0%, #1E3A8A 50%, #2D7FEA 100%)' }}>
-            <div className="absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl opacity-30" style={{ background: '#3FA9F5' }} />
+        </div>        <div className="space-y-6">
+          {/* Team Activity Section */}
+          <section className={cn("p-8 rounded-[2.5rem] border shadow-sm relative overflow-hidden flex flex-col", C.card, C.cardBorder)}>
+            <div className="absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl opacity-20" style={{ background: '#3FA9F5' }} />
             <div className="flex items-center gap-3 mb-6 relative z-10">
-              <Calendar size={18} style={{ color: '#67C6FF' }} />
-              <h2 className="text-base font-bold tracking-tight">{t('deadlinesAndReminders')}</h2>
+              <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950 text-[#3FA9F5] border border-blue-100 dark:border-blue-900">
+                <Users size={18} />
+              </div>
+              <h2 className={cn("text-base font-bold tracking-tight", C.text)}>
+                {language === 'en' ? 'Team Activity' : 'Aktivitas Tim'}
+              </h2>
             </div>
-            <div className="space-y-5 relative z-10">
-              {myActiveTasks.filter(t => t.deadline).slice(0, 4).map(task => {
-                const deadline = new Date(task.deadline!);
-                const isUrgent = deadline.getTime() - now.getTime() < 86400000 * 2;
-                return (
-                  <div key={task.id} className="relative pl-5 border-l-2 group"
-                    style={{ borderColor: isUrgent ? '#EF4444' : '#3FA9F5' }}>
-                    <div className={cn("absolute -left-[5px] top-0.5 w-2 h-2 rounded-full", isUrgent ? "bg-rose-500 animate-pulse" : "")}
-                      style={!isUrgent ? { background: '#3FA9F5' } : {}} />
-                    <h4 className="text-xs font-bold leading-tight line-clamp-1 text-white">{task.title}</h4>
-                    <p className="text-[10px] text-blue-200 mt-1">
-                      {deadline.toLocaleDateString(language === 'en' ? 'en-US' : 'id-ID', { day: 'numeric', month: 'long' })}
-                    </p>
+            
+            <div className="space-y-3 relative z-10">
+              {users.map(u => {
+                const completedCount = tasks.filter(t => t.assignee === u.id && t.status === 'Done').length;
+                return { ...u, completedCount };
+              })
+              .sort((a, b) => b.completedCount - a.completedCount)
+              .map(member => (
+                <div 
+                  key={member.id} 
+                  className={cn(
+                    "flex items-center justify-between p-3 rounded-2xl border transition-all hover:-translate-y-0.5",
+                    darkMode 
+                      ? "bg-slate-900/40 border-[#1E3A5F]/30 hover:bg-slate-900/60 hover:border-blue-500/20" 
+                      : "bg-slate-50 border-slate-100 hover:bg-white hover:border-slate-200/80 hover:shadow-sm"
+                  )}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <img 
+                      src={member.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${member.name}`} 
+                      className="w-9 h-9 rounded-full border border-slate-200 dark:border-slate-700/60 shrink-0" 
+                      alt={member.name} 
+                    />
+                    <div className="min-w-0">
+                      <p className={cn("text-xs font-bold truncate", C.text)}>{member.name}</p>
+                      <p className={cn("text-[9px] font-black uppercase tracking-wider", C.sub)}>{member.role}</p>
+                    </div>
                   </div>
-                );
-              })}
-              {myActiveTasks.filter(t => t.deadline).length === 0 && (
-                <p className="text-blue-300 text-xs font-medium">Tidak ada deadline mendatang</p>
-              )}
+                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400 shrink-0">
+                    <CheckCircle2 size={11} />
+                    <span className="text-[10px] font-black">{member.completedCount} Selesai</span>
+                  </div>
+                </div>
+              ))}
             </div>
           </section>
         </div>

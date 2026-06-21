@@ -1,14 +1,12 @@
-import React, { useState } from 'react';
-import { User, Mail, Lock, Phone, Save, Camera, CheckCircle2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { User, Mail, Phone, Save, Camera, CheckCircle2, AlertCircle } from 'lucide-react';
 import { User as UserType } from '../types';
-import { motion } from 'motion/react';
 import { cn } from '../lib/utils';
-
 import { useLanguage } from '../context/LanguageContext';
 
 interface ProfileSettingsProps {
   currentUser: UserType;
-  onUpdateProfile: (updatedUser: UserType) => void;
+  onUpdateProfile: (updatedUser: UserType) => Promise<{ success: boolean; error?: string }>;
   darkMode: boolean;
 }
 
@@ -23,10 +21,22 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
     email: currentUser.email,
     whatsapp: currentUser.whatsapp || '',
     avatar: currentUser.avatar,
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: '',
   });
+
+  const [isSaving, setIsSaving] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
+
+  // Sync state if currentUser changes (e.g. initial fetch loads)
+  useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      name: currentUser.name,
+      email: currentUser.email,
+      whatsapp: currentUser.whatsapp || '',
+      avatar: currentUser.avatar,
+    }));
+  }, [currentUser]);
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -39,15 +49,34 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onUpdateProfile({
-      ...currentUser,
-      name: formData.name,
-      email: formData.email,
-      whatsapp: formData.whatsapp,
-      avatar: formData.avatar,
-    });
+    setErrorMsg('');
+    setSuccessMsg('');
+
+    const cleanedWhatsapp = formData.whatsapp.trim();
+
+    setIsSaving(true);
+    try {
+      const result = await onUpdateProfile({
+        ...currentUser,
+        name: formData.name,
+        email: formData.email,
+        whatsapp: cleanedWhatsapp,
+        avatar: formData.avatar,
+      });
+
+      if (result && !result.success) {
+        setErrorMsg(result.error || 'Gagal menyimpan perubahan.');
+      } else {
+        setSuccessMsg('Profil berhasil diperbarui!');
+        setTimeout(() => setSuccessMsg(''), 5000);
+      }
+    } catch (err) {
+      setErrorMsg('Terjadi kesalahan jaringan.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -86,6 +115,20 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
 
         <div className="lg:col-span-2">
           <form onSubmit={handleSubmit} className="bg-white dark:bg-slate-800 p-10 rounded-[2.5rem] border border-slate-100 dark:border-slate-700 shadow-sm space-y-8">
+            {errorMsg && (
+              <div className="p-4 bg-rose-50 dark:bg-rose-950/30 border border-rose-100 dark:border-rose-900/50 rounded-2xl flex items-center gap-3 text-rose-600 dark:text-rose-400 text-sm font-medium animate-in fade-in slide-in-from-top-2">
+                <AlertCircle size={20} className="shrink-0" />
+                <span>{errorMsg}</span>
+              </div>
+            )}
+            
+            {successMsg && (
+              <div className="p-4 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/50 rounded-2xl flex items-center gap-3 text-emerald-600 dark:text-emerald-400 text-sm font-medium animate-in fade-in slide-in-from-top-2">
+                <CheckCircle2 size={20} className="shrink-0" />
+                <span>{successMsg}</span>
+              </div>
+            )}
+
             <section className="space-y-6">
               <h3 className="text-lg font-bold flex items-center gap-2 border-b border-slate-50 dark:border-slate-700 pb-4">
                 <User size={20} className="text-[#2D7FEA]" />
@@ -98,6 +141,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                     <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
                     <input 
                       type="text" 
+                      id="input_profile_name"
                       value={formData.name}
                       onChange={(e) => setFormData({...formData, name: e.target.value})}
                       className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-[#3FA9F5]/20" 
@@ -110,6 +154,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
                     <input 
                       type="email" 
+                      id="input_profile_email"
                       value={formData.email}
                       onChange={(e) => setFormData({...formData, email: e.target.value})}
                       className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-[#3FA9F5]/20" 
@@ -122,6 +167,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                     <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
                     <input 
                       type="text" 
+                      id="input_profile_whatsapp"
                       value={formData.whatsapp}
                       onChange={(e) => setFormData({...formData, whatsapp: e.target.value})}
                       placeholder="+62..."
@@ -132,44 +178,17 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
               </div>
             </section>
 
-            <section className="space-y-6">
-              <h3 className="text-lg font-bold flex items-center gap-2 border-b border-slate-50 dark:border-slate-700 pb-4">
-                <Lock size={20} className="text-amber-500" />
-                {t('security')}
-              </h3>
-              <div className="space-y-6">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('currentPass')}</label>
-                  <input 
-                    type="password" 
-                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-[#3FA9F5]/20" 
-                  />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('newPass')}</label>
-                    <input 
-                      type="password" 
-                      className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-[#3FA9F5]/20" 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('confirmPass')}</label>
-                    <input 
-                      type="password" 
-                      className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-[#3FA9F5]/20" 
-                    />
-                  </div>
-                </div>
-              </div>
-            </section>
-
             <button 
               type="submit"
-              className="w-full py-4 bg-[#2D7FEA] text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-[#1C6ED9] transition-all shadow-lg shadow-[#2D7FEA]/20"
+              id="btn_save_profile"
+              disabled={isSaving}
+              className={cn(
+                "w-full py-4 bg-[#2D7FEA] text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-[#1C6ED9] transition-all shadow-lg shadow-[#2D7FEA]/20",
+                isSaving && "opacity-75 cursor-not-allowed"
+              )}
             >
               <Save size={18} />
-              {t('saveChanges')}
+              {isSaving ? 'Menyimpan...' : t('saveChanges')}
             </button>
           </form>
         </div>
