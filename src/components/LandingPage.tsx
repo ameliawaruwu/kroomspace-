@@ -109,7 +109,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart, language, set
             : "bg-transparent py-5"
         )}
       >
-        <div className="max-w-7xl mx-auto px-6 md:px-10 flex justify-between items-center">
+        <div className="max-w-5xl mx-auto px-6 md:px-10 flex justify-between items-center">
           {/* Logo */}
           <div className="flex items-center gap-3 group cursor-pointer" onClick={() => setActiveMenu('Beranda')}>
             <div className="relative">
@@ -120,7 +120,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart, language, set
           </div>
           
           {/* Desktop Menu */}
-          <div className="hidden lg:flex items-center gap-10">
+          <div className="hidden lg:flex items-center gap-4 lg:gap-6">
             {[
               { name: 'Beranda', id: 'beranda' }, 
               { name: 'Tentang', id: 'tentang' }, 
@@ -151,7 +151,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart, language, set
           </div>
 
           {/* Desktop CTA */}
-          <div className="hidden lg:flex items-center gap-6">
+          <div className="hidden lg:flex items-center gap-4">
             <button 
               onClick={onStart}
               className={cn(
@@ -307,13 +307,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart, language, set
           initial={{ opacity: 0, y: 60 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5, duration: 1, type: "spring", stiffness: 50 }}
-          className="mt-24 relative max-w-6xl mx-auto perspective-1000"
+          className="mt-16 relative max-w-5xl mx-auto perspective-1000 transform md:scale-90 origin-top -mb-16"
         >
           {/* Main Dashboard Mockup */}
           <div className="relative z-10 bg-[#0B1727] border border-white/10 rounded-[2rem] p-3 shadow-[0_30px_80px_rgba(11,23,39,0.4)] overflow-hidden transition-all duration-700 hover:shadow-[0_40px_100px_rgba(52,152,219,0.3)] ring-1 ring-white/5">
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-32 bg-[#3498DB]/30 blur-[80px] pointer-events-none" />
             
-            <div className="bg-[#131B2F] rounded-t-[1.5rem] border border-white/5 flex flex-col overflow-hidden h-[550px] relative">
+            <div className="bg-[#131B2F] rounded-t-[1.5rem] border border-white/5 flex flex-col overflow-hidden h-[500px] relative">
               <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#1E3A8A]/20 via-transparent to-transparent pointer-events-none" />
               
               {/* Dashboard Header */}
@@ -362,14 +362,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart, language, set
                       </span>
                       <span className="text-xs font-bold text-slate-500 bg-[#0B1727] px-2 py-0.5 rounded-full border border-white/5">3</span>
                     </div>
-                    <div className="bg-[#0B1727]/80 backdrop-blur-md p-4 rounded-xl border border-white/5 shadow-lg group hover:border-slate-500/50 transition-colors cursor-pointer">
-                      <div className="text-[10px] font-bold text-slate-300 bg-slate-700/50 px-2 py-1 rounded w-max mb-3 border border-slate-600/30">DESIGN</div>
-                      <p className="text-sm font-bold text-white mb-4">UI Revamp Homepage</p>
+                    <div className="bg-[#0B1727]/80 backdrop-blur-md p-3 rounded-xl border border-white/5 shadow-lg group hover:border-slate-500/50 transition-colors cursor-pointer">
+                      <div className="text-[9px] font-bold text-slate-300 bg-slate-700/50 px-2 py-0.5 rounded w-max mb-2 border border-slate-600/30">DESIGN</div>
+                      <p className="text-xs font-bold text-white mb-3">UI Revamp Homepage</p>
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
-                          <CheckCircle2 size={14}/> 0/4
+                        <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-medium">
+                          <CheckCircle2 size={12}/> 0/4
                         </div>
-                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=A" className="w-6 h-6 rounded-full bg-slate-800 border border-slate-600" alt=""/>
+                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=A" className="w-5 h-5 rounded-full bg-slate-800 border border-slate-600" alt=""/>
                       </div>
                     </div>
                   </div>
@@ -382,20 +382,20 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart, language, set
                       </span>
                       <span className="text-xs font-bold text-[#3498DB] bg-[#3498DB]/10 px-2 py-0.5 rounded-full border border-[#3498DB]/20">2</span>
                     </div>
-                    <div className="bg-[#1E3A8A]/20 backdrop-blur-md p-4 rounded-xl border border-[#3498DB]/30 shadow-[0_8px_30px_rgba(52,152,219,0.1)] group hover:border-[#3498DB] transition-all cursor-pointer relative overflow-hidden">
+                    <div className="bg-[#1E3A8A]/20 backdrop-blur-md p-3 rounded-xl border border-[#3498DB]/30 shadow-[0_8px_30px_rgba(52,152,219,0.1)] group hover:border-[#3498DB] transition-all cursor-pointer relative overflow-hidden">
                       <div className="absolute top-0 left-0 w-1 h-full bg-[#3498DB] shadow-[0_0_10px_#3498DB]" />
-                      <div className="text-[10px] font-bold text-[#3498DB] bg-[#3498DB]/10 px-2 py-1 rounded w-max mb-3 border border-[#3498DB]/20">DEVELOPMENT</div>
-                      <p className="text-sm font-bold text-white mb-3">API Integration Auth</p>
-                      <div className="w-full bg-[#0B1727] rounded-full h-1.5 mb-4 border border-white/5 overflow-hidden">
+                      <div className="text-[9px] font-bold text-[#3498DB] bg-[#3498DB]/10 px-2 py-0.5 rounded w-max mb-2 border border-[#3498DB]/20">DEVELOPMENT</div>
+                      <p className="text-xs font-bold text-white mb-2">API Integration Auth</p>
+                      <div className="w-full bg-[#0B1727] rounded-full h-1 mb-3 border border-white/5 overflow-hidden">
                         <div className="bg-[#3498DB] h-full rounded-full w-[65%] shadow-[0_0_10px_#3498DB]" />
                       </div>
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1.5 text-xs text-[#3498DB] font-medium">
-                          <CheckCircle2 size={14}/> 3/5
+                        <div className="flex items-center gap-1.5 text-[10px] text-[#3498DB] font-medium">
+                          <CheckCircle2 size={12}/> 3/5
                         </div>
-                        <div className="flex -space-x-2">
-                          <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=D" className="w-6 h-6 rounded-full bg-slate-800 border border-slate-600" alt=""/>
-                          <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=E" className="w-6 h-6 rounded-full bg-slate-800 border border-slate-600" alt=""/>
+                        <div className="flex -space-x-1.5">
+                          <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=D" className="w-5 h-5 rounded-full bg-slate-800 border border-slate-600" alt=""/>
+                          <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=E" className="w-5 h-5 rounded-full bg-slate-800 border border-slate-600" alt=""/>
                         </div>
                       </div>
                     </div>
@@ -409,15 +409,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart, language, set
                       </span>
                       <span className="text-xs font-bold text-[#E74C3C] bg-[#E74C3C]/10 px-2 py-0.5 rounded-full border border-[#E74C3C]/20">1</span>
                     </div>
-                    <div className="bg-[#E74C3C]/10 backdrop-blur-md p-4 rounded-xl border border-[#E74C3C]/30 shadow-[0_8px_30px_rgba(231,76,60,0.1)] group hover:border-[#E74C3C] transition-all cursor-pointer relative overflow-hidden">
-                      <div className="absolute top-0 right-0 w-24 h-24 bg-[#E74C3C]/10 rounded-bl-full blur-xl" />
-                      <div className="text-[10px] font-bold text-[#E74C3C] bg-[#E74C3C]/20 px-2 py-1 rounded w-max mb-3 border border-[#E74C3C]/30 flex items-center gap-1">
-                        <Wrench size={12}/> URGENT
+                    <div className="bg-[#E74C3C]/10 backdrop-blur-md p-3 rounded-xl border border-[#E74C3C]/30 shadow-[0_8px_30px_rgba(231,76,60,0.1)] group hover:border-[#E74C3C] transition-all cursor-pointer relative overflow-hidden">
+                      <div className="absolute top-0 right-0 w-20 h-20 bg-[#E74C3C]/10 rounded-bl-full blur-xl" />
+                      <div className="text-[9px] font-bold text-[#E74C3C] bg-[#E74C3C]/20 px-2 py-0.5 rounded w-max mb-2 border border-[#E74C3C]/30 flex items-center gap-1">
+                        <Wrench size={10}/> URGENT
                       </div>
-                      <p className="text-sm font-bold text-white mb-4">Server Downtime DB-01</p>
+                      <p className="text-xs font-bold text-white mb-3">Server Downtime DB-01</p>
                       <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-bold text-[#E74C3C] bg-[#E74C3C]/10 px-2 py-1 rounded-md">Menunggu Teknisi</span>
-                        <div className="w-2 h-2 rounded-full bg-[#E74C3C] animate-pulse" />
+                        <span className="text-[9px] font-bold text-[#E74C3C] bg-[#E74C3C]/10 px-2 py-0.5 rounded-md">Menunggu Teknisi</span>
+                        <div className="w-1.5 h-1.5 rounded-full bg-[#E74C3C] animate-pulse" />
                       </div>
                     </div>
                   </div>
@@ -430,12 +430,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart, language, set
                       </span>
                       <span className="text-xs font-bold text-[#2ECC71] bg-[#2ECC71]/10 px-2 py-0.5 rounded-full border border-[#2ECC71]/20">12</span>
                     </div>
-                    <div className="bg-[#2ECC71]/5 backdrop-blur-md p-4 rounded-xl border border-[#2ECC71]/20 opacity-80 group hover:opacity-100 transition-opacity cursor-pointer">
-                      <div className="text-[10px] font-bold text-[#2ECC71] bg-[#2ECC71]/10 px-2 py-1 rounded w-max mb-3 border border-[#2ECC71]/20">COMPLETED</div>
-                      <p className="text-sm font-bold text-slate-300 line-through mb-4">Setup Repository</p>
+                    <div className="bg-[#2ECC71]/5 backdrop-blur-md p-3 rounded-xl border border-[#2ECC71]/20 opacity-80 group hover:opacity-100 transition-opacity cursor-pointer">
+                      <div className="text-[9px] font-bold text-[#2ECC71] bg-[#2ECC71]/10 px-2 py-0.5 rounded w-max mb-2 border border-[#2ECC71]/20">COMPLETED</div>
+                      <p className="text-xs font-bold text-slate-300 line-through mb-3">Setup Repository</p>
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold text-slate-500">2 hari yang lalu</span>
-                        <CheckCircle2 size={16} className="text-[#2ECC71]" />
+                        <span className="text-[9px] font-bold text-slate-500">2 hari yang lalu</span>
+                        <CheckCircle2 size={12} className="text-[#2ECC71]" />
                       </div>
                     </div>
                   </div>
@@ -450,14 +450,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart, language, set
           <motion.div 
             animate={{ y: [0, -15, 0] }}
             transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-            className="hidden lg:flex absolute -right-8 top-10 z-20 bg-white/95 backdrop-blur-xl p-4 rounded-2xl shadow-[0_15px_40px_rgba(30,58,138,0.15)] border border-[#3498DB]/20 items-center gap-4 hover:scale-105 transition-transform"
+            className="hidden lg:flex absolute -right-4 top-12 z-20 bg-white/95 backdrop-blur-xl p-3 rounded-xl shadow-[0_15px_40px_rgba(30,58,138,0.15)] border border-[#3498DB]/20 items-center gap-3 hover:scale-105 transition-transform"
           >
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#2ECC71] to-emerald-400 flex items-center justify-center text-white shadow-lg shadow-[#2ECC71]/30">
-              <CheckCircle2 size={24} />
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#2ECC71] to-emerald-400 flex items-center justify-center text-white shadow-lg shadow-[#2ECC71]/30">
+              <CheckCircle2 size={20} />
             </div>
             <div>
-              <p className="text-2xl font-black text-[#0B1727]">98%</p>
-              <p className="text-[11px] font-bold text-[#4B5563] uppercase tracking-widest">Fasilitas Optimal</p>
+              <p className="text-xl font-black text-[#0B1727]">98%</p>
+              <p className="text-[9px] font-bold text-[#4B5563] uppercase tracking-widest">Fasilitas Optimal</p>
             </div>
           </motion.div>
 
@@ -465,14 +465,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart, language, set
           <motion.div 
             animate={{ y: [0, 15, 0] }}
             transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-            className="hidden lg:flex absolute -left-8 bottom-20 z-20 bg-white/95 backdrop-blur-xl p-4 rounded-2xl shadow-[0_15px_40px_rgba(30,58,138,0.15)] border border-[#3498DB]/20 items-center gap-4 hover:scale-105 transition-transform"
+            className="hidden lg:flex absolute -left-4 bottom-24 z-20 bg-white/95 backdrop-blur-xl p-3 rounded-xl shadow-[0_15px_40px_rgba(30,58,138,0.15)] border border-[#3498DB]/20 items-center gap-3 hover:scale-105 transition-transform"
           >
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#3498DB] to-[#00D2FF] flex items-center justify-center text-white shadow-lg shadow-[#3498DB]/30">
-              <Activity size={24} />
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#3498DB] to-[#00D2FF] flex items-center justify-center text-white shadow-lg shadow-[#3498DB]/30">
+              <Activity size={20} />
             </div>
             <div>
-              <p className="text-2xl font-black text-[#0B1727]">5</p>
-              <p className="text-[11px] font-bold text-[#4B5563] uppercase tracking-widest">Tugas Berjalan</p>
+              <p className="text-xl font-black text-[#0B1727]">5</p>
+              <p className="text-[9px] font-bold text-[#4B5563] uppercase tracking-widest">Tugas Berjalan</p>
             </div>
           </motion.div>
 
@@ -480,14 +480,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart, language, set
           <motion.div 
             animate={{ y: [0, 10, 0] }}
             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-            className="hidden lg:flex absolute -left-4 top-24 z-20 bg-[#0B1727]/95 backdrop-blur-xl p-4 rounded-2xl shadow-[0_15px_40px_rgba(231,76,60,0.2)] border border-[#E74C3C]/30 items-center gap-4 ring-1 ring-[#E74C3C]/10 hover:scale-105 transition-transform"
+            className="hidden lg:flex absolute -left-2 top-28 z-20 bg-[#0B1727]/95 backdrop-blur-xl p-3 rounded-xl shadow-[0_15px_40px_rgba(231,76,60,0.2)] border border-[#E74C3C]/30 items-center gap-3 ring-1 ring-[#E74C3C]/10 hover:scale-105 transition-transform"
           >
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#E74C3C] to-red-400 flex items-center justify-center text-white shadow-lg shadow-[#E74C3C]/30">
-              <ShieldAlert size={24} />
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#E74C3C] to-red-400 flex items-center justify-center text-white shadow-lg shadow-[#E74C3C]/30">
+              <ShieldAlert size={20} />
             </div>
             <div>
-              <p className="text-2xl font-black text-white">2</p>
-              <p className="text-[11px] font-bold text-red-200 uppercase tracking-widest">Maintenance Darurat</p>
+              <p className="text-xl font-black text-white">2</p>
+              <p className="text-[9px] font-bold text-red-200 uppercase tracking-widest">Maintenance Darurat</p>
             </div>
           </motion.div>
         </motion.div>
@@ -501,7 +501,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart, language, set
       {/* 1.5 Tentang Section */}
       <section id="tentang" className="py-24 bg-white border-y border-[#3498DB]/10 relative z-10">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#3498DB]/5 to-transparent pointer-events-none" />
-        <div className="max-w-7xl mx-auto px-4 md:px-8 relative z-10">
+        <div className="max-w-5xl mx-auto px-4 md:px-8 relative z-10">
           <div className="text-center mb-20">
             <h2 className="text-3xl md:text-4xl font-black text-[#0B1727] mb-4">Dari Masalah hingga Selesai</h2>
             <p className="text-[#4B5563] max-w-2xl mx-auto font-medium">Alur kerja sistematis yang memastikan setiap tiket ditangani dengan sempurna.</p>
@@ -511,19 +511,19 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart, language, set
             <div className="hidden md:block absolute top-12 left-1/8 right-1/8 h-0.5 bg-gradient-to-r from-slate-200 via-[#3498DB] to-slate-200 -z-10 shadow-[0_0_10px_#3498DB]" />
 
             {[
-              { title: "Identifikasi", desc: "Laporan masuk atau jadwal tercatat.", icon: <Search size={24}/>, color: "text-[#1E3A8A]", bg: "bg-blue-50" },
-              { title: "Masuk Kanban", desc: "Tugas dikategorikan & diprioritaskan.", icon: <Kanban size={24}/>, color: "text-[#3498DB]", bg: "bg-[#3498DB]/10" },
-              { title: "Eksekusi", desc: "Tim menangani perbaikan/tugas.", icon: <Settings size={24}/>, color: "text-[#E74C3C]", bg: "bg-[#E74C3C]/10" },
-              { title: "Selesai", desc: "Verifikasi dan dokumentasi otomatis.", icon: <CheckCircle2 size={24}/>, color: "text-[#2ECC71]", bg: "bg-[#2ECC71]/10" }
+              { title: "Identifikasi", desc: "Laporan masuk atau jadwal tercatat.", icon: <Search size={20}/>, color: "text-[#1E3A8A]", bg: "bg-blue-50" },
+              { title: "Masuk Kanban", desc: "Tugas dikategorikan & diprioritaskan.", icon: <Kanban size={20}/>, color: "text-[#3498DB]", bg: "bg-[#3498DB]/10" },
+              { title: "Eksekusi", desc: "Tim menangani perbaikan/tugas.", icon: <Settings size={20}/>, color: "text-[#E74C3C]", bg: "bg-[#E74C3C]/10" },
+              { title: "Selesai", desc: "Verifikasi dan dokumentasi otomatis.", icon: <CheckCircle2 size={20}/>, color: "text-[#2ECC71]", bg: "bg-[#2ECC71]/10" }
             ].map((step, i) => (
               <div key={i} className="flex flex-col items-center text-center relative group">
-                <div className={cn("w-24 h-24 rounded-full flex items-center justify-center shadow-[0_10px_20px_rgba(0,0,0,0.05)] border-4 border-white mb-6 transition-transform group-hover:scale-110", step.bg, step.color)}>
+                <div className={cn("w-20 h-20 rounded-full flex items-center justify-center shadow-[0_10px_20px_rgba(0,0,0,0.05)] border-4 border-white mb-4 transition-transform group-hover:scale-110", step.bg, step.color)}>
                   {step.icon}
                 </div>
-                <div className="bg-white/80 backdrop-blur-sm p-6 rounded-2xl shadow-[0_10px_30px_rgba(30,58,138,0.05)] border border-[#3498DB]/10 w-full h-full group-hover:border-[#3498DB]/30 transition-colors">
-                  <div className="text-xs font-black text-[#3498DB] mb-2 tracking-widest uppercase">LANGKAH {i+1}</div>
-                  <h4 className="text-lg font-bold text-[#0B1727] mb-2">{step.title}</h4>
-                  <p className="text-sm text-[#4B5563] font-medium">{step.desc}</p>
+                <div className="bg-white/80 backdrop-blur-sm p-5 rounded-2xl shadow-[0_10px_30px_rgba(30,58,138,0.05)] border border-[#3498DB]/10 w-full h-full group-hover:border-[#3498DB]/30 transition-colors">
+                  <div className="text-[10px] font-black text-[#3498DB] mb-2 tracking-widest uppercase">LANGKAH {i+1}</div>
+                  <h4 className="text-base font-bold text-[#0B1727] mb-2">{step.title}</h4>
+                  <p className="text-xs text-[#4B5563] font-medium">{step.desc}</p>
                 </div>
               </div>
             ))}
@@ -533,7 +533,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart, language, set
 
       {/* 2. Fitur Utama */}
       <section id="fitur" className="py-24 bg-[#F8FAFC] relative z-10">
-        <div className="max-w-7xl mx-auto px-4 md:px-8">
+        <div className="max-w-5xl mx-auto px-4 md:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-black text-[#0B1727] mb-4">The Core Powerhouse</h2>
             <p className="text-[#4B5563] max-w-2xl mx-auto font-medium">Dua pilar utama KroomSpace yang dirancang untuk mengendalikan kompleksitas operasional Anda.</p>
@@ -543,15 +543,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart, language, set
             {/* Kanban Feature */}
             <motion.div 
               whileHover={{ y: -5 }}
-              className="bg-white rounded-[2rem] p-10 border border-[#3498DB]/10 relative overflow-hidden group shadow-[0_20px_40px_rgba(30,58,138,0.05)] hover:shadow-[0_30px_60px_rgba(52,152,219,0.15)] transition-all"
+              className="bg-white rounded-[2rem] p-8 border border-[#3498DB]/10 relative overflow-hidden group shadow-[0_20px_40px_rgba(30,58,138,0.05)] hover:shadow-[0_30px_60px_rgba(52,152,219,0.15)] transition-all"
             >
               <div className="absolute top-0 right-0 w-64 h-64 bg-[#3498DB]/5 rounded-full blur-[80px] -z-0 transition-all group-hover:bg-[#3498DB]/15" />
               <div className="relative z-10">
-                <div className="w-14 h-14 bg-gradient-to-br from-[#1E3A8A] to-[#3498DB] rounded-2xl flex items-center justify-center shadow-[0_10px_20px_rgba(52,152,219,0.3)] mb-6 text-white">
-                  <Kanban size={28} />
+                <div className="w-12 h-12 bg-gradient-to-br from-[#1E3A8A] to-[#3498DB] rounded-2xl flex items-center justify-center shadow-[0_10px_20px_rgba(52,152,219,0.3)] mb-5 text-white">
+                  <Kanban size={24} />
                 </div>
-                <h3 className="text-2xl font-bold text-[#0B1727] mb-4">Manajemen Proyek Berbasis Kanban</h3>
-                <ul className="space-y-4">
+                <h3 className="text-xl font-bold text-[#0B1727] mb-4">Manajemen Proyek Berbasis Kanban</h3>
+                <ul className="space-y-3">
                   {[
                     "Drag and drop task card",
                     "Visual workflow board",
@@ -571,15 +571,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart, language, set
             {/* Maintenance Feature */}
             <motion.div 
               whileHover={{ y: -5 }}
-              className="bg-[#0B1727] rounded-[2rem] p-10 relative overflow-hidden group text-white shadow-[0_20px_50px_rgba(11,23,39,0.3)] hover:shadow-[0_30px_60px_rgba(30,58,138,0.4)] transition-all border border-[#1E3A8A]"
+              className="bg-[#0B1727] rounded-[2rem] p-8 relative overflow-hidden group text-white shadow-[0_20px_50px_rgba(11,23,39,0.3)] hover:shadow-[0_30px_60px_rgba(30,58,138,0.4)] transition-all border border-[#1E3A8A]"
             >
               <div className="absolute top-0 right-0 w-64 h-64 bg-[#3498DB]/20 rounded-full blur-[80px] -z-0 transition-all group-hover:bg-[#3498DB]/30" />
               <div className="relative z-10">
-                <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center border border-white/20 mb-6 text-[#3498DB] backdrop-blur-md shadow-[0_0_15px_rgba(52,152,219,0.3)]">
-                  <Wrench size={28} />
+                <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center border border-white/20 mb-5 text-[#3498DB] backdrop-blur-md shadow-[0_0_15px_rgba(52,152,219,0.3)]">
+                  <Wrench size={24} />
                 </div>
-                <h3 className="text-2xl font-bold text-white mb-4">Sistem Maintenance Terpadu</h3>
-                <ul className="space-y-4">
+                <h3 className="text-xl font-bold text-white mb-4">Sistem Maintenance Terpadu</h3>
+                <ul className="space-y-3">
                   {[
                     "Tiket maintenance otomatis",
                     "Integrasi maintenance ke Kanban board",
@@ -601,7 +601,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart, language, set
 
       {/* 4. Keunggulan Proposition */}
       <section id="keunggulan" className="py-24 bg-white relative border-t border-[#3498DB]/10 z-10">
-        <div className="max-w-7xl mx-auto px-4 md:px-8">
+        <div className="max-w-5xl mx-auto px-4 md:px-8">
           <div className="flex flex-col md:flex-row gap-12 items-center">
             <div className="w-full md:w-1/2 space-y-8">
               <h2 className="text-3xl md:text-5xl font-black text-[#0B1727] tracking-tight leading-[1.1]">
@@ -609,14 +609,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart, language, set
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {[
-                  { icon: <Users size={20}/>, title: "Kolaborasi Tanpa Batas" },
-                  { icon: <Zap size={20}/>, title: "Respons Lebih Cepat" },
-                  { icon: <Wallet size={20}/>, title: "Efisiensi Anggaran" },
-                  { icon: <Activity size={20}/>, title: "Monitoring Transparan" },
-                  { icon: <ClipboardList size={20}/>, title: "Dokumentasi Terpusat" }
+                  { icon: <Users size={18}/>, title: "Kolaborasi Tanpa Batas" },
+                  { icon: <Zap size={18}/>, title: "Respons Lebih Cepat" },
+                  { icon: <Wallet size={18}/>, title: "Efisiensi Anggaran" },
+                  { icon: <Activity size={18}/>, title: "Monitoring Transparan" },
+                  { icon: <ClipboardList size={18}/>, title: "Dokumentasi Terpusat" }
                 ].map((val, i) => (
-                  <div key={i} className="flex items-center gap-4 bg-[#F8FAFC] p-4 rounded-xl border border-[#3498DB]/10 hover:border-[#3498DB]/30 hover:shadow-[0_5px_15px_rgba(52,152,219,0.1)] transition-all group cursor-pointer">
-                    <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-[#3498DB] shadow-sm group-hover:bg-[#3498DB] group-hover:text-white transition-colors">
+                  <div key={i} className="flex items-center gap-3 bg-[#F8FAFC] p-3 rounded-xl border border-[#3498DB]/10 hover:border-[#3498DB]/30 hover:shadow-[0_5px_15px_rgba(52,152,219,0.1)] transition-all group cursor-pointer">
+                    <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-[#3498DB] shadow-sm group-hover:bg-[#3498DB] group-hover:text-white transition-colors">
                       {val.icon}
                     </div>
                     <span className="font-bold text-[#2C3E50] text-sm">{val.title}</span>
@@ -626,25 +626,25 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart, language, set
             </div>
 
             <div className="w-full md:w-1/2">
-               <div className="bg-[#0B1727] rounded-[2rem] p-8 text-white relative overflow-hidden shadow-[0_20px_50px_rgba(11,23,39,0.3)] border border-[#1E3A8A]/50">
+               <div className="bg-[#0B1727] rounded-[2rem] p-6 text-white relative overflow-hidden shadow-[0_20px_50px_rgba(11,23,39,0.3)] border border-[#1E3A8A]/50">
                  <div className="absolute top-0 right-0 w-64 h-64 bg-[#3498DB]/20 rounded-full blur-[60px] -z-0" />
                  
-                 <div className="relative z-10 space-y-6">
+                 <div className="relative z-10 space-y-5">
                     <div className="flex items-center justify-between">
-                      <h3 className="font-bold text-lg flex items-center gap-2">Analytics Overview</h3>
-                      <div className="p-2 bg-[#3498DB]/20 rounded-lg text-[#3498DB] shadow-[0_0_10px_#3498DB]">
-                        <BarChart3 size={20} />
+                      <h3 className="font-bold text-base flex items-center gap-2">Analytics Overview</h3>
+                      <div className="p-1.5 bg-[#3498DB]/20 rounded-lg text-[#3498DB] shadow-[0_0_10px_#3498DB]">
+                        <BarChart3 size={18} />
                       </div>
                     </div>
                     
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-white/5 backdrop-blur-md p-4 rounded-xl border border-white/10 hover:bg-white/10 transition-colors cursor-pointer">
-                        <p className="text-[#3498DB] text-xs font-bold uppercase tracking-wider mb-1">Maintenance Cost</p>
-                        <p className="text-2xl font-black text-white">-34%</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-white/5 backdrop-blur-md p-3 rounded-xl border border-white/10 hover:bg-white/10 transition-colors cursor-pointer">
+                        <p className="text-[#3498DB] text-[10px] font-bold uppercase tracking-wider mb-1">Maintenance Cost</p>
+                        <p className="text-xl font-black text-white">-34%</p>
                       </div>
-                      <div className="bg-white/5 backdrop-blur-md p-4 rounded-xl border border-white/10 hover:bg-white/10 transition-colors cursor-pointer">
-                        <p className="text-[#3498DB] text-xs font-bold uppercase tracking-wider mb-1">Task Completion</p>
-                        <p className="text-2xl font-black text-white">+52%</p>
+                      <div className="bg-white/5 backdrop-blur-md p-3 rounded-xl border border-white/10 hover:bg-white/10 transition-colors cursor-pointer">
+                        <p className="text-[#3498DB] text-[10px] font-bold uppercase tracking-wider mb-1">Task Completion</p>
+                        <p className="text-xl font-black text-white">+52%</p>
                       </div>
                     </div>
 
@@ -664,8 +664,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart, language, set
       <section id="faq" className="py-24 bg-[#F8FAFC] border-t border-[#3498DB]/10 relative z-10">
         <div className="max-w-4xl mx-auto px-4 md:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-black text-[#0B1727] mb-4">Frequently Asked Questions</h2>
-            <p className="text-[#4B5563] font-medium max-w-2xl mx-auto">Masih memiliki pertanyaan? Berikut adalah jawaban dari pertanyaan yang sering ditanyakan mengenai KroomSpace.</p>
+            <h2 className="text-2xl md:text-3xl font-black text-[#0B1727] mb-3">Frequently Asked Questions</h2>
+            <p className="text-[#4B5563] text-sm font-medium max-w-2xl mx-auto">Masih memiliki pertanyaan? Berikut adalah jawaban dari pertanyaan yang sering ditanyakan mengenai KroomSpace.</p>
           </div>
 
           <div className="space-y-4">
@@ -696,10 +696,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart, language, set
                 className="bg-white border border-[#3498DB]/10 rounded-2xl overflow-hidden shadow-sm hover:shadow-[0_10px_20px_rgba(52,152,219,0.05)] hover:border-[#3498DB]/30 transition-all cursor-pointer"
                 onClick={() => setActiveFaq(activeFaq === index ? null : index)}
               >
-                <div className="p-6 flex justify-between items-center bg-white">
-                  <h4 className={cn("font-bold text-[15px] transition-colors", activeFaq === index ? "text-[#3498DB]" : "text-[#0B1727]")}>{faq.q}</h4>
+                <div className="p-5 flex justify-between items-center bg-white">
+                  <h4 className={cn("font-bold text-sm transition-colors", activeFaq === index ? "text-[#3498DB]" : "text-[#0B1727]")}>{faq.q}</h4>
                   <div className={cn("text-[#3498DB] transition-transform duration-300", activeFaq === index ? "rotate-180" : "")}>
-                    <ChevronDown size={20} />
+                    <ChevronDown size={18} />
                   </div>
                 </div>
                 <motion.div 
@@ -707,7 +707,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart, language, set
                   animate={{ height: activeFaq === index ? "auto" : 0, opacity: activeFaq === index ? 1 : 0 }}
                   className="overflow-hidden bg-[#F8FAFC]"
                 >
-                  <div className="p-6 pt-0 text-[#4B5563] font-medium leading-relaxed border-t border-[#3498DB]/10">
+                  <div className="p-5 pt-0 text-[#4B5563] text-sm font-medium leading-relaxed border-t border-[#3498DB]/10">
                     {faq.a}
                   </div>
                 </motion.div>
@@ -720,7 +720,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart, language, set
       {/* Footer */}
       <footer className="bg-[#0B1727] text-white pt-24 pb-12 px-4 md:px-8 border-t border-[#1E3A8A] relative overflow-hidden z-10">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-px bg-gradient-to-r from-transparent via-[#3498DB] to-transparent shadow-[0_0_10px_#3498DB]" />
-        <div className="max-w-7xl mx-auto relative z-10">
+        <div className="max-w-5xl mx-auto relative z-10">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
             <div className="md:col-span-1 space-y-6">
               <div className="flex items-center gap-3">

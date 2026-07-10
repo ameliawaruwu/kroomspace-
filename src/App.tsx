@@ -136,8 +136,9 @@ export default function App() {
                 assignee: t.id_penanggung_jawab,
                 createdAt: t.dibuat_pada,
                 startDate: t.tanggal_mulai ? new Date(t.tanggal_mulai).toISOString().split('T')[0] : undefined,
-                deadline: t.batas_waktu ? new Date(t.batas_waktu).toISOString().split('T')[0] : undefined,
-                endDate: t.tanggal_selesai ? new Date(t.tanggal_selesai).toISOString().split('T')[0] : undefined,
+                deadline: t.tanggal_selesai ? new Date(t.tanggal_selesai).toISOString().split('T')[0] : undefined,
+                isBlocked: t.apakah_diblokir,
+                blockReason: t.alasan_diblokir,
                 checklist: t.daftar_periksa?.map((c:any) => ({ 
                   id: c.id_periksa, 
                   text: c.teks_periksa, 
@@ -181,8 +182,9 @@ export default function App() {
                 assignee: t.id_penanggung_jawab,
                 createdAt: t.dibuat_pada,
                 startDate: t.tanggal_mulai ? new Date(t.tanggal_mulai).toISOString().split('T')[0] : undefined,
-                deadline: t.batas_waktu ? new Date(t.batas_waktu).toISOString().split('T')[0] : undefined,
-                endDate: t.tanggal_selesai ? new Date(t.tanggal_selesai).toISOString().split('T')[0] : undefined,
+                deadline: t.tanggal_selesai ? new Date(t.tanggal_selesai).toISOString().split('T')[0] : undefined,
+                isBlocked: t.apakah_diblokir,
+                blockReason: t.alasan_diblokir,
                 checklist: t.daftar_periksa?.map((c:any) => ({ 
                   id: c.id_periksa, 
                   text: c.teks_periksa, 
@@ -350,6 +352,7 @@ export default function App() {
         <Dashboard 
           tasks={tasks} 
           users={users} 
+          projects={projects}
           user={currentUser} 
           darkMode={darkMode} 
           notifications={notifications}
@@ -363,7 +366,10 @@ export default function App() {
                   judul_tugas: updatedTask.title,
                   prioritas: updatedTask.priority,
                   id_penanggung_jawab: updatedTask.assignee || null,
-                  batas_waktu: updatedTask.deadline
+                  tanggal_mulai: updatedTask.startDate,
+                  tanggal_selesai: updatedTask.deadline,
+                  apakah_diblokir: updatedTask.isBlocked,
+                  alasan_diblokir: updatedTask.blockReason
                 })
               });
               setTasks(prev => prev.map(t => t.id === updatedTask.id ? updatedTask : t));
@@ -398,7 +404,10 @@ export default function App() {
                       comments: task.comments,
                       attachments: task.attachments,
                       contributors: task.contributors,
-                      batas_waktu: task.deadline
+                      tanggal_mulai: task.startDate,
+                      tanggal_selesai: task.deadline,
+                      apakah_diblokir: task.isBlocked,
+                      alasan_diblokir: task.blockReason
                     })
                   }).catch(console.error);
 
@@ -432,7 +441,10 @@ export default function App() {
                     comments: task.comments,
                     attachments: task.attachments,
                     contributors: task.contributors,
-                    batas_waktu: task.deadline
+                    tanggal_mulai: task.startDate,
+                    tanggal_selesai: task.deadline,
+                    apakah_diblokir: task.isBlocked,
+                    alasan_diblokir: task.blockReason
                   })
                 }).then(res => res.json()).then(dbTask => {
                   if (dbTask.id_tugas) {
@@ -519,7 +531,11 @@ export default function App() {
                          checklist: t.checklist,
                          comments: t.comments,
                          attachments: t.attachments,
-                         contributors: t.contributors
+                         contributors: t.contributors,
+                         tanggal_mulai: t.startDate,
+                         tanggal_selesai: t.deadline,
+                         apakah_diblokir: t.isBlocked,
+                         alasan_diblokir: t.blockReason
                       })
                     });
                     const newT = await taskRes.json();
@@ -576,7 +592,11 @@ export default function App() {
                   status: updatedTask.status,
                   judul_tugas: updatedTask.title,
                   prioritas: updatedTask.priority,
-                  id_penanggung_jawab: updatedTask.assignee || null
+                  id_penanggung_jawab: updatedTask.assignee || null,
+                  tanggal_mulai: updatedTask.startDate,
+                  tanggal_selesai: (updatedTask as any).endDate,
+                  apakah_diblokir: updatedTask.isBlocked,
+                  alasan_diblokir: updatedTask.blockReason
                 })
               });
               setTasks(prev => prev.map(t => t.id === updatedTask.id ? updatedTask : t));

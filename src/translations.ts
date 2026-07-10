@@ -55,6 +55,7 @@ export const translations = {
     onCompleted: "Saat Selesai",
     onOverdue: "Lewati Deadline",
     item: "Item",
+    userManagement: "Manajemen Pengguna",
     profileSettings: "Pengaturan Profil",
     logout: "Keluar",
     notifications: "Notifikasi",

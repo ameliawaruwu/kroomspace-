@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { 
-  LayoutDashboard, 
-  Trello, 
-  FileText, 
-  LogOut, 
-  Menu, 
+import {
+  LayoutDashboard,
+  Trello,
+  FileText,
+  LogOut,
+  Menu,
   X,
   User as UserIcon,
   Users,
@@ -48,10 +48,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, user,
       <div className="p-6 pb-2 flex flex-col items-center gap-0 shrink-0">
         <div className="relative group">
           <div className="absolute inset-0 bg-[#3FA9F5]/15 rounded-full blur-2xl group-hover:bg-[#3FA9F5]/25 transition-all duration-500" />
-          <img 
-            src="https://i.ibb.co.com/Fk4YB1cM/logo-ks.png" 
-            alt="KroomSpace Logo" 
-            className="w-24 h-24 lg:w-28 lg:h-28 object-contain relative group-hover:scale-105 transition-transform duration-500" 
+          <img
+            src="https://i.ibb.co.com/Fk4YB1cM/logo-ks.png"
+            alt="KroomSpace Logo"
+            className="w-24 h-24 lg:w-28 lg:h-28 object-contain relative group-hover:scale-105 transition-transform duration-500"
           />
         </div>
         <span className="text-xl lg:text-2xl font-black tracking-wider uppercase -mt-3 bg-gradient-to-r from-[#3FA9F5] to-[#2D7FEA] bg-clip-text text-transparent transition-colors">
@@ -68,10 +68,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, user,
             onClick={() => handleNavClick(item.id)}
             className={cn(
               "w-full flex items-center gap-3.5 px-4 py-3.5 rounded-2xl transition-all duration-200 group relative overflow-hidden",
-              activeTab === item.id 
-                ? "text-white shadow-lg shadow-[#2D7FEA]/25" 
-                : darkMode 
-                  ? "hover:bg-[#3FA9F5]/10 hover:text-white text-slate-400" 
+              activeTab === item.id
+                ? "text-white shadow-lg shadow-[#2D7FEA]/25"
+                : darkMode
+                  ? "hover:bg-[#3FA9F5]/10 hover:text-white text-slate-400"
                   : "hover:bg-[#EBF5FF] hover:text-[#2D7FEA] text-slate-500"
             )}
             style={activeTab === item.id ? { background: 'linear-gradient(135deg, #3FA9F5, #2D7FEA)' } : {}}
@@ -79,15 +79,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, user,
             {activeTab === item.id && (
               <div className="absolute inset-0 bg-white/10 opacity-50" />
             )}
-            <item.icon 
-              size={20} 
-              strokeWidth={2.5} 
+            <item.icon
+              size={20}
+              strokeWidth={2.5}
               className={cn(
                 "relative z-10 transition-colors",
-                activeTab === item.id 
-                  ? "text-white" 
+                activeTab === item.id
+                  ? "text-white"
                   : darkMode ? "text-slate-500 group-hover:text-[#3FA9F5]" : "text-slate-400 group-hover:text-[#2D7FEA]"
-              )} 
+              )}
             />
             <span className="font-bold text-sm tracking-wide whitespace-nowrap relative z-10">{item.label}</span>
             {activeTab === item.id && (
@@ -104,8 +104,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, user,
       )}>
         <div className={cn(
           "flex items-center gap-3 p-3.5 rounded-2xl mb-3 border transition-colors",
-          darkMode 
-            ? "bg-[#1E3A5F]/40 border-[#1E3A5F]/50" 
+          darkMode
+            ? "bg-[#1E3A5F]/40 border-[#1E3A5F]/50"
             : "bg-[#F0F9FF] border-[#BFDFFF]/50"
         )}>
           <div className="relative shrink-0">
@@ -117,13 +117,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, user,
             <p className="text-[10px] font-black uppercase tracking-wider truncate text-[#3FA9F5]">{user.role}</p>
           </div>
         </div>
-        <button 
+        <button
           id="btn_logout"
           onClick={onLogout}
           className={cn(
             "w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all font-bold text-sm group",
-            darkMode 
-              ? "text-slate-500 hover:bg-rose-500/10 hover:text-rose-400" 
+            darkMode
+              ? "text-slate-500 hover:bg-rose-500/10 hover:text-rose-400"
               : "text-slate-400 hover:bg-red-50 hover:text-red-500"
           )}
         >
@@ -137,7 +137,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, user,
   return (
     <>
       {/* Mobile hamburger button */}
-      <button 
+      <button
         id="btn_menu_toggle"
         className="lg:hidden fixed top-4 left-4 z-[60] p-2.5 text-white rounded-xl transition-all shadow-lg shadow-[#2D7FEA]/30"
         style={{ background: 'linear-gradient(135deg, #3FA9F5, #2D7FEA)' }}
@@ -170,8 +170,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, user,
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
             className={cn(
               "fixed inset-y-0 left-0 z-[50] w-[280px] border-r flex flex-col lg:hidden",
-              darkMode 
-                ? "bg-[#0D1B35]/98 border-[#1E3A5F]/60 text-slate-300" 
+              darkMode
+                ? "bg-[#0D1B35]/98 border-[#1E3A5F]/60 text-slate-300"
                 : "bg-white border-[#E8F4FD]/80 text-slate-600"
             )}
           >
@@ -184,8 +184,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, user,
       <aside
         className={cn(
           "hidden lg:flex flex-col fixed inset-y-0 left-0 z-40 w-[300px] border-r",
-          darkMode 
-            ? "bg-[#0D1B35]/95 border-[#1E3A5F]/60 text-slate-300" 
+          darkMode
+            ? "bg-[#0D1B35]/95 border-[#1E3A5F]/60 text-slate-300"
             : "bg-white/95 border-[#E8F4FD]/80 text-slate-600"
         )}
       >

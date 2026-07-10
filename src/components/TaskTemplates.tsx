@@ -44,22 +44,22 @@ const getCategoryIcon = (kategori: string, size = 24) => {
   const props = { size, strokeWidth: 1.8 };
   switch (kategori) {
     case 'Infrastructure': return <Server {...props} />;
-    case 'API Service':    return <Globe {...props} />;
-    case 'Security':       return <Shield {...props} />;
-    case 'Maintenance':    return <Zap {...props} />;
-    case 'Bug Fix':        return <Bug {...props} />;
-    default:               return <Code {...props} />;  // Development
+    case 'API Service': return <Globe {...props} />;
+    case 'Security': return <Shield {...props} />;
+    case 'Maintenance': return <Zap {...props} />;
+    case 'Bug Fix': return <Bug {...props} />;
+    default: return <Code {...props} />;  // Development
   }
 };
 
 const getCategoryGradient = (kategori: string) => {
   switch (kategori) {
     case 'Infrastructure': return 'from-emerald-400 to-emerald-600';
-    case 'API Service':    return 'from-indigo-400 to-indigo-600';
-    case 'Security':       return 'from-purple-400 to-purple-600';
-    case 'Maintenance':    return 'from-amber-400 to-amber-600';
-    case 'Bug Fix':        return 'from-rose-400 to-rose-600';
-    default:               return 'from-[#3FA9F5] to-[#2D7FEA]';  // Development / Blue
+    case 'API Service': return 'from-indigo-400 to-indigo-600';
+    case 'Security': return 'from-purple-400 to-purple-600';
+    case 'Maintenance': return 'from-amber-400 to-amber-600';
+    case 'Bug Fix': return 'from-rose-400 to-rose-600';
+    default: return 'from-[#3FA9F5] to-[#2D7FEA]';  // Development / Blue
   }
 };
 
@@ -67,28 +67,28 @@ const getCategoryBg = (kategori: string, dark: boolean) => {
   if (dark) {
     switch (kategori) {
       case 'Infrastructure': return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
-      case 'API Service':    return 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20';
-      case 'Security':       return 'bg-purple-500/10 text-purple-400 border-purple-500/20';
-      case 'Maintenance':    return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
-      case 'Bug Fix':        return 'bg-rose-500/10 text-rose-400 border-rose-500/20';
-      default:               return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+      case 'API Service': return 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20';
+      case 'Security': return 'bg-purple-500/10 text-purple-400 border-purple-500/20';
+      case 'Maintenance': return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+      case 'Bug Fix': return 'bg-rose-500/10 text-rose-400 border-rose-500/20';
+      default: return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
     }
   }
   switch (kategori) {
     case 'Infrastructure': return 'bg-emerald-50 text-emerald-600 border-emerald-100';
-    case 'API Service':    return 'bg-indigo-50 text-indigo-600 border-indigo-100';
-    case 'Security':       return 'bg-purple-50 text-purple-600 border-purple-100';
-    case 'Maintenance':    return 'bg-amber-50 text-amber-700 border-amber-100';
-    case 'Bug Fix':        return 'bg-rose-50 text-rose-600 border-rose-100';
-    default:               return 'bg-blue-50 text-blue-600 border-blue-100';
+    case 'API Service': return 'bg-indigo-50 text-indigo-600 border-indigo-100';
+    case 'Security': return 'bg-purple-50 text-purple-600 border-purple-100';
+    case 'Maintenance': return 'bg-amber-50 text-amber-700 border-amber-100';
+    case 'Bug Fix': return 'bg-rose-50 text-rose-600 border-rose-100';
+    default: return 'bg-blue-50 text-blue-600 border-blue-100';
   }
 };
 
 const getPriorityColor = (priority: string) => {
   switch (priority) {
-    case 'High':   return 'text-rose-500 bg-rose-50 dark:bg-rose-500/10';
+    case 'High': return 'text-rose-500 bg-rose-50 dark:bg-rose-500/10';
     case 'Medium': return 'text-amber-500 bg-amber-50 dark:bg-amber-500/10';
-    default:       return 'text-slate-500 bg-slate-50 dark:bg-slate-500/10';
+    default: return 'text-slate-500 bg-slate-50 dark:bg-slate-500/10';
   }
 };
 
@@ -213,7 +213,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      
+
       setGeneratedTasks(data.tasks || []);
       setIsAiGenerated(true);
       setCreateStep(2);
@@ -394,7 +394,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
             </h1>
           </div>
           <p className={cn("text-sm font-medium ml-14", darkMode ? "text-slate-400" : "text-slate-500")}>
-            Blueprint proyek lengkap — tugas & checklist siap pakai, di-generate AI
+            Blueprint proyek lengkap — tugas & checklist siap pakai
           </p>
         </div>
 
@@ -433,23 +433,23 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
       <div className="px-8 pt-6 pb-2">
         <div className={cn(
           "inline-flex p-1.5 rounded-2xl gap-1.5 border transition-all max-w-full overflow-x-auto scrollbar-none",
-          darkMode 
-            ? "bg-slate-900/50 border-slate-800/80" 
+          darkMode
+            ? "bg-slate-900/50 border-slate-800/80"
             : "bg-slate-100/80 border-slate-200/60"
         )}>
           {categories.map(cat => {
-            const count = cat === 'Semua' 
-              ? templates.length 
+            const count = cat === 'Semua'
+              ? templates.length
               : templates.filter(t => t.kategori === cat).length;
-            
+
             const isActive = selectedCategory === cat;
-            
+
             return (
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
                 className={cn(
-                  "relative px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 select-none shrink-0",
+                  "relative px-4 py-2.5 rounded-xl text-xs font-medium uppercase tracking-wider transition-all flex items-center gap-2 select-none shrink-0",
                   isActive
                     ? "bg-[#2D7FEA] text-white shadow-lg shadow-[#2D7FEA]/20"
                     : darkMode
@@ -459,7 +459,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
               >
                 <span>{cat}</span>
                 <span className={cn(
-                  "px-2 py-0.5 rounded-md text-[10px] font-black tracking-normal transition-all",
+                  "px-2 py-0.5 rounded-md text-[10px] font-medium tracking-normal transition-all",
                   isActive
                     ? "bg-white/20 text-white"
                     : darkMode
@@ -519,28 +519,14 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
               transition={{ delay: i * 0.06 }}
               className={cn(
                 "group relative rounded-[2rem] overflow-hidden border transition-all duration-300 flex flex-col justify-between cursor-pointer",
-                darkMode 
-                  ? "bg-slate-800/80 border-slate-700/60 hover:border-[#2D7FEA]/30 hover:bg-slate-800/100" 
+                darkMode
+                  ? "bg-slate-800/80 border-slate-700/60 hover:border-[#2D7FEA]/30 hover:bg-slate-800/100"
                   : "bg-white border-slate-200/50 shadow-sm hover:shadow-xl hover:shadow-blue-500/5 hover:border-[#2D7FEA]/20",
                 "hover:-translate-y-1.5"
               )}
               onClick={() => setPreviewTemplate(template)}
             >
-              {/* Absolute Badge */}
-              {meta.badge && (
-                <div className="absolute top-4 right-4 z-10 select-none">
-                  <span className={cn(
-                    "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider shadow-sm border",
-                    meta.badge === 'Paling Populer'
-                      ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white border-transparent"
-                      : meta.badge === 'Direkomendasikan'
-                        ? "bg-gradient-to-r from-blue-500 to-indigo-500 text-white border-transparent"
-                        : "bg-gradient-to-r from-emerald-500 to-teal-500 text-white border-transparent"
-                  )}>
-                    {meta.badge === 'Paling Populer' ? '🔥' : meta.badge === 'Direkomendasikan' ? '⭐' : '✨'} {meta.badge}
-                  </span>
-                </div>
-              )}
+
 
               <div>
                 {/* Gradient header */}
@@ -660,8 +646,8 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                     {(template.tasks ?? []).slice(0, 2).map((task, idx) => (
                       <div key={idx} className={cn(
                         "flex items-center gap-2 text-xs font-medium py-2 px-3 rounded-xl border",
-                        darkMode 
-                          ? "bg-slate-900/40 text-slate-400 border-slate-800/80" 
+                        darkMode
+                          ? "bg-slate-900/40 text-slate-400 border-slate-800/80"
                           : "bg-slate-50 text-slate-500 border-slate-100"
                       )}>
                         <CheckCircle2 size={12} className="text-[#2D7FEA] shrink-0" />
@@ -670,7 +656,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                     ))}
                     {(template.tasks ?? []).length > 2 && (
                       <p className={cn(
-                        "text-[10px] font-bold pl-2.5 flex items-center gap-1.5", 
+                        "text-[10px] font-bold pl-2.5 flex items-center gap-1.5",
                         darkMode ? "text-slate-500" : "text-slate-400"
                       )}>
                         <span className="w-1.5 h-1.5 rounded-full bg-[#2D7FEA]" />
@@ -1157,8 +1143,8 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                                 key={cl.id || ci}
                                 className={cn(
                                   "flex items-center gap-1.5 text-[10px] font-bold px-3 py-1.5 rounded-full border shadow-sm",
-                                  darkMode 
-                                    ? "bg-slate-800 text-slate-300 border-slate-700" 
+                                  darkMode
+                                    ? "bg-slate-800 text-slate-300 border-slate-700"
                                     : "bg-white text-slate-600 border-slate-200"
                                 )}
                               >
@@ -1251,8 +1237,8 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                     }}
                     className={cn(
                       "w-full py-5 border-2 border-dashed rounded-[2rem] flex items-center justify-center gap-3 transition-all font-bold text-sm shadow-sm",
-                      darkMode 
-                        ? "border-slate-700 bg-slate-900/20 text-slate-400 hover:border-blue-500/50 hover:bg-slate-900/40 hover:text-blue-400" 
+                      darkMode
+                        ? "border-slate-700 bg-slate-900/20 text-slate-400 hover:border-blue-500/50 hover:bg-slate-900/40 hover:text-blue-400"
                         : "border-slate-200 bg-slate-50/50 text-slate-500 hover:border-blue-500/50 hover:bg-white hover:text-blue-600"
                     )}
                   >

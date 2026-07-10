@@ -737,7 +737,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-4">
+              <div className="flex items-center gap-3 xl:gap-4 shrink-0">
                 <div className="bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-center shadow-inner">
                   <button 
                     onClick={() => setFilterMode('my')}
@@ -1651,7 +1651,9 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                               onChange={(e) => {
                                 const next = [...(selectedTask.checklist || [])];
                                 next[idx].startDate = e.target.value;
-                                setSelectedTask({ ...selectedTask, checklist: next });
+                                const updatedTask = { ...selectedTask, checklist: next };
+                                setSelectedTask(updatedTask);
+                                setTasks(tasks.map(t => t.id === selectedTask.id ? updatedTask : t));
                               }}
                               className="w-full px-2 py-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-lg text-[10px] font-bold text-slate-500 outline-none"
                               title="Tanggal Mulai (Start Date)"
@@ -1665,7 +1667,9 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                               onChange={(e) => {
                                 const next = [...(selectedTask.checklist || [])];
                                 next[idx].endDate = e.target.value;
-                                setSelectedTask({ ...selectedTask, checklist: next });
+                                const updatedTask = { ...selectedTask, checklist: next };
+                                setSelectedTask(updatedTask);
+                                setTasks(tasks.map(t => t.id === selectedTask.id ? updatedTask : t));
                               }}
                               className="w-full px-2 py-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-lg text-[10px] font-bold text-slate-500 outline-none"
                               title="Tanggal Selesai (End Date)"
@@ -1767,18 +1771,26 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                       </div>
                     )}
 
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="flex flex-col gap-3">
                       {selectedTask.attachments?.map((attachment) => (
-                        <div key={attachment.id} className="group relative aspect-square bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-700 overflow-hidden shadow-sm hover:shadow-md transition-all">
+                        <div key={attachment.id} className="group relative flex items-center gap-4 p-3 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md hover:border-blue-200 dark:hover:border-blue-500/30 transition-all">
                           {attachment.type === 'file' && attachment.url.startsWith('data:image') ? (
-                            <img src={attachment.url} className="w-full h-full object-cover" alt={attachment.name} />
+                            <img src={attachment.url} className="w-12 h-12 rounded-xl object-cover shrink-0 border border-slate-100 dark:border-slate-800" alt={attachment.name} />
                           ) : (
-                            <div className="w-full h-full flex flex-col items-center justify-center p-4">
-                              {attachment.type === 'file' ? <FileText size={32} className="text-slate-300" /> : <Zap size={32} className="text-blue-500/30" />}
-                              <p className="text-[8px] font-bold text-slate-500 mt-2 text-center break-all line-clamp-2 px-2">{attachment.name}</p>
+                            <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shrink-0">
+                              {attachment.type === 'file' ? <FileText size={20} className="text-slate-400" /> : <Zap size={20} className="text-blue-500" />}
                             </div>
                           )}
-                          <div className="absolute top-2 right-2 z-10 flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                          <a 
+                            href={attachment.url} 
+                            target="_blank" 
+                            rel="noreferrer"
+                            className="flex-1 min-w-0 flex flex-col justify-center py-1"
+                          >
+                            <p className="text-sm font-bold text-slate-700 dark:text-slate-200 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{attachment.name}</p>
+                            <p className="text-[11px] font-medium text-slate-400 truncate">{attachment.type === 'link' ? attachment.url : 'File Lampiran'}</p>
+                          </a>
+                          <div className="opacity-0 group-hover:opacity-100 transition-all px-2">
                             <button
                               onClick={() => {
                                 const next = (selectedTask.attachments || []).filter(a => a.id !== attachment.id);
@@ -1786,29 +1798,23 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                                 setSelectedTask(updatedTask);
                                 setTasks(tasks.map(t => t.id === selectedTask.id ? updatedTask : t));
                               }}
-                              className="p-1 bg-white/90 hover:bg-rose-500 hover:text-white rounded-md shadow-sm transition-colors text-slate-500"
+                              className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-xl transition-all shrink-0"
                             >
-                              <X size={10} />
+                              <X size={16} />
                             </button>
                           </div>
-                          <a 
-                            href={attachment.url} 
-                            target="_blank" 
-                            rel="noreferrer"
-                            className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center"
-                          >
-                            <ChevronRight size={24} className="text-white hover:scale-125 transition-transform" />
-                          </a>
                         </div>
                       ))}
                       {attachmentType === 'file' && (
                         <button 
                           type="button"
                           onClick={() => attachmentFileInputRef.current?.click()}
-                          className="aspect-square bg-white dark:bg-slate-800 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl flex flex-col items-center justify-center gap-2 text-slate-400 hover:text-blue-600 hover:border-blue-200 transition-all group"
+                          className="flex items-center gap-4 p-3 bg-slate-50 dark:bg-slate-800/50 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl text-slate-400 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50 dark:hover:bg-blue-500/5 transition-all group"
                         >
-                          <Plus size={24} className="group-hover:scale-110 transition-transform" />
-                          <span className="text-[10px] font-black uppercase tracking-widest">{t('addAttachment')}</span>
+                          <div className="w-12 h-12 rounded-xl bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center shrink-0 border border-slate-100 dark:border-slate-700">
+                            <Plus size={20} className="group-hover:scale-110 transition-transform" />
+                          </div>
+                          <span className="text-xs font-bold tracking-wide">{t('addAttachment')}</span>
                         </button>
                       )}
                       <input 

@@ -72,7 +72,7 @@ model Tugas {
   status               String
   prioritas            String
   tipe                 String
-  batas_waktu          DateTime?
+
   apakah_diblokir      Boolean  @default(false)
   alasan_diblokir      String?  @db.Text
   tanggal_mulai        DateTime?

@@ -26,7 +26,7 @@ import {
   Paperclip
 } from 'lucide-react';
 import { motion } from 'motion/react';
-import { Task, User } from '../types';
+import { Task, User, Project } from '../types';
 import { mockKPIs } from '../services/apiService';
 import { cn } from '../lib/utils';
 import { useLanguage } from '../context/LanguageContext';
@@ -34,6 +34,7 @@ import { useLanguage } from '../context/LanguageContext';
 interface DashboardProps {
   tasks: Task[];
   users: User[];
+  projects?: Project[];
   user: User;
   darkMode: boolean;
   notifications: any[];
@@ -44,6 +45,7 @@ interface DashboardProps {
 export const Dashboard: React.FC<DashboardProps> = ({ 
   tasks, 
   users, 
+  projects,
   user, 
   darkMode, 
   notifications,
@@ -57,6 +59,33 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const isAdmin = user.role === 'Admin';
+
+  // Calculate unique team members based on projects and tasks
+  const teamMemberIds = new Set<string>();
+  // 1. Add current user
+  teamMemberIds.add(user.id);
+  // 2. Add from projects
+  if (projects) {
+    projects.forEach(p => {
+      if (p.id_pengguna) teamMemberIds.add(p.id_pengguna);
+      if (p.anggota && Array.isArray(p.anggota)) {
+        p.anggota.forEach((a: any) => {
+          if (typeof a === 'string') teamMemberIds.add(a);
+          else if (a.id_pengguna) teamMemberIds.add(a.id_pengguna);
+        });
+      }
+    });
+  }
+  // 3. Add from tasks
+  tasks.forEach(t => {
+    if (t.assignee) teamMemberIds.add(t.assignee);
+    if (t.contributors) t.contributors.forEach(c => teamMemberIds.add(c));
+  });
+
+  // Filter users based on teamMemberIds and deduplicate
+  const uniqueTeamUsersMap = new Map<string, User>();
+  users.filter(u => teamMemberIds.has(u.id)).forEach(u => uniqueTeamUsersMap.set(u.id, u));
+  const teamUsers = Array.from(uniqueTeamUsersMap.values());
 
   const handleExecute = (task: Task) => {
     if (task.status === 'To Do' || task.status === 'Backlog') {
@@ -541,7 +570,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </div>
             
             <div className="space-y-3 relative z-10">
-              {users.map(u => {
+              {teamUsers.map(u => {
                 const completedCount = tasks.filter(t => t.assignee === u.id && t.status === 'Done').length;
                 return { ...u, completedCount };
               })

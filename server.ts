@@ -1652,7 +1652,7 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
   // 4. Buat Tugas baru
   app.post("/api/tugas", async (req, res) => {
     try {
-      const { id_proyek, judul_tugas, deskripsi, status, prioritas, tipe, id_penanggung_jawab, checklist, comments, attachments, contributors, catatan_selesai, batas_waktu, tanggal_mulai, tanggal_selesai } = req.body;
+      const { id_proyek, judul_tugas, deskripsi, status, prioritas, tipe, id_penanggung_jawab, checklist, comments, attachments, contributors, catatan_selesai, tanggal_mulai, tanggal_selesai, apakah_diblokir, alasan_diblokir } = req.body;
       const newId = await generateId('tugas', 'id_tugas');
       
       let baseChecklistId = checklist && checklist.length > 0 ? parseInt((await generateId('daftarPeriksa', 'id_periksa')).match(/\d+$/)?.[0] || '1') : 1;
@@ -1688,9 +1688,10 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
           status,
           prioritas,
           tipe,
-          batas_waktu: batas_waktu ? new Date(batas_waktu) : null,
           tanggal_mulai: tanggal_mulai ? new Date(tanggal_mulai) : null,
           tanggal_selesai: tanggal_selesai ? new Date(tanggal_selesai) : null,
+          apakah_diblokir: apakah_diblokir || false,
+          alasan_diblokir: alasan_diblokir || null,
           ...(contributors && contributors.length > 0 && {
             kontributor: {
               create: contributors.map((c: string) => ({ id_pengguna: c }))
@@ -1742,7 +1743,7 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
   app.put("/api/tugas/:id", async (req, res) => {
     try {
       const { id } = req.params;
-      const { status, judul_tugas, deskripsi, prioritas, tipe, id_penanggung_jawab, checklist, comments, attachments, contributors, catatan_selesai, batas_waktu, tanggal_mulai, tanggal_selesai } = req.body;
+      const { status, judul_tugas, deskripsi, prioritas, tipe, id_penanggung_jawab, checklist, comments, attachments, contributors, catatan_selesai, tanggal_mulai, tanggal_selesai, apakah_diblokir, alasan_diblokir } = req.body;
       const tugasUpdated = await prisma.tugas.update({
         where: { id_tugas: id },
         data: {
@@ -1752,9 +1753,10 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
           ...(prioritas && { prioritas }),
           ...(tipe && { tipe }),
           ...(id_penanggung_jawab !== undefined && { id_penanggung_jawab }),
-          ...(batas_waktu !== undefined && { batas_waktu: batas_waktu ? new Date(batas_waktu) : null }),
           ...(tanggal_mulai !== undefined && { tanggal_mulai: tanggal_mulai ? new Date(tanggal_mulai) : null }),
           ...(tanggal_selesai !== undefined && { tanggal_selesai: tanggal_selesai ? new Date(tanggal_selesai) : null }),
+          ...(apakah_diblokir !== undefined && { apakah_diblokir }),
+          ...(alasan_diblokir !== undefined && { alasan_diblokir }),
         }
       });
 

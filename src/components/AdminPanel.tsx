@@ -25,8 +25,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ users, setUsers, current
     role: 'Member' as 'Admin' | 'Member'
   });
 
-  const filteredUsers = users.filter(u => 
-    u.name.toLowerCase().includes(search.toLowerCase()) || 
+  const filteredUsers = users.filter(u =>
+    u.name.toLowerCase().includes(search.toLowerCase()) ||
     u.email.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -38,11 +38,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ users, setUsers, current
 
   const handleOpenEdit = (user: User) => {
     setEditingUser(user);
-    setFormData({ 
-      name: user.name, 
-      email: user.email, 
-      whatsapp: user.whatsapp || '', 
-      role: user.role 
+    setFormData({
+      name: user.name,
+      email: user.email,
+      whatsapp: user.whatsapp || '',
+      role: user.role
     });
     setIsModalOpen(true);
   };
@@ -86,21 +86,21 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ users, setUsers, current
     <div className="space-y-8 relative">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 sticky top-0 z-20 px-8 py-6 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-transparent transition-all">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">{t('userManagement')}</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t('User Management')}</h1>
           <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium">{t('adminSubHeader')}</p>
         </div>
         <div className="flex items-center gap-4">
           <div className="relative w-72 group">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-500 group-focus-within:text-blue-500 transition-colors" size={20} />
-            <input 
-              type="text" 
+            <input
+              type="text"
               placeholder={t('searchUsers')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500/50 transition-all shadow-sm font-medium"
             />
           </div>
-          <button 
+          <button
             onClick={handleOpenAdd}
             className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20"
           >
@@ -124,7 +124,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ users, setUsers, current
             <tbody className="divide-y divide-slate-50 dark:divide-slate-700/50">
               <AnimatePresence>
                 {filteredUsers.map((user) => (
-                  <motion.tr 
+                  <motion.tr
                     key={user.id}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -146,8 +146,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ users, setUsers, current
                     <td className="px-10 py-8">
                       <div className={cn(
                         "inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-colors",
-                        user.role === 'Admin' 
-                          ? "bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-500/20" 
+                        user.role === 'Admin'
+                          ? "bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-500/20"
                           : "bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-200/50 dark:border-slate-800"
                       )}>
                         {user.role === 'Admin' ? <Shield size={16} /> : <UserIcon size={16} />}
@@ -159,13 +159,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ users, setUsers, current
                     </td>
                     <td className="px-10 py-8 text-right">
                       <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button 
+                        <button
                           onClick={() => handleOpenEdit(user)}
                           className="p-3 bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 rounded-2xl border border-blue-100 dark:border-blue-500/30 hover:bg-blue-600 hover:text-white transition-all shadow-sm"
                         >
                           <Edit2 size={20} />
                         </button>
-                        <button 
+                        <button
                           onClick={() => handleDeleteClick(user.id)}
                           disabled={user.id === currentUser.id}
                           className={cn(
@@ -189,20 +189,20 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ users, setUsers, current
       <AnimatePresence>
         {isModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-6 sm:p-10">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsModalOpen(false)}
               className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
             />
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               className="relative w-full max-w-xl bg-white dark:bg-slate-800 rounded-[2.5rem] shadow-2xl p-10 overflow-hidden"
             >
-              <button 
+              <button
                 onClick={() => setIsModalOpen(false)}
                 className="absolute top-8 right-8 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
               >
@@ -219,33 +219,33 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ users, setUsers, current
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('name')}</label>
-                  <input 
+                  <input
                     required
-                    type="text" 
+                    type="text"
                     value={formData.name}
-                    onChange={(e) => setFormData({...formData, name: e.target.value})}
-                    className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-2xl text-sm outline-none focus:ring-4 focus:ring-blue-500/10" 
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-2xl text-sm outline-none focus:ring-4 focus:ring-blue-500/10"
                   />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Email</label>
-                    <input 
+                    <input
                       required
-                      type="email" 
+                      type="email"
                       value={formData.email}
-                      onChange={(e) => setFormData({...formData, email: e.target.value})}
-                      className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-2xl text-sm outline-none focus:ring-4 focus:ring-blue-500/10" 
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-2xl text-sm outline-none focus:ring-4 focus:ring-blue-500/10"
                     />
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('whatsapp')}</label>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       placeholder="+62..."
                       value={formData.whatsapp}
-                      onChange={(e) => setFormData({...formData, whatsapp: e.target.value})}
-                      className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-2xl text-sm outline-none focus:ring-4 focus:ring-blue-500/10" 
+                      onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
+                      className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-2xl text-sm outline-none focus:ring-4 focus:ring-blue-500/10"
                     />
                   </div>
                 </div>
@@ -256,11 +256,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ users, setUsers, current
                       <button
                         key={role}
                         type="button"
-                        onClick={() => setFormData({...formData, role: role as 'Admin' | 'Member'})}
+                        onClick={() => setFormData({ ...formData, role: role as 'Admin' | 'Member' })}
                         className={cn(
                           "flex-1 py-4 rounded-2xl font-bold text-sm transition-all border",
-                          formData.role === role 
-                            ? "bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-600/20" 
+                          formData.role === role
+                            ? "bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-600/20"
                             : "bg-slate-50 dark:bg-slate-900 text-slate-500 border-slate-100 dark:border-slate-700"
                         )}
                       >
@@ -271,7 +271,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ users, setUsers, current
                 </div>
 
                 <div className="pt-6">
-                  <button 
+                  <button
                     type="submit"
                     className="w-full py-5 bg-blue-600 text-white rounded-2xl font-black uppercase tracking-[0.2em] text-xs hover:bg-blue-700 transition-all shadow-xl shadow-blue-100 dark:shadow-none"
                   >
@@ -288,14 +288,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ users, setUsers, current
       <AnimatePresence>
         {isDeleteModalOpen && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 sm:p-10">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsDeleteModalOpen(false)}
               className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
             />
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -311,13 +311,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ users, setUsers, current
                 {t('deleteConfirm')}
               </p>
               <div className="flex gap-4">
-                <button 
+                <button
                   onClick={() => setIsDeleteModalOpen(false)}
                   className="flex-1 py-4 bg-slate-50 dark:bg-slate-900 text-slate-500 rounded-2xl font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-all border border-slate-100 dark:border-slate-700"
                 >
                   {t('cancel')}
                 </button>
-                <button 
+                <button
                   onClick={confirmDelete}
                   className="flex-1 py-4 bg-rose-600 text-white rounded-2xl font-bold hover:bg-rose-700 transition-all shadow-lg shadow-rose-100 dark:shadow-none"
                 >
