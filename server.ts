@@ -10,6 +10,30 @@ import nodemailer from "nodemailer";
 
 dotenv.config();
 
+// Helper untuk retry & fallback otomatis saat model Google mengalami 503 (Overloaded / High Demand) atau 429
+async function generateAIContent(ai: GoogleGenAI, contents: any, config?: any): Promise<any> {
+  const models = ["gemini-flash-lite-latest", "gemini-2.5-flash-lite", "gemini-3-flash-preview", "gemini-flash-latest", "gemini-3.5-flash"];
+  let lastError: any;
+  for (const model of models) {
+    try {
+      return await ai.models.generateContent({
+        model,
+        contents,
+        config
+      });
+    } catch (err: any) {
+      lastError = err;
+      const status = err?.status || err?.code;
+      if (status === 503 || status === 429 || status === 404 || err?.message?.includes("503") || err?.message?.includes("429") || err?.message?.includes("overloaded") || err?.message?.includes("high demand")) {
+        console.warn(`[AI Fallback] Model ${model} unavailable (${status || 'overloaded'}), trying next model...`);
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw lastError;
+}
+
 // In-memory OTP Store
 const otpStore = new Map<string, { otp: string, expiresAt: number }>();
 
@@ -89,9 +113,7 @@ async function startServer() {
                               .substring(0, 10000);
 
         const ai = new GoogleGenAI({ apiKey });
-        const result = await ai.models.generateContent({
-          model: "gemini-1.5-flash",
-          contents: `
+        const result = await generateAIContent(ai, `
           Analyze the following content from an external source (${url}).
           Identify any maintenance issues, bugs, or required tasks mentioned.
           For each issue, determine:
@@ -102,23 +124,19 @@ async function startServer() {
 
           Content:
           ${cleanText}
-
-          Return the result as a JSON array of objects.
-        `,
-          config: {
-            responseMimeType: "application/json",
-            responseSchema: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  title: { type: Type.STRING },
-                  description: { type: Type.STRING },
-                  priority: { type: Type.STRING, enum: ["Low", "Medium", "High"] },
-                  type: { type: Type.STRING, enum: ["Maintenance", "Bug Fix", "Development"] }
-                },
-                required: ["title", "description", "priority", "type"]
-              }
+        `, {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                title: { type: Type.STRING },
+                description: { type: Type.STRING },
+                priority: { type: Type.STRING, enum: ["Low", "Medium", "High"] },
+                type: { type: Type.STRING, enum: ["Maintenance", "Bug Fix", "Development"] }
+              },
+              required: ["title", "description", "priority", "type"]
             }
           }
         });
@@ -158,16 +176,13 @@ async function startServer() {
       if (!isApiKeyInvalid) {
         try {
           const ai = new GoogleGenAI({ apiKey });
-          const response = await ai.models.generateContent({
-            model: "gemini-1.5-flash",
-            contents: `Analyze the priority for this task:
+          const response = await generateAIContent(ai, `Analyze the priority for this task:
               Title: ${task.title}
               Description: ${task.description}
               Type: ${task.type}
               Deadline: ${task.deadline}
               
-              Based on standard IT practices, return ONLY one word: Low, Medium, or High.`,
-          });
+              Based on standard IT practices, return ONLY one word: Low, Medium, or High.`);
           return res.json({ priority: response.text.trim() });
         } catch (apiError) {
           console.error("Gemini Priority Analysis failed, using fallback:", apiError);
@@ -224,10 +239,7 @@ async function startServer() {
           5. Isi mencakup: Ringkasan Eksekutif, Detail Tugas, Analisis Kendala, dan Rekomendasi/Tindak Lanjut.
           6. Buat bahasanya profesional, baku, dan jelas.`;
 
-          const response = await ai.models.generateContent({
-            model: "gemini-1.5-flash",
-            contents: prompt
-          });
+          const response = await generateAIContent(ai, prompt);
           
           let html = response.text.trim();
           if (html.startsWith('\`\`\`html')) html = html.substring(7);
@@ -315,22 +327,18 @@ async function startServer() {
       if (!isApiKeyInvalid) {
         try {
           const ai = new GoogleGenAI({ apiKey });
-          const response = await ai.models.generateContent({
-            model: "gemini-1.5-flash",
-            contents: `Sort these tasks by priority (High to Low). 
+          const response = await generateAIContent(ai, `Sort these tasks by priority (High to Low). 
               CRITICAL: Prioritize Maintenance tasks and tasks that mention urgent issues, bugs, or system downtime.
               Tasks:
               ${tasks.map((t:any) => `- ID: ${t.id}, Title: ${t.title}, Priority: ${t.priority}, Type: ${t.type}, Description: ${t.description}`).join('\n')}
-              Return a JSON array of task IDs in the sorted order.`,
-            config: {
+              Return a JSON array of task IDs in the sorted order.`, {
               responseMimeType: "application/json",
               responseSchema: {
                 type: Type.OBJECT,
                 properties: { sortedIds: { type: Type.ARRAY, items: { type: Type.STRING } } },
                 required: ["sortedIds"]
               }
-            }
-          });
+            });
           return res.json(JSON.parse(response.text));
         } catch (apiError) {
           console.error("Gemini Task Sorting failed, using fallback:", apiError);
@@ -364,9 +372,7 @@ async function startServer() {
       if (!isApiKeyInvalid) {
         try {
           const ai = new GoogleGenAI({ apiKey });
-          const response = await ai.models.generateContent({
-            model: "gemini-1.5-flash",
-            contents: `You are an expert technical maintenance assistant. A team member is asking for help with a maintenance task.
+          const response = await generateAIContent(ai, `You are an expert technical maintenance assistant. A team member is asking for help with a maintenance task.
               Language Requirement: Respond strictly in ${language === 'id' ? 'Indonesian (Bahasa Indonesia)' : 'English'}.
               Context:
               Project: ${context.projectTitle}
@@ -384,8 +390,7 @@ async function startServer() {
               4. Use simple plain text.
               5. Use simple hyphens (-) for bullet points if needed.
               6. NO special icons or emojis.
-              7. NO formatting characters.`,
-          });
+              7. NO formatting characters.`);
           return res.json({ result: response.text.replace(/[#*]/g, '').trim() });
         } catch (apiError) {
           console.error("Gemini Consultation failed, using fallback:", apiError);
@@ -1025,10 +1030,7 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
             ]
           }`;
 
-          const response = await ai.models.generateContent({
-            model: "gemini-1.5-flash",
-            contents: prompt,
-            config: {
+          const response = await generateAIContent(ai, prompt, {
               responseMimeType: "application/json",
               responseSchema: {
                 type: Type.OBJECT,
@@ -1057,8 +1059,7 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
                 },
                 required: ["tasks"]
               }
-            }
-          });
+            });
 
           const generatedData = JSON.parse(response.text);
           return res.json(generatedData);
@@ -1458,20 +1459,16 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
       if (!isApiKeyInvalid) {
         try {
           const ai = new GoogleGenAI({ apiKey });
-          const response = await ai.models.generateContent({
-            model: "gemini-1.5-flash",
-            contents: `Server ${serverName} (ID: ${serverId}) melaporkan status ${status} untuk metrik ${metric} dengan nilai ${value}. 
+          const response = await generateAIContent(ai, `Server ${serverName} (ID: ${serverId}) melaporkan status ${status} untuk metrik ${metric} dengan nilai ${value}. 
             Deskripsi gangguan: "${description}".
             Berikan tepat 3 langkah pemecahan masalah (troubleshooting checklist) yang ringkas dan taktis untuk teknisi. 
-            Kembalikan hasilnya sebagai JSON array berisi string saja. Contoh: ["langkah 1", "langkah 2", "langkah 3"].`,
-            config: {
+            Kembalikan hasilnya sebagai JSON array berisi string saja. Contoh: ["langkah 1", "langkah 2", "langkah 3"].`, {
               responseMimeType: "application/json",
               responseSchema: {
                 type: Type.ARRAY,
                 items: { type: Type.STRING }
               }
-            }
-          });
+            });
           aiChecklist = JSON.parse(response.text);
         } catch (aiErr) {
           console.error("Gemini AI Checklist Generation failed, using fallback:", aiErr);
