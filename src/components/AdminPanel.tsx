@@ -110,13 +110,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ users, setUsers, current
         </div>
       </header>
 
-      <div className="mx-8 bg-white dark:bg-slate-800 rounded-[2.5rem] border border-slate-100 dark:border-slate-700 shadow-xl overflow-hidden">
+      <div className="mx-8 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/50 dark:bg-slate-900/30 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] border-b border-slate-100 dark:border-slate-700">
-                <th className="px-10 py-6">{t('name')}</th>
-                <th className="px-10 py-6">{t('role')}</th>
+                <th className="px-10 py-6">{t('fullName')}</th>
+                <th className="px-10 py-6">Role</th>
                 <th className="px-10 py-6">{t('whatsapp')}</th>
                 <th className="px-10 py-6 text-right">{t('actions')}</th>
               </tr>
@@ -158,7 +158,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ users, setUsers, current
                       <span className="text-sm font-medium text-slate-600 dark:text-slate-400">{user.whatsapp || '-'}</span>
                     </td>
                     <td className="px-10 py-8 text-right">
-                      <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center justify-end gap-3">
                         <button
                           onClick={() => handleOpenEdit(user)}
                           className="p-3 bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 rounded-2xl border border-blue-100 dark:border-blue-500/30 hover:bg-blue-600 hover:text-white transition-all shadow-sm"
@@ -200,7 +200,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ users, setUsers, current
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-xl bg-white dark:bg-slate-800 rounded-[2.5rem] shadow-2xl p-10 overflow-hidden"
+              className="relative w-full max-w-xl bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-10 overflow-hidden"
             >
               <button
                 onClick={() => setIsModalOpen(false)}
@@ -218,7 +218,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ users, setUsers, current
 
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('name')}</label>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('fullName')}</label>
                   <input
                     required
                     type="text"
@@ -299,7 +299,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ users, setUsers, current
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-md bg-white dark:bg-slate-800 rounded-[2.5rem] shadow-2xl p-10 overflow-hidden text-center"
+              className="relative w-full max-w-md bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-10 overflow-hidden text-center"
             >
               <div className="w-20 h-20 bg-rose-50 dark:bg-rose-500/10 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-6">
                 <Trash2 size={32} />

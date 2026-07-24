@@ -69,7 +69,7 @@ export const Header: React.FC<HeaderProps> = ({
           {darkMode ? <Sun size={18} className="pointer-events-none" /> : <Moon size={18} className="pointer-events-none" />}
         </button>
 
-        {/* Language Switcher - hidden on mobile */}
+        {/* Language Switcher */}
         <div className={cn(
           "hidden md:flex items-center p-1 rounded-2xl border transition-all",
           darkMode 
@@ -103,6 +103,7 @@ export const Header: React.FC<HeaderProps> = ({
             ID
           </button>
         </div>
+
 
         {/* Notifications */}
         <button 

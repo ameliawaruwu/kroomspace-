@@ -8,7 +8,8 @@ import {
   X,
   User as UserIcon,
   Users,
-  ChevronRight
+  ChevronRight,
+  Key
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
@@ -34,6 +35,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, user,
 
   if (user.role === 'Admin') {
     menuItems.push({ id: 'admin', label: t('userManagement'), icon: Users });
+    menuItems.push({ id: 'ai-settings', label: t('aiSettings'), icon: Key });
     menuItems.push({ id: 'settings', label: t('profileSettings'), icon: UserIcon });
   }
 

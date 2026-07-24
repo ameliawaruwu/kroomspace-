@@ -697,7 +697,7 @@ async function main() {
   await prisma.tugas.create({ data: {
     id_tugas: 'T001', id_proyek: 'PR001', id_penanggung_jawab: 'P002',
     judul_tugas: 'Perbaiki Bug Login', deskripsi: 'Pengguna tidak dapat login menggunakan akun Google SSO.',
-    status: 'In Progress', prioritas: 'High', tipe: 'Bug Fix', batas_waktu: new Date('2026-04-06'), dibuat_pada: new Date('2026-04-01'),
+    status: 'In Progress', prioritas: 'High', tipe: 'Bug Fix', tanggal_selesai: new Date('2026-04-06'), dibuat_pada: new Date('2026-04-01'),
     kontributor: { create: [{ id_pengguna: 'P001' }, { id_pengguna: 'P003' }] },
     komentar: { create: [{ id_komentar: 'KM001', id_pengguna: 'P001', isi_komentar: 'Saya juga melihat bug ini di perangkat seluler. Perlu ditangani segera.', dibuat_pada: new Date('2026-04-05') }] },
     daftar_periksa: { create: [
@@ -711,7 +711,7 @@ async function main() {
   await prisma.tugas.create({ data: {
     id_tugas: 'T002', id_proyek: 'PR001', id_penanggung_jawab: 'P003',
     judul_tugas: 'Error API pada Dasbor', deskripsi: 'Grafik statistik tidak memuat data dari server.',
-    status: 'To Do', prioritas: 'High', tipe: 'Bug Fix', batas_waktu: new Date('2026-04-07'), dibuat_pada: new Date('2026-04-02'),
+    status: 'To Do', prioritas: 'High', tipe: 'Bug Fix', tanggal_selesai: new Date('2026-04-07'), dibuat_pada: new Date('2026-04-02'),
     kontributor: { create: [{ id_pengguna: 'P002' }] },
     daftar_periksa: { create: [
       { id_periksa: 'CL005', teks_periksa: 'Cek endpoint API statistik di server', apakah_selesai: false },
@@ -734,7 +734,7 @@ async function main() {
   await prisma.tugas.create({ data: {
     id_tugas: 'T004', id_proyek: 'PR002', id_penanggung_jawab: 'P001',
     judul_tugas: 'Website Down (Pemeliharaan Darurat)', deskripsi: 'Halaman utama tidak dapat diakses.',
-    status: 'To Do', prioritas: 'High', tipe: 'Maintenance', batas_waktu: new Date('2026-04-05'), dibuat_pada: new Date('2026-04-05'),
+    status: 'To Do', prioritas: 'High', tipe: 'Maintenance', tanggal_selesai: new Date('2026-04-05'), dibuat_pada: new Date('2026-04-05'),
     kontributor: { create: [{ id_pengguna: 'P002' }, { id_pengguna: 'P003' }] },
     komentar: { create: [{ id_komentar: 'KM002', id_pengguna: 'P002', isi_komentar: 'Ada masalah di konfigurasi Nginx.', dibuat_pada: new Date('2026-04-05') }] },
     daftar_periksa: { create: [
@@ -748,7 +748,7 @@ async function main() {
   await prisma.tugas.create({ data: {
     id_tugas: 'T005', id_proyek: 'PR002', id_penanggung_jawab: 'P002',
     judul_tugas: 'Server Overload (CPU 95%)', deskripsi: 'CPU server mencapai 95% menyebabkan respons lambat.',
-    status: 'Review', prioritas: 'High', tipe: 'Maintenance', batas_waktu: new Date('2026-04-05'), dibuat_pada: new Date('2026-04-05'),
+    status: 'Review', prioritas: 'High', tipe: 'Maintenance', tanggal_selesai: new Date('2026-04-05'), dibuat_pada: new Date('2026-04-05'),
     daftar_periksa: { create: [
       { id_periksa: 'CL015', teks_periksa: 'Identifikasi proses penyebab beban tinggi via htop', apakah_selesai: true  },
       { id_periksa: 'CL016', teks_periksa: 'Terminasi proses zombie',                             apakah_selesai: true  },
@@ -772,7 +772,7 @@ async function main() {
   await prisma.tugas.create({ data: {
     id_tugas: 'T007', id_proyek: 'PR002', id_penanggung_jawab: 'P004',
     judul_tugas: 'Backup Database Bulanan', deskripsi: 'Eksekusi prosedur backup dan verifikasi integritas data.',
-    status: 'Done', prioritas: 'Medium', tipe: 'Maintenance', batas_waktu: new Date('2026-04-01'), dibuat_pada: new Date('2026-04-01'),
+    status: 'Done', prioritas: 'Medium', tipe: 'Maintenance', tanggal_selesai: new Date('2026-04-01'), dibuat_pada: new Date('2026-04-01'),
     daftar_periksa: { create: [
       { id_periksa: 'CL023', teks_periksa: 'Jalankan skrip backup otomatis',       apakah_selesai: true },
       { id_periksa: 'CL024', teks_periksa: 'Verifikasi integritas file backup',     apakah_selesai: true },

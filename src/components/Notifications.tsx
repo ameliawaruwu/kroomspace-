@@ -72,37 +72,38 @@ export const Notifications: React.FC<NotificationsProps> = ({
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
       <header className={cn(
-        "flex flex-col md:flex-row justify-between items-start md:items-center sticky top-0 z-30 px-8 py-6 backdrop-blur-xl border-b transition-all gap-4",
+        "sticky top-0 z-30 py-6 backdrop-blur-xl border-b transition-all",
         darkMode 
           ? "bg-[#0D1B35]/90 border-[#1E3A5F]/40" 
           : "bg-[#F4F8FC]/90 border-[#BFDFFF]/30"
       )}>
-        <div>
-          <h1 className={cn("text-3xl font-black tracking-tight", darkMode ? "text-white" : "text-slate-800")}>{t('notifHeader')}</h1>
-          <p className={cn("mt-1 font-medium text-sm", darkMode ? "text-slate-400" : "text-slate-500")}>{t('notifSubHeader')}</p>
+        <div className="max-w-4xl mx-auto px-8 w-full flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h1 className={cn("text-3xl font-black tracking-tight", darkMode ? "text-white" : "text-slate-800")}>{t('notifHeader')}</h1>
+            <p className={cn("mt-1 font-medium text-sm", darkMode ? "text-slate-400" : "text-slate-500")}>{t('notifSubHeader')}</p>
+          </div>
+          <button 
+            onClick={() => {
+              const unread = notifications.filter(n => (n.userId === user.id || !n.userId) && !n.read);
+              setNotifications(notifications.map(n => (n.userId === user.id || !n.userId) ? { ...n, read: true } : n));
+              unread.forEach(n => {
+                fetch(`/api/notifikasi/${n.id}`, {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ sudah_dibaca: true })
+                }).catch(console.error);
+              });
+            }}
+            className="px-6 py-2.5 bg-slate-900 dark:bg-slate-800 text-white dark:text-slate-200 text-sm font-bold rounded-2xl hover:bg-[#2D7FEA] transition-all shadow-lg shadow-[#2D7FEA]/10 shrink-0"
+          >
+            {t('markAllRead')}
+          </button>
         </div>
-        <button 
-          onClick={() => {
-            const unread = notifications.filter(n => (n.userId === user.id || !n.userId) && !n.read);
-            setNotifications(notifications.map(n => (n.userId === user.id || !n.userId) ? { ...n, read: true } : n));
-            unread.forEach(n => {
-              fetch(`/api/notifikasi/${n.id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ sudah_dibaca: true })
-              }).catch(console.error);
-            });
-          }}
-          className="px-6 py-2.5 bg-slate-900 dark:bg-slate-800 text-white dark:text-slate-200 text-sm font-bold rounded-2xl hover:bg-[#2D7FEA] transition-all shadow-lg shadow-[#2D7FEA]/10"
-        >
-          {t('markAllRead')}
-        </button>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 px-8 pb-10">
-        <div className="lg:col-span-2 space-y-4">
+      <div className="max-w-4xl mx-auto px-8 pb-10 space-y-4">
           {userNotifications.length === 0 && (
-            <div className="text-center py-20 bg-white dark:bg-slate-800/40 rounded-[2.5rem] border border-dashed border-slate-200 dark:border-slate-700">
+            <div className="text-center py-20 bg-white dark:bg-slate-800/40 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
                <Bell size={48} className="mx-auto mb-4 text-slate-200" />
                <p className="text-slate-400 font-bold">{t('notifEmpty')}</p>
             </div>
@@ -115,7 +116,7 @@ export const Notifications: React.FC<NotificationsProps> = ({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, x: 20 }}
                 className={cn(
-                  "p-6 rounded-[2.5rem] border transition-all flex flex-col md:flex-row gap-6 relative overflow-hidden group",
+                  "p-6 rounded-2xl border transition-all flex flex-col md:flex-row gap-6 relative overflow-hidden group",
                   n.read 
                     ? "bg-white border-slate-100 dark:bg-slate-800/40 dark:border-slate-800 opacity-60 shadow-sm" 
                     : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 shadow-xl shadow-slate-200/50 dark:shadow-none"
@@ -193,9 +194,6 @@ export const Notifications: React.FC<NotificationsProps> = ({
               </motion.div>
             ))}
           </AnimatePresence>
-        </div>
-
-
       </div>
     </div>
   );

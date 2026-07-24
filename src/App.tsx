@@ -9,12 +9,50 @@ import { Auth } from './components/Auth';
 import { AdminPanel } from './components/AdminPanel';
 import { LandingPage } from './components/LandingPage';
 import { ProfileSettings } from './components/ProfileSettings';
+import { ApiKeySettings } from './components/ApiKeySettings';
 import { mockUsers as initialUsers, mockTasks, mockProjects, mockNotifications } from './services/apiService';
 import { Task, Project, User, Notification } from './types';
 import { motion, AnimatePresence } from 'motion/react';
 import { LogIn, ShieldCheck, User as UserIcon, Moon, Sun, CheckCircle2 } from 'lucide-react';
 import { cn } from './lib/utils';
 import { useLanguage } from './context/LanguageContext';
+
+function sortTasksBySavedOrder(tasksArray: any[]): any[] {
+  const projectsGroup: { [key: string]: any[] } = {};
+  tasksArray.forEach(task => {
+    if (!projectsGroup[task.projectId]) {
+      projectsGroup[task.projectId] = [];
+    }
+    projectsGroup[task.projectId].push(task);
+  });
+
+  const sortedTasks: any[] = [];
+
+  Object.keys(projectsGroup).forEach(projId => {
+    const projTasks = projectsGroup[projId];
+    const savedOrderJson = localStorage.getItem(`task_order_${projId}`);
+    if (savedOrderJson) {
+      try {
+        const orderIds: string[] = JSON.parse(savedOrderJson);
+        const orderMap = new Map<string, number>();
+        orderIds.forEach((id, index) => {
+          orderMap.set(id, index);
+        });
+
+        projTasks.sort((a, b) => {
+          const indexA = orderMap.has(a.id) ? orderMap.get(a.id)! : 999999;
+          const indexB = orderMap.has(b.id) ? orderMap.get(b.id)! : 999999;
+          return indexA - indexB;
+        });
+      } catch (e) {
+        console.error("Failed to parse saved task order", e);
+      }
+    }
+    sortedTasks.push(...projTasks);
+  });
+
+  return sortedTasks;
+}
 
 export default function App() {
   const { language, setLanguage, t } = useLanguage();
@@ -150,7 +188,7 @@ export default function App() {
                 attachments: t.lampiran?.map((a:any) => ({ id: a.id_lampiran, name: a.nama_file, url: a.tautan_url, type: a.tipe_lampiran, createdAt: a.dibuat_pada })) || [],
                 contributors: t.kontributor?.map((c:any) => c.id_pengguna) || [],
              }));
-             setTasks(mappedTasks);
+             setTasks(sortTasksBySavedOrder(mappedTasks));
            }
         })
         .catch(console.error);
@@ -196,7 +234,7 @@ export default function App() {
                 attachments: t.lampiran?.map((a:any) => ({ id: a.id_lampiran, name: a.nama_file, url: a.tautan_url, type: a.tipe_lampiran, createdAt: a.dibuat_pada })) || [],
                 contributors: t.kontributor?.map((c:any) => c.id_pengguna) || [],
              }));
-              setTasks(mappedTasks);
+              setTasks(sortTasksBySavedOrder(mappedTasks));
            }
         })
         .catch(console.error);
@@ -468,9 +506,15 @@ export default function App() {
               ...t,
               projectId: t.projectId || currentProjectId
             }));
+
+            // Save the new task ordering for this project
+            const taskIdsOrder = newTasksWithProject.map(t => t.id);
+            localStorage.setItem(`task_order_${currentProjectId}`, JSON.stringify(taskIdsOrder));
+
             setTasks(prevTasks => {
               const otherTasks = prevTasks.filter(t => t.projectId !== currentProjectId);
-              return [...otherTasks, ...newTasksWithProject];
+              const merged = [...otherTasks, ...newTasksWithProject];
+              return sortTasksBySavedOrder(merged);
             });
             showSuccess(t('success'));
           }} 
@@ -620,6 +664,12 @@ export default function App() {
           darkMode={darkMode}
         />
       );
+      case 'ai-settings': return (
+        <ApiKeySettings 
+          darkMode={darkMode}
+          onSuccess={showSuccess}
+        />
+      );
       default: return <Dashboard tasks={tasks} users={users} user={currentUser} darkMode={darkMode} />;
     }
   };
@@ -632,7 +682,7 @@ export default function App() {
       )}>
         <div className="absolute inset-0 bg-gradient-to-tr from-[#3FA9F5]/10 via-transparent to-[#2D7FEA]/10 animate-pulse" />
         <div className={cn(
-          "p-10 rounded-[2.5rem] border backdrop-blur-xl flex flex-col items-center justify-center gap-6 shadow-2xl relative z-10",
+          "p-10 rounded-2xl border backdrop-blur-xl flex flex-col items-center justify-center gap-6 shadow-2xl relative z-10",
           darkMode ? "bg-[#1C2B45]/80 border-[#1E3A5F]/60" : "bg-white/80 border-[#BFDFFF]/40 shadow-slate-200/60"
         )}>
           <div className="relative w-20 h-20">

@@ -540,7 +540,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
             </div>
           </header>
 
-          <div className="px-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="px-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             {projects.map((project) => {
               const projectTasks = tasks.filter(t => t.projectId === project.id);
               const completedCount = projectTasks.filter(t => t.status === 'Done').length;
@@ -555,7 +555,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                     setCurrentProjectId(project.id);
                     setIsBoardOpen(true);
                   }}
-                  className="bg-white dark:bg-slate-800 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-2xl hover:shadow-blue-500/10 hover:border-blue-100 dark:hover:border-blue-500/30 transition-all cursor-pointer group"
+                  className="bg-white dark:bg-slate-800 p-8 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-2xl hover:shadow-blue-500/10 hover:border-blue-100 dark:hover:border-blue-500/30 transition-all cursor-pointer group"
                 >
                   <div className="flex justify-between items-start mb-6">
                     <div className={cn(
@@ -570,14 +570,16 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   </div>
 
                   <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2 group-hover:text-blue-600 transition-colors">
-                    {project.name}
+                    {t(project.name)}
                   </h3>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 mb-8 font-medium leading-relaxed">{project.description}</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 mb-8 font-medium leading-relaxed">{t(project.description)}</p>
 
                   <div className="space-y-4">
                     <div className="flex justify-between items-end text-[10px] font-black uppercase tracking-wider">
-                      <span className="text-blue-600 dark:text-blue-400">{progress}% Complete</span>
-                      <span className="text-slate-400 dark:text-slate-500">{completedCount} / {projectTasks.length} Tasks</span>
+                      <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                        {progress}% {t('taskPercentComplete')}
+                      </span>
+                      <span className="text-slate-400 dark:text-slate-500">{completedCount} / {projectTasks.length} {t('tasksLabel')}</span>
                     </div>
                     <div className="h-2 bg-slate-50 dark:bg-slate-900 rounded-full overflow-hidden border border-slate-100 dark:border-slate-800">
                       <motion.div 
@@ -637,7 +639,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                 setNewProjectMode('Project');
                 setShowCreateModal(true);
               }}
-              className="h-full min-h-[320px] bg-white/50 dark:bg-slate-800/50 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-[2.5rem] flex flex-col items-center justify-center gap-4 text-slate-400 hover:text-blue-500 hover:bg-white dark:hover:bg-slate-800 hover:border-blue-200 transition-all group shadow-sm hover:shadow-xl hover:shadow-blue-500/5"
+              className="h-full min-h-[320px] bg-white/50 dark:bg-slate-800/50 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl flex flex-col items-center justify-center gap-4 text-slate-400 hover:text-blue-500 hover:bg-white dark:hover:bg-slate-800 hover:border-blue-200 transition-all group shadow-sm hover:shadow-xl hover:shadow-blue-500/5"
               id="btn_create_project"
             >
               <div className="w-16 h-16 rounded-full bg-white dark:bg-slate-700 flex items-center justify-center group-hover:shadow-lg transition-all border border-slate-100 dark:border-slate-600">
@@ -854,7 +856,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                                   id="btn_edit_proyek_board"
                                 >
                                   <Settings size={18} className="text-blue-500" />
-                                  Edit Proyek
+                                  {t('editProject')}
                                 </button>
                                 <button 
                                   onClick={() => {
@@ -865,7 +867,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                                   id="btn_delete_proyek_board"
                                 >
                                   <Trash2 size={18} className="text-rose-500" />
-                                  Hapus Proyek
+                                  {t('deleteProject')}
                                 </button>
                               </>
                             )}
@@ -885,10 +887,10 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                 <FolderKanban className="w-12 h-12 text-blue-500" />
               </div>
               <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
-                Papan Kanban Kosong
+                {t('emptyBoard')}
               </h2>
               <p className="text-slate-500 dark:text-slate-400 max-w-md">
-                Anda belum memiliki proyek. Silakan buat proyek baru melalui menu di sidebar sebelah kiri untuk mulai mengatur tugas Anda.
+                {t('emptyBoardDesc')}
               </p>
             </div>
           ) : (
@@ -1033,10 +1035,10 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
 
                               // Status badge config
                               const statusBadge = (() => {
-                                if (task.status === 'Done') return { label: 'Complete', color: 'text-emerald-600 bg-emerald-50 border-emerald-200', dot: 'bg-emerald-500' };
-                                if (task.status === 'In Progress') return { label: 'On Track', color: 'text-[#3FA9F5] bg-blue-50 border-blue-200', dot: 'bg-[#3FA9F5]' };
-                                if (task.status === 'Review') return { label: 'In Review', color: 'text-violet-600 bg-violet-50 border-violet-200', dot: 'bg-violet-500' };
-                                return { label: 'Not Started', color: 'text-slate-500 bg-slate-100 border-slate-200', dot: 'bg-slate-400' };
+                                if (task.status === 'Done') return { label: t('statusComplete'), color: 'text-emerald-600 bg-emerald-50 border-emerald-200', dot: 'bg-emerald-500' };
+                                if (task.status === 'In Progress') return { label: t('statusOnTrack'), color: 'text-[#3FA9F5] bg-blue-50 border-blue-200', dot: 'bg-[#3FA9F5]' };
+                                if (task.status === 'Review') return { label: t('statusInReview'), color: 'text-violet-600 bg-violet-50 border-violet-200', dot: 'bg-violet-500' };
+                                return { label: t('statusNotStarted'), color: 'text-slate-500 bg-slate-100 border-slate-200', dot: 'bg-slate-400' };
                               })();
 
                               const priorityBadge = task.priority === 'High'
@@ -1092,20 +1094,20 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
 
                                         {/* Row 2: Title */}
                                         <h4 id={`task-title-${task.id}`} className={cn("font-bold text-[14px] leading-snug line-clamp-2", darkMode ? "text-white" : "text-slate-800")}>
-                                          {task.title}
+                                          {t(task.title)}
                                         </h4>
 
                                         {/* Row 3: Description */}
                                         {task.description && (
                                           <p className={cn("text-[11px] line-clamp-2 leading-relaxed", darkMode ? "text-slate-400" : "text-slate-500")}>
-                                            {task.description}
+                                            {t(task.description)}
                                           </p>
                                         )}
 
                                         {/* Row 4: Assignees label + avatars */}
                                         <div className="flex items-center justify-between">
                                           <div className="flex items-center gap-2">
-                                            <span className={cn("text-[11px] font-medium", darkMode ? "text-slate-500" : "text-slate-400")}>Assignees :</span>
+                                            <span className={cn("text-[11px] font-medium", darkMode ? "text-slate-500" : "text-slate-400")}>{t('assignees')} :</span>
                                             <div className="flex -space-x-1.5">
                                               {assigneeUser && (
                                                 <img
@@ -1152,11 +1154,11 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                                         <div className={cn("flex items-center gap-4 pt-2 border-t text-[11px]", darkMode ? "border-[#1E3A5F]/50" : "border-slate-100")}>
                                           <div className={cn("flex items-center gap-1", darkMode ? "text-slate-500" : "text-slate-400")}>
                                             <MessageSquare size={11} />
-                                            <span>{task.comments?.length || 0} Comments</span>
+                                            <span>{task.comments?.length || 0} {t('comments')}</span>
                                           </div>
                                           <div className={cn("flex items-center gap-1", darkMode ? "text-slate-500" : "text-slate-400")}>
                                             <Paperclip size={11} />
-                                            <span>{task.attachments?.filter(a => a.type === 'link').length || 0} Links</span>
+                                            <span>{task.attachments?.filter(a => a.type === 'link').length || 0} {t('links')}</span>
                                           </div>
                                           {checkTotal > 0 && (
                                             <div className={cn("flex items-center gap-1", darkMode ? "text-slate-500" : "text-slate-400")}>
@@ -1186,7 +1188,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                                             )}
                                           >
                                             <BookOpen size={11} />
-                                            Lihat Dok
+                                            {t('docView')}
                                             {documentations.filter(d => d.taskId === task.id).length > 0 && (
                                               <span className="ml-0.5 w-4 h-4 rounded-full text-white text-[8px] font-black flex items-center justify-center" style={{ background: '#3FA9F5' }}>
                                                 {documentations.filter(d => d.taskId === task.id).length}
@@ -1204,7 +1206,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                                             style={{ background: 'linear-gradient(135deg, #3FA9F5, #2D7FEA)', boxShadow: '0 2px 10px rgba(63,169,245,0.25)' }}
                                           >
                                             <FilePlus size={11} />
-                                            Tambah Dok
+                                            {t('docAdd')}
                                           </button>
                                         </div>
                                       </div>
@@ -1255,7 +1257,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                           onSuccess(t('columnAdded'));
                         }
                       }}
-                      className="w-full h-[500px] border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[2.5rem] flex flex-col items-center justify-center gap-4 text-slate-400 hover:text-blue-500 hover:bg-white dark:hover:bg-slate-800 hover:border-blue-200 transition-all group shadow-sm hover:shadow-xl hover:shadow-blue-500/5"
+                      className="w-full h-[500px] border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col items-center justify-center gap-4 text-slate-400 hover:text-blue-500 hover:bg-white dark:hover:bg-slate-800 hover:border-blue-200 transition-all group shadow-sm hover:shadow-xl hover:shadow-blue-500/5"
                     >
                       <div className="w-12 h-12 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center group-hover:scale-110 transition-all border border-slate-100 dark:border-slate-700">
                         <Plus size={24} />
@@ -1276,7 +1278,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   initial={{ opacity: 0, scale: 0.95, y: 20 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                  className="bg-white dark:bg-slate-900 w-full max-w-4xl max-h-[85vh] overflow-hidden rounded-[3rem] shadow-2xl border border-slate-100 dark:border-slate-800 flex flex-col"
+                  className="bg-white dark:bg-slate-900 w-full max-w-4xl max-h-[85vh] overflow-hidden rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-800 flex flex-col"
                 >
                   <div className="p-8 border-b border-slate-50 dark:border-slate-800 flex justify-between items-center">
                     <div>
@@ -1297,7 +1299,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                         <div 
                           key={template.id}
                           onClick={() => createTaskFromTemplate(template)}
-                          className="group p-8 rounded-[2rem] border-2 border-transparent bg-white dark:bg-slate-800 shadow-sm hover:shadow-2xl hover:shadow-blue-500/10 hover:border-blue-500/30 cursor-pointer transition-all duration-500 flex flex-col gap-6"
+                          className="group p-8 rounded-2xl border-2 border-transparent bg-white dark:bg-slate-800 shadow-sm hover:shadow-2xl hover:shadow-blue-500/10 hover:border-blue-500/30 cursor-pointer transition-all duration-500 flex flex-col gap-6"
                         >
                           <div className="flex justify-between items-start">
                             <div className={cn(
@@ -1369,7 +1371,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-white dark:bg-slate-800 w-full max-w-lg rounded-[2.5rem] shadow-2xl shadow-blue-900/10 overflow-hidden p-10 border border-slate-100 dark:border-slate-700 transition-colors"
+              className="bg-white dark:bg-slate-800 w-full max-w-lg rounded-2xl shadow-2xl shadow-blue-900/10 overflow-hidden p-10 border border-slate-100 dark:border-slate-700 transition-colors"
             >
               <div className="flex justify-between items-center mb-8">
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white transition-colors">{t('createProject')}</h2>
@@ -1490,7 +1492,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-white dark:bg-slate-800 w-full max-w-5xl rounded-[3rem] shadow-2xl shadow-blue-900/10 overflow-hidden flex flex-col max-h-[90vh] border border-slate-100 dark:border-slate-700 transition-colors"
+              className="bg-white dark:bg-slate-800 w-full max-w-5xl rounded-3xl shadow-2xl shadow-blue-900/10 overflow-hidden flex flex-col max-h-[90vh] border border-slate-100 dark:border-slate-700 transition-colors"
             >
               {/* Modal Header */}
               <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/20 dark:bg-slate-900/10">
@@ -1505,7 +1507,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                     <input
                       type="text"
                       id="input_task_title"
-                      value={selectedTask.title}
+                      value={t(selectedTask.title)}
                       onChange={(e) => {
                         const updatedTask = { ...selectedTask, title: e.target.value };
                         setSelectedTask(updatedTask);
@@ -1527,7 +1529,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                         setShowAIChat(true);
                         if (chatMessages.length <= 1) {
                           const introMsg = t('aiAssistant.intro') as string;
-                          const insightMsg = (t('aiAssistant.criticalTaskInsight') as string).replace('{title}', selectedTask.title);
+                          const insightMsg = (t('aiAssistant.criticalTaskInsight') as string).replace('{title}', t(selectedTask.title));
                           setChatMessages([
                             { role: 'ai', content: introMsg },
                             { role: 'ai', content: insightMsg }
@@ -1537,7 +1539,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                       className="flex items-center gap-2 px-3.5 py-2 bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-200 transition-all shadow-sm"
                     >
                       <BrainCircuit size={14} />
-                      Solusi AI
+                      {t('aiSolution')}
                     </button>
                   )}
                   <button 
@@ -1570,7 +1572,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                     </h4>
                     <textarea
                       id="textarea_task_desc"
-                      value={selectedTask.description || ''}
+                      value={t(selectedTask.description || '')}
                       onChange={(e) => {
                         const updatedTask = { ...selectedTask, description: e.target.value };
                         setSelectedTask(updatedTask);
@@ -1593,7 +1595,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                       </h4>
                       {selectedTask.checklist && selectedTask.checklist.length > 0 && (
                         <span className="text-[10px] font-black text-slate-400 uppercase">
-                          {selectedTask.checklist.filter(c => c.completed).length} / {selectedTask.checklist.length} Selesai
+                          {selectedTask.checklist.filter(c => c.completed).length} / {selectedTask.checklist.length} {t('taskPercentComplete')}
                         </span>
                       )}
                     </div>
@@ -1630,7 +1632,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                           </button>
                           
                           <input 
-                            value={item.text}
+                            value={t(item.text)}
                             onChange={(e) => {
                               const next = [...(selectedTask.checklist || [])];
                               next[idx].text = e.target.value;
@@ -1706,7 +1708,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                           onClick={handleAddChecklistItem}
                           className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-blue-500/10"
                         >
-                          Tambah
+                          {t('addChecklistItem')}
                         </button>
                       </div>
                     </div>
@@ -1788,7 +1790,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                             className="flex-1 min-w-0 flex flex-col justify-center py-1"
                           >
                             <p className="text-sm font-bold text-slate-700 dark:text-slate-200 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{attachment.name}</p>
-                            <p className="text-[11px] font-medium text-slate-400 truncate">{attachment.type === 'link' ? attachment.url : 'File Lampiran'}</p>
+                            <p className="text-[11px] font-medium text-slate-400 truncate">{attachment.type === 'link' ? attachment.url : t('taskFileLampiran')}</p>
                           </a>
                           <div className="opacity-0 group-hover:opacity-100 transition-all px-2">
                             <button
@@ -1877,7 +1879,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                             }}
                             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[10px] font-bold transition-all shadow-md shadow-blue-500/10"
                           >
-                            Kirim Komentar
+                            {t('sendComment')}
                           </button>
                         </div>
                       </div>
@@ -1890,11 +1892,11 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                 <div className="space-y-6">
                   
                   {/* Metadata Card container */}
-                  <div className="bg-slate-50/50 dark:bg-slate-900/30 p-6 rounded-[2rem] border border-slate-100 dark:border-slate-700 space-y-6">
+                  <div className="bg-slate-50/50 dark:bg-slate-900/30 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 space-y-6">
                     
                     {/* Status Dropdown */}
                     <div className="space-y-2">
-                      <label className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Status Papan</label>
+                      <label className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">{t('boardStatus')}</label>
                       <select
                         value={selectedTask.status}
                         onChange={(e) => {
@@ -1911,18 +1913,14 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                     {/* Priority Selector with AI assistant button */}
                     <div className="space-y-2">
                       <label className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-1.5">
-                        <Sparkles size={10} className="text-blue-500" /> Prioritas
+                        <Sparkles size={10} className="text-blue-500" /> {t('priority')}
                       </label>
                       <div className="flex gap-2">
                         <select
                           id="select_priority"
                           value={selectedTask.priority}
-                          onChange={(e) => {
-                            const updatedTask = { ...selectedTask, priority: e.target.value as Priority };
-                            setSelectedTask(updatedTask);
-                            setTasks(tasks.map(t => t.id === selectedTask.id ? updatedTask : t));
-                          }}
-                          className="flex-1 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white text-xs font-bold focus:border-blue-500 outline-none transition-all shadow-sm cursor-pointer"
+                          disabled
+                          className="flex-1 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 text-xs font-bold outline-none transition-all shadow-sm cursor-not-allowed appearance-none"
                         >
                           <option value="Low">Low</option>
                           <option value="Medium">Medium</option>
@@ -1938,24 +1936,24 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                           {isAnalyzing ? (
                             <>
                               <Loader2 size={12} className="animate-spin" />
-                              <span>Analisis...</span>
+                              <span>{t('analyzing')}</span>
                             </>
                           ) : (
                             <>
                               <Sparkles size={12} />
-                              <span>AI Priority</span>
+                              <span>{t('aiSolution')}</span>
                             </>
                           )}
                         </button>
                       </div>
                       <p className="text-[9px] text-slate-400 dark:text-slate-500 font-medium ml-1 flex items-center gap-1">
-                        <BrainCircuit size={9} className="text-blue-400" /> Gunakan AI untuk merekomendasikan prioritas tugas
+                        <BrainCircuit size={9} className="text-blue-400" /> {t('aiPriorityHint')}
                       </p>
                     </div>
 
                     {/* Tipe Dropdown */}
                     <div className="space-y-2">
-                      <label className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Tipe Tugas</label>
+                      <label className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">{t('taskType')}</label>
                       <select
                         value={selectedTask.type}
                         onChange={(e) => {
@@ -1975,7 +1973,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
 
                     {/* Start Date picker */}
                     <div className="space-y-2">
-                      <label className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Tanggal Mulai</label>
+                      <label className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">{t('startDate')}</label>
                       <input 
                         type="date"
                         id="input_task_start_date"
@@ -1991,7 +1989,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   
                     {/* Due Date picker */}
                     <div className="space-y-2">
-                      <label className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Tanggal Selesai (Deadline)</label>
+                      <label className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">{t('deadline')}</label>
                       <div className="relative">
                         <input
                           type="date"
@@ -2009,7 +2007,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
 
                     {/* Assignee Dropdown */}
                     <div className="space-y-2">
-                      <label className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Penanggung Jawab</label>
+                      <label className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">{t('assignee')}</label>
                       <select
                         id="select_task_assignee"
                         value={selectedTask.assignee || ''}
@@ -2020,7 +2018,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                         }}
                         className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white text-xs font-bold focus:border-blue-500 outline-none transition-all shadow-sm"
                       >
-                        <option value="">Belum Ditugaskan</option>
+                        <option value="">{t('unassigned')}</option>
                         {allProjectUsers.map(u => (
                           <option key={u?.id || u?.id_pengguna} value={u?.id || u?.id_pengguna}>
                             {u?.nama || u?.name}
@@ -2032,9 +2030,9 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   </div>
 
                   {/* Contributors selection (visual card grid) */}
-                  <div className="bg-slate-50/50 dark:bg-slate-900/30 p-6 rounded-[2rem] border border-slate-100 dark:border-slate-700 space-y-4">
+                  <div className="bg-slate-50/50 dark:bg-slate-900/30 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 space-y-4">
                     <label className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
-                      <UserIcon size={12} className="text-blue-500" /> Kontributor Tim
+                      <UserIcon size={12} className="text-blue-500" /> {t('teamContributors')}
                     </label>
                     <div className="grid grid-cols-1 gap-2">
                       {allProjectUsers.map(u => {
@@ -2137,7 +2135,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   id="btn_submit_task"
                   className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-blue-500/20"
                 >
-                  Selesai
+                  {t('done')}
                 </button>
               </div>
 
@@ -2150,7 +2148,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
           <div className="fixed inset-0 z-[120] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm">
             <motion.div 
               initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-lg bg-white dark:bg-slate-800 rounded-[3rem] shadow-2xl p-10 border border-slate-100 dark:border-slate-700 transition-colors"
+              className="relative w-full max-w-lg bg-white dark:bg-slate-800 rounded-3xl shadow-2xl p-10 border border-slate-100 dark:border-slate-700 transition-colors"
             >
               <div className="flex justify-between items-center mb-8">
                 <h3 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">{t('completeTask')}</h3>
@@ -2198,7 +2196,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                       <>
                         <Camera size={38} className="text-blue-500 stroke-1" />
                         <span className="text-[10px] font-black uppercase tracking-widest text-blue-600">
-                          <span className="bg-blue-500 text-white px-1.5 py-0.5 rounded mr-1">Klik</span> atau seret untuk unggah
+                          <span className="bg-blue-500 text-white px-1.5 py-0.5 rounded mr-1">Klik</span> {t('clickOrDrag')}
                         </span>
                       </>
                     )}
@@ -2213,7 +2211,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                     }} 
                     className="py-4 bg-slate-100 dark:bg-slate-900 text-slate-500 rounded-2xl font-bold hover:bg-slate-200 transition-all text-sm uppercase tracking-widest"
                   >
-                    Batal
+                    {t('cancelLabel')}
                   </button>
                   <button 
                     onClick={() => {
@@ -2237,7 +2235,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                     }}
                     className="py-4 bg-blue-600 text-white rounded-2xl font-bold shadow-xl shadow-blue-500/20 hover:bg-blue-700 transition-all text-sm uppercase tracking-widest"
                   >
-                    Selesaikan
+                    {t('finishLabel')}
                   </button>
                 </div>
               </div>
@@ -2277,7 +2275,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                 initial={{ opacity: 0, y: 20, scale: 0.9 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 20, scale: 0.9 }}
-                className="absolute bottom-20 right-0 w-[400px] max-w-[calc(100vw-2rem)] h-[600px] max-h-[calc(100vh-10rem)] bg-white dark:bg-slate-800 rounded-[3rem] shadow-2xl border border-slate-100 dark:border-slate-700 flex flex-col overflow-hidden transition-colors"
+                className="absolute bottom-20 right-0 w-[400px] max-w-[calc(100vw-2rem)] h-[600px] max-h-[calc(100vh-10rem)] bg-white dark:bg-slate-800 rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-700 flex flex-col overflow-hidden transition-colors"
               >
                 {/* Header */}
                 <div className="p-6 bg-blue-600 text-white flex items-center justify-between">
@@ -2381,19 +2379,19 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-md bg-white dark:bg-slate-800 rounded-[2.5rem] shadow-2xl p-10"
+              className="relative w-full max-w-md bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-10"
             >
               <h2 className="text-2xl font-bold tracking-tight mb-2 text-slate-900 dark:text-white">
-                Add Team Member
+                {t('addMemberTitle')}
               </h2>
               <p className="text-slate-500 dark:text-slate-400 font-medium mb-6">
-                Search and select a user to add to this project.
+                {t('addMemberDesc')}
               </p>
               
               <div className="mb-6 relative">
                 <input 
                   type="text" 
-                  placeholder="Ketik nama anggota..."
+                  placeholder={t('memberSearchPlaceholder')}
                   value={memberSearchQuery}
                   onChange={(e) => setMemberSearchQuery(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm font-medium dark:text-white"
@@ -2406,7 +2404,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
               <div className="space-y-3 mb-10 max-h-80 overflow-y-auto pr-2 custom-scrollbar">
                 {/* Current Members Section */}
                 <div className="mb-6">
-                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Anggota Proyek Saat Ini</h3>
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">{t('currentMembers')}</h3>
                   <div className="space-y-2">
                     {allProjectUsers.map((member: any) => (
                       <div key={member.id || member.id_pengguna} className="w-full text-left p-3 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 flex items-center justify-between gap-4 shadow-sm">
@@ -2455,7 +2453,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
 
                 {/* Add New Members Section */}
                 <div>
-                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Tambah Anggota Baru</h3>
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">{t('addNewMembers')}</h3>
                   <div className="space-y-2">
                     {dbUsers
                       .filter(u => !allProjectUsers.find(member => member.id === u.id || member.id_pengguna === u.id))
@@ -2501,14 +2499,14 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                     ))}
                     {dbUsers.filter(u => !allProjectUsers.find(member => member.id === u.id || member.id_pengguna === u.id)).length === 0 && (
                       <div className="text-center p-4 text-slate-400 text-sm font-medium border border-dashed border-slate-200 dark:border-slate-700 rounded-2xl">
-                        Semua pengguna telah bergabung.
+                        {t('allMembersJoined')}
                       </div>
                     )}
                     {dbUsers.filter(u => !allProjectUsers.find(member => member.id === u.id || member.id_pengguna === u.id)).length > 0 && 
                      dbUsers.filter(u => !allProjectUsers.find(member => member.id === u.id || member.id_pengguna === u.id))
                             .filter(u => (u.nama || u.name || '').toLowerCase().includes(memberSearchQuery.toLowerCase())).length === 0 && (
                       <div className="text-center p-4 text-slate-400 text-sm font-medium border border-dashed border-slate-200 dark:border-slate-700 rounded-2xl">
-                        Tidak ada pengguna dengan nama tersebut.
+                        {t('noMemberFound')}
                       </div>
                     )}
                   </div>
@@ -2583,12 +2581,12 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-white dark:bg-slate-800 w-full max-w-sm rounded-[2rem] shadow-2xl overflow-hidden p-8 border border-slate-100 dark:border-slate-700"
+              className="bg-white dark:bg-slate-800 w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden p-8 border border-slate-100 dark:border-slate-700"
             >
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">Tambah Kolom Baru</h3>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">{t('addNewColumn')}</h3>
               <input 
                 type="text"
-                placeholder="Nama kolom..."
+                placeholder={t('columnPlaceholder')}
                 value={newColName}
                 onChange={(e) => setNewColName(e.target.value)}
                 autoFocus
@@ -2599,7 +2597,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   onClick={() => { setShowAddColumnModal(false); setNewColName(''); }}
                   className="px-4 py-2 font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-all"
                 >
-                  Batal
+                  {t('cancel')}
                 </button>
                 <button 
                   onClick={() => {
@@ -2622,7 +2620,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   }}
                   className="px-4 py-2 font-bold bg-blue-600 text-white rounded-xl shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all"
                 >
-                  Tambah
+                  {t('addChecklistItem')}
                 </button>
               </div>
             </motion.div>
@@ -2638,16 +2636,16 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-white dark:bg-slate-800 w-full max-w-sm rounded-[2rem] shadow-2xl overflow-hidden p-8 border border-slate-100 dark:border-slate-700"
+              className="bg-white dark:bg-slate-800 w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden p-8 border border-slate-100 dark:border-slate-700"
             >
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Hapus Kolom?</h3>
-              <p className="text-slate-500 text-sm mb-6">Apakah Anda yakin ingin menghapus kolom ini? Tugas di dalamnya mungkin akan hilang dari tampilan board jika tidak dipindahkan.</p>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{t('deleteColumn')}</h3>
+              <p className="text-slate-500 text-sm mb-6">{t('confirmDeleteColumnDesc')}</p>
               <div className="flex gap-3 justify-end">
                 <button 
                   onClick={() => setColumnToDelete(null)}
                   className="px-4 py-2 font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-all"
                 >
-                  Batal
+                  {t('cancel')}
                 </button>
                 <button 
                   onClick={() => {
@@ -2660,7 +2658,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   }}
                   className="px-4 py-2 font-bold bg-rose-500 text-white rounded-xl shadow-lg shadow-rose-500/20 hover:bg-rose-600 transition-all"
                 >
-                  Hapus
+                  {t('delete')}
                 </button>
               </div>
             </motion.div>
@@ -2676,17 +2674,17 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-white dark:bg-slate-800 w-full max-w-sm rounded-[2rem] shadow-2xl overflow-hidden p-8 border border-slate-100 dark:border-slate-700"
+              className="bg-white dark:bg-slate-800 w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden p-8 border border-slate-100 dark:border-slate-700"
             >
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Hapus Proyek?</h3>
-              <p className="text-slate-500 text-sm mb-6">Apakah Anda yakin ingin menghapus proyek "{projectToDelete.name}"? Semua tugas di dalamnya juga akan terhapus secara permanen.</p>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{t('deleteProject')}</h3>
+              <p className="text-slate-500 text-sm mb-6">{t('confirmDeleteProject').replace('{name}', projectToDelete.name)}</p>
               <div className="flex gap-3 justify-end">
                 <button 
                   onClick={() => setProjectToDelete(null)}
                   className="px-4 py-2 font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-all"
                   id="btn-cancel-delete-project"
                 >
-                  Batal
+                  {t('cancel')}
                 </button>
                 <button 
                   onClick={async () => {
@@ -2718,7 +2716,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   className="px-4 py-2 font-bold bg-rose-500 text-white rounded-xl shadow-lg shadow-rose-500/20 hover:bg-rose-600 transition-all"
                   id="btn-confirm-delete"
                 >
-                  Hapus
+                  {t('delete')}
                 </button>
               </div>
             </motion.div>

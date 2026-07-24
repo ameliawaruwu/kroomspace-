@@ -173,3 +173,10 @@ model TemplateProyek {
   tugas_json       String   @db.LongText  // JSON array of tasks + checklist
   dibuat_pada      DateTime @default(now())
 }
+
+model Api_key {
+  id         Int      @id @default(autoincrement())
+  key_value  String   @db.Text
+  provider   String   @default("Gemini")
+  updated_at DateTime @updatedAt
+}

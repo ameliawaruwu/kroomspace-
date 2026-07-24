@@ -6,3 +6,7 @@
 @theme {
   --font-sans: "Poppins", "Inter", ui-sans-serif, system-ui, sans-serif;
 }
+
+html {
+  font-size: 14px;
+}

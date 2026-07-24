@@ -390,11 +390,11 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
               <LayoutTemplate size={20} className="text-white" />
             </div>
             <h1 className={cn("text-3xl font-black tracking-tight", darkMode ? "text-white" : "text-slate-800")}>
-              Template Proyek
+              {t('templatePageTitle')}
             </h1>
           </div>
           <p className={cn("text-sm font-medium ml-14", darkMode ? "text-slate-400" : "text-slate-500")}>
-            Blueprint proyek lengkap — tugas & checklist siap pakai
+            {t('templatePageDesc')}
           </p>
         </div>
 
@@ -405,7 +405,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
               type="text"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Cari template..."
+              placeholder={t('searchTemplate')}
               className="w-full pl-12 pr-5 py-3.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none focus:ring-4 focus:ring-blue-500/10 text-slate-900 dark:text-white text-sm font-medium shadow-sm transition-all"
             />
           </div>
@@ -423,7 +423,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
               )}
             >
               <Plus size={18} />
-              Buat Template Baru
+              {t('createNewTemplate')}
             </button>
           )}
         </div>
@@ -449,7 +449,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
                 className={cn(
-                  "relative px-4 py-2.5 rounded-xl text-xs font-medium uppercase tracking-wider transition-all flex items-center gap-2 select-none shrink-0",
+                  "relative px-4 py-2.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 select-none shrink-0",
                   isActive
                     ? "bg-[#2D7FEA] text-white shadow-lg shadow-[#2D7FEA]/20"
                     : darkMode
@@ -457,7 +457,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                       : "text-slate-500 hover:text-slate-800 hover:bg-white/60"
                 )}
               >
-                <span>{cat}</span>
+                <span>{cat === 'Semua' ? t('all') : t(cat)}</span>
                 <span className={cn(
                   "px-2 py-0.5 rounded-md text-[10px] font-medium tracking-normal transition-all",
                   isActive
@@ -494,11 +494,11 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
       </AnimatePresence>
 
       {/* ── Grid ── */}
-      <div className="px-8 pt-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+      <div className="px-8 pt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {loading ? (
           [...Array(6)].map((_, i) => (
             <div key={i} className={cn(
-              "rounded-[2.5rem] p-8 animate-pulse h-72",
+              "rounded-2xl p-8 animate-pulse h-72",
               darkMode ? "bg-slate-800" : "bg-slate-100"
             )} />
           ))
@@ -507,7 +507,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
             <div className="w-20 h-20 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
               <LayoutTemplate size={36} className="text-slate-400" />
             </div>
-            <p className="text-slate-400 font-medium">Tidak ada template ditemukan</p>
+            <p className="text-slate-400 font-medium">{t('noTemplateFound')}</p>
           </div>
         ) : filtered.map((template, i) => {
           const meta = getTemplateMetadata(template.id, template.kategori, totalTugas(template));
@@ -518,7 +518,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.06 }}
               className={cn(
-                "group relative rounded-[2rem] overflow-hidden border transition-all duration-300 flex flex-col justify-between cursor-pointer",
+                "group relative rounded-2xl overflow-hidden border transition-all duration-300 flex flex-col justify-between cursor-pointer",
                 darkMode
                   ? "bg-slate-800/80 border-slate-700/60 hover:border-[#2D7FEA]/30 hover:bg-slate-800/100"
                   : "bg-white border-slate-200/50 shadow-sm hover:shadow-xl hover:shadow-blue-500/5 hover:border-[#2D7FEA]/20",
@@ -529,9 +529,6 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
 
 
               <div>
-                {/* Gradient header */}
-                <div className={cn("h-1.5 w-full bg-gradient-to-r", getCategoryGradient(template.kategori))} />
-
                 <div className="p-6">
                   {/* Icon + Category + Title */}
                   <div className="flex items-start justify-between mb-4">
@@ -547,13 +544,13 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                           "inline-flex w-max text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md border mb-1",
                           getCategoryBg(template.kategori, darkMode)
                         )}>
-                          {template.kategori}
+                          {t(template.kategori)}
                         </span>
                         <h3 className={cn(
                           "text-base font-black tracking-tight leading-tight line-clamp-2",
                           darkMode ? "text-white" : "text-slate-900"
                         )}>
-                          {template.name}
+                          {t(template.name)}
                         </h3>
                       </div>
                     </div>
@@ -574,7 +571,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                     "text-xs font-medium leading-relaxed line-clamp-2 mb-4 min-h-[2.25rem]",
                     darkMode ? "text-slate-400" : "text-slate-500"
                   )}>
-                    {template.description || "Tidak ada deskripsi."}
+                    {t(template.description) || t('noDescription')}
                   </p>
 
                   {/* Metadata Grid */}
@@ -584,8 +581,8 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                         <ListChecks size={14} />
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-[9px] text-slate-400 font-medium leading-none mb-0.5">Tugas</span>
-                        <span className={cn("font-bold text-[11px]", darkMode ? "text-slate-200" : "text-slate-700")}>{totalTugas(template)} Tugas</span>
+                        <span className="text-[9px] text-slate-400 font-medium leading-none mb-0.5">{t('tugasLabel')}</span>
+                        <span className={cn("font-bold text-[11px]", darkMode ? "text-slate-200" : "text-slate-700")}>{totalTugas(template)} {t('tugasLabel')}</span>
                       </div>
                     </div>
 
@@ -604,7 +601,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                         <Clock size={14} />
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-[9px] text-slate-400 font-medium leading-none mb-0.5">Estimasi</span>
+                        <span className="text-[9px] text-slate-400 font-medium leading-none mb-0.5">{t('estimasiLabel')}</span>
                         <span className={cn("font-bold text-[11px]", darkMode ? "text-slate-200" : "text-slate-700")}>{meta.duration}</span>
                       </div>
                     </div>
@@ -614,7 +611,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                         <Users size={14} />
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-[9px] text-slate-400 font-medium leading-none mb-0.5">Rekomendasi</span>
+                        <span className="text-[9px] text-slate-400 font-medium leading-none mb-0.5">{t('rekomendasiLabel')}</span>
                         <span className={cn("font-bold text-[11px]", darkMode ? "text-slate-200" : "text-slate-700")}>{meta.teamSize}</span>
                       </div>
                     </div>
@@ -624,7 +621,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                         <Layers size={14} />
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-[9px] text-slate-400 font-medium leading-none mb-0.5">Kompleksitas</span>
+                        <span className="text-[9px] text-slate-400 font-medium leading-none mb-0.5">{t('complexityLabel')}</span>
                         <div className="flex items-center gap-1.5 mt-0.5">
                           <span className={cn(
                             "px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border",
@@ -651,7 +648,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                           : "bg-slate-50 text-slate-500 border-slate-100"
                       )}>
                         <CheckCircle2 size={12} className="text-[#2D7FEA] shrink-0" />
-                        <span className="truncate">{task.title}</span>
+                        <span className="truncate">{t(task.title)}</span>
                       </div>
                     ))}
                     {(template.tasks ?? []).length > 2 && (
@@ -660,7 +657,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                         darkMode ? "text-slate-500" : "text-slate-400"
                       )}>
                         <span className="w-1.5 h-1.5 rounded-full bg-[#2D7FEA]" />
-                        +{template.tasks.length - 2} tugas lainnya dalam blueprint...
+                        +{template.tasks.length - 2} {t('moreTasksBlueprint')}
                       </p>
                     )}
                   </div>
@@ -696,7 +693,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                   )}
                 >
                   <Sparkles size={14} />
-                  Terapkan
+                  {t('applyTemplate')}
                 </button>
               </div>
             </motion.div>
@@ -713,7 +710,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               className={cn(
-                "w-full max-w-3xl max-h-[90vh] rounded-[3rem] overflow-hidden flex flex-col",
+                "w-full max-w-3xl max-h-[90vh] rounded-3xl overflow-hidden flex flex-col",
                 darkMode ? "bg-slate-800 border border-slate-700" : "bg-white border border-slate-100",
                 "shadow-2xl shadow-blue-900/10"
               )}
@@ -725,8 +722,8 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                     {getCategoryIcon(previewTemplate.kategori, 24)}
                   </div>
                   <div>
-                    <h2 className={cn("text-2xl font-black", darkMode ? "text-white" : "text-slate-900")}>{previewTemplate.name}</h2>
-                    <p className={cn("text-sm mt-0.5", darkMode ? "text-slate-400" : "text-slate-500")}>{previewTemplate.description}</p>
+                    <h2 className={cn("text-2xl font-black", darkMode ? "text-white" : "text-slate-900")}>{t(previewTemplate.name)}</h2>
+                    <p className={cn("text-sm mt-0.5", darkMode ? "text-slate-400" : "text-slate-500")}>{t(previewTemplate.description)}</p>
                   </div>
                 </div>
                 <button onClick={() => setPreviewTemplate(null)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-2xl transition-colors">
@@ -741,7 +738,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                   <div className={cn("px-8 py-4 flex flex-wrap gap-x-6 gap-y-2 border-b shrink-0 text-xs font-bold", darkMode ? "border-slate-700 bg-slate-900/30" : "border-slate-100 bg-slate-50/80")}>
                     <div className="flex items-center gap-2">
                       <ListChecks size={15} className="text-blue-500" />
-                      <span className={darkMode ? "text-slate-300" : "text-slate-700"}>{totalTugas(previewTemplate)} Tugas</span>
+                      <span className={darkMode ? "text-slate-300" : "text-slate-700"}>{totalTugas(previewTemplate)} {t('tugasLabel')}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <CheckSquare size={15} className="text-emerald-500" />
@@ -760,7 +757,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                       <span className={darkMode ? "text-slate-300" : "text-slate-700"}>Mode {previewTemplate.mode}</span>
                     </div>
                     <div className="flex items-center gap-1.5 sm:ml-auto">
-                      <span className="text-[10px] text-slate-400 font-medium">Kompleksitas:</span>
+                      <span className="text-[10px] text-slate-400 font-medium">{t('complexityLabel')}:</span>
                       <span className={cn(
                         "px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border",
                         meta.complexity === 'Tinggi'
@@ -785,18 +782,17 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                   )}>
                     <div className="flex items-center gap-3 mb-3">
                       <span className={cn(
-                        "w-7 h-7 rounded-xl flex items-center justify-center text-xs font-black shrink-0 bg-gradient-to-br",
-                        getCategoryGradient(previewTemplate.kategori),
-                        "text-white"
+                        "w-7 h-7 rounded-xl flex items-center justify-center text-xs font-black shrink-0",
+                        darkMode ? "bg-slate-800 text-slate-200" : "bg-slate-200 text-slate-600"
                       )}>
                         {idx + 1}
                       </span>
                       <div>
-                        <h4 className={cn("font-bold text-sm", darkMode ? "text-white" : "text-slate-900")}>{task.title}</h4>
-                        <p className={cn("text-xs mt-0.5 line-clamp-1", darkMode ? "text-slate-500" : "text-slate-400")}>{task.description}</p>
+                        <h4 className={cn("font-bold text-sm", darkMode ? "text-white" : "text-slate-900")}>{t(task.title)}</h4>
+                        <p className={cn("text-xs mt-0.5 line-clamp-1", darkMode ? "text-slate-500" : "text-slate-400")}>{t(task.description)}</p>
                       </div>
                       <span className={cn("ml-auto text-[10px] font-black uppercase px-2.5 py-1 rounded-lg shrink-0", getPriorityColor(task.priority))}>
-                        {task.priority}
+                        {t(task.priority.toLowerCase())}
                       </span>
                     </div>
                     <div className="flex flex-wrap gap-1.5 pl-10">
@@ -806,7 +802,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                           darkMode ? "bg-slate-800 text-slate-400" : "bg-white text-slate-500 border border-slate-100"
                         )}>
                           <CheckCircle2 size={9} className="text-blue-400" />
-                          {cl.text}
+                          {t(cl.text)}
                         </span>
                       ))}
                     </div>
@@ -825,7 +821,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                   className="w-full py-4 bg-gradient-to-r from-[#3FA9F5] to-[#2D7FEA] text-white rounded-2xl font-black text-sm flex items-center justify-center gap-3 hover:shadow-xl hover:shadow-[#2D7FEA]/30 transition-all hover:scale-[1.01] active:scale-100"
                 >
                   <Sparkles size={18} />
-                  Terapkan Template Ini
+                  {t('applyTemplateTitle')}
                   <ArrowRight size={18} />
                 </button>
               </div>
@@ -843,7 +839,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               className={cn(
-                "w-full max-w-md rounded-[2.5rem] p-10 shadow-2xl shadow-blue-900/10",
+                "w-full max-w-md rounded-2xl p-10 shadow-2xl shadow-blue-900/10",
                 darkMode ? "bg-slate-800 border border-slate-700" : "bg-white border border-slate-100"
               )}
             >
@@ -853,7 +849,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
               </div>
 
               <h2 className={cn("text-2xl font-black mb-2", darkMode ? "text-white" : "text-slate-900")}>
-                Buat Proyek Baru
+                {t('applyTemplateConfirmTitle')}
               </h2>
               <p className={cn("text-sm mb-8 font-medium leading-relaxed", darkMode ? "text-slate-400" : "text-slate-500")}>
                 Template <strong className={darkMode ? "text-white" : "text-slate-800"}>{applyTemplate.name}</strong> akan membuat proyek dengan <strong className="text-blue-500">{totalTugas(applyTemplate)} tugas</strong> dan <strong className="text-emerald-500">{totalChecklist(applyTemplate)} checklist</strong>.
@@ -862,7 +858,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
               {/* Name Input */}
               <div className="space-y-2 mb-8">
                 <label className={cn("text-[10px] font-black uppercase tracking-widest", darkMode ? "text-slate-400" : "text-slate-500")}>
-                  Nama Proyek
+                  {t('projectNameLabel')}
                 </label>
                 <input
                   type="text"
@@ -870,7 +866,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                   onChange={e => setProjectName(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleApply()}
                   onFocus={(e) => e.target.select()}
-                  placeholder="Masukkan nama proyek..."
+                  placeholder={t('projectNamePlaceholder')}
                   autoFocus
                   className={cn(
                     "w-full px-5 py-4 rounded-2xl font-bold outline-none transition-all text-slate-900 dark:text-white border",
@@ -890,7 +886,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                     darkMode ? "bg-slate-900 text-slate-400 border-slate-700 hover:bg-slate-700" : "bg-slate-50 text-slate-500 border-slate-100 hover:bg-slate-100"
                   )}
                 >
-                  Batal
+                  {t('cancelBtn')}
                 </button>
                 <button
                   onClick={handleApply}
@@ -905,12 +901,12 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                   {isApplying ? (
                     <>
                       <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Membuat...
+                      {t('creating')}
                     </>
                   ) : (
                     <>
                       <CheckCheck size={18} />
-                      Buat Proyek
+                      {t('createProjectBtn')}
                     </>
                   )}
                 </button>
@@ -929,7 +925,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               className={cn(
-                "w-full max-w-2xl max-h-[90vh] rounded-[3rem] overflow-hidden flex flex-col shadow-2xl shadow-blue-900/10",
+                "w-full max-w-2xl max-h-[90vh] rounded-3xl overflow-hidden flex flex-col shadow-2xl shadow-blue-900/10",
                 darkMode ? "bg-slate-800 border border-slate-700" : "bg-white border border-slate-100"
               )}
             >
@@ -940,7 +936,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                     <Sparkles size={18} />
                   </div>
                   <h2 className={cn("text-2xl font-black", darkMode ? "text-white" : "text-slate-900")}>
-                    {createStep === 1 ? 'Rancang Template Baru' : 'Tinjau Hasil Rancangan AI'}
+                    {createStep === 1 ? t('designNewTemplate') : t('reviewAITemplate')}
                   </h2>
                 </div>
                 <button
@@ -962,7 +958,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                 <div className="flex-1 overflow-y-auto p-8 space-y-6">
                   <div className="space-y-2">
                     <label className={cn("text-[10px] font-black uppercase tracking-widest", darkMode ? "text-slate-400" : "text-slate-500")}>
-                      Nama Template
+                      {t('templateNameLabel')}
                     </label>
                     <input
                       id="input_template_name"
@@ -979,7 +975,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
 
                   <div className="space-y-2">
                     <label className={cn("text-[10px] font-black uppercase tracking-widest", darkMode ? "text-slate-400" : "text-slate-500")}>
-                      Deskripsi Template
+                      {t('templateDescLabel')}
                     </label>
                     <textarea
                       id="input_template_desc"
@@ -996,7 +992,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
 
                   <div className="space-y-2">
                     <label className={cn("text-[10px] font-black uppercase tracking-widest", darkMode ? "text-slate-400" : "text-slate-500")}>
-                      Kategori
+                      {t('templateCategoryLabel')}
                     </label>
                     <select
                       id="select_template_category"
@@ -1029,16 +1025,16 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                   <div className="space-y-6">
                     {generatedTasks.map((task, idx) => (
                       <div key={task.id || idx} className={cn(
-                        "rounded-[2rem] border p-6 space-y-4 shadow-sm",
-                        darkMode ? "bg-slate-900/30 border-slate-750" : "bg-slate-50/50 border-slate-100"
+                        "rounded-2xl border p-6 space-y-4 shadow-sm",
+                        darkMode ? "bg-slate-900/30 border-slate-700" : "bg-slate-50/50 border-slate-100"
                       )}>
                         {/* Task Card Header */}
-                        <div className="flex items-center justify-between border-b border-slate-150 dark:border-slate-800 pb-3">
+                        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
                           <div className="flex items-center gap-2">
                             <span className="w-7 h-7 rounded-xl bg-blue-500 text-white flex items-center justify-center text-xs font-black shadow-md shadow-blue-500/15">
                               {idx + 1}
                             </span>
-                            <span className="text-xs font-black tracking-wide text-slate-400 uppercase">Tugas Blueprint</span>
+                            <span className="text-xs font-black tracking-wide text-slate-400 uppercase">{t('taskBlueprintLabel')}</span>
                           </div>
                           <button
                             type="button"
@@ -1053,7 +1049,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
 
                         {/* Title input */}
                         <div className="space-y-2">
-                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Judul Tugas</label>
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">{t('taskTitleLabel')}</label>
                           <input
                             type="text"
                             value={task.title}
@@ -1072,7 +1068,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
 
                         {/* Description textarea */}
                         <div className="space-y-2">
-                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Deskripsi Tugas</label>
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">{t('taskDescLabel')}</label>
                           <textarea
                             value={task.description}
                             onChange={e => {
@@ -1092,7 +1088,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                         {/* Priority and Type Grid */}
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Prioritas</label>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">{t('priorityLabel')}</label>
                             <select
                               value={task.priority}
                               onChange={e => {
@@ -1111,7 +1107,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                             </select>
                           </div>
                           <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Tipe Tugas</label>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">{t('taskTypeLabel')}</label>
                             <select
                               value={task.type}
                               onChange={e => {
@@ -1136,7 +1132,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
 
                         {/* Checklist Section */}
                         <div className="space-y-2 pt-3 border-t border-slate-150 dark:border-slate-800">
-                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 block">Checklist Langkah Kerja</label>
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 block">{t('checklistStepLabel')}</label>
                           <div className="flex flex-wrap gap-2">
                             {(task.checklist ?? []).map((cl, ci) => (
                               <span
@@ -1165,7 +1161,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                               </span>
                             ))}
                             {(task.checklist ?? []).length === 0 && (
-                              <span className="text-[10px] text-slate-400 italic">Belum ada langkah kerja. Tulis dan tambahkan di bawah.</span>
+                              <span className="text-[10px] text-slate-400 italic">{t('noStepsYet')}</span>
                             )}
                           </div>
                           {/* Input to add checklist */}
@@ -1173,7 +1169,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                             <input
                               type="text"
                               id={`new-cl-${idx}`}
-                              placeholder="Tulis langkah kerja lalu tekan Enter..."
+                              placeholder={t('stepPlaceholder')}
                               onKeyDown={e => {
                                 if (e.key === 'Enter') {
                                   e.preventDefault();
@@ -1211,7 +1207,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                               }}
                               className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm shadow-blue-500/10 transition-all active:scale-95"
                             >
-                              Tambah
+                              {t('addBtn')}
                             </button>
                           </div>
                         </div>
@@ -1236,14 +1232,14 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                       ]);
                     }}
                     className={cn(
-                      "w-full py-5 border-2 border-dashed rounded-[2rem] flex items-center justify-center gap-3 transition-all font-bold text-sm shadow-sm",
+                      "w-full py-5 border-2 border-dashed rounded-2xl flex items-center justify-center gap-3 transition-all font-bold text-sm shadow-sm",
                       darkMode
                         ? "border-slate-700 bg-slate-900/20 text-slate-400 hover:border-blue-500/50 hover:bg-slate-900/40 hover:text-blue-400"
                         : "border-slate-200 bg-slate-50/50 text-slate-500 hover:border-blue-500/50 hover:bg-white hover:text-blue-600"
                     )}
                   >
                     <Plus size={18} />
-                    Tambah Tugas Baru
+                    {t('addNewTask')}
                   </button>
                 </div>
               )}
@@ -1266,7 +1262,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                         darkMode ? "bg-slate-900 text-slate-400 border-slate-700 hover:bg-slate-700" : "bg-slate-50 text-slate-500 border-slate-100 hover:bg-slate-100"
                       )}
                     >
-                      Batal
+                      {t('cancelTemplate')}
                     </button>
                     <button
                       id="btn_rancang_template"
@@ -1292,7 +1288,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                         "disabled:opacity-50 disabled:cursor-not-allowed"
                       )}
                     >
-                      Rancang Template
+                      {t('designTemplate')}
                     </button>
                   </>
                 ) : (
@@ -1305,7 +1301,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                         darkMode ? "bg-slate-900 text-slate-400 border-slate-700 hover:bg-slate-700" : "bg-slate-50 text-slate-500 border-slate-100 hover:bg-slate-100"
                       )}
                     >
-                      Kembali
+                      {t('backBtn')}
                     </button>
                     <button
                       id="btn_simpan_template"
@@ -1319,7 +1315,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                       )}
                     >
                       <CheckCheck size={16} />
-                      Simpan Template
+                      {t('saveTemplate')}
                     </button>
                   </>
                 )}

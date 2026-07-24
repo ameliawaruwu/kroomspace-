@@ -1,6 +1,7 @@
 import express from "express";
 import { createServer as createViteServer } from "vite";
 import path from "path";
+import fs from "fs";
 import { fileURLToPath } from "url";
 import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from "dotenv";
@@ -9,6 +10,20 @@ import { generateId } from "./src/lib/idGenerator";
 import nodemailer from "nodemailer";
 
 dotenv.config();
+
+async function getGeminiApiKey(): Promise<string> {
+  try {
+    const keyRecord = await (prisma as any).api_key.findFirst({
+      orderBy: { id: 'desc' }
+    });
+    if (keyRecord && keyRecord.key_value && keyRecord.key_value.trim() !== '') {
+      return keyRecord.key_value;
+    }
+  } catch (error) {
+    console.error("Error retrieving API Key from database:", error);
+  }
+  return process.env.GEMINI_API_KEY || '';
+}
 
 // Helper untuk retry & fallback otomatis saat model Google mengalami 503 (Overloaded / High Demand) atau 429
 async function generateAIContent(ai: GoogleGenAI, contents: any, config?: any): Promise<any> {
@@ -92,10 +107,61 @@ async function startServer() {
   app.use(express.json({ limit: '50mb' }));
   app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
+  // Admin Settings Endpoints
+  app.get("/api/admin/settings", async (req, res) => {
+    try {
+      const keyRecord = await (prisma as any).api_key.findFirst({
+        orderBy: { id: 'desc' }
+      });
+      const apiKey = keyRecord?.key_value || "";
+      const isCustom = apiKey.trim() !== "";
+      const envKey = process.env.GEMINI_API_KEY || "";
+      const hasEnv = envKey.trim() !== "" && envKey !== "your_gemini_api_key_here";
+      
+      let maskedKey = "";
+      if (isCustom) {
+        maskedKey = apiKey.length > 8 ? `${apiKey.substring(0, 6)}...${apiKey.substring(apiKey.length - 4)}` : "********";
+      } else if (hasEnv) {
+        maskedKey = envKey.length > 8 ? `${envKey.substring(0, 6)}...${envKey.substring(envKey.length - 4)} (env)` : "******** (env)";
+      }
+
+      res.json({
+        hasCustomKey: isCustom,
+        hasEnvKey: hasEnv,
+        maskedKey: maskedKey || null,
+        activeSource: isCustom ? "custom" : (hasEnv ? "env" : "none")
+      });
+    } catch (error) {
+      console.error("[GET Settings Error]", error);
+      res.status(500).json({ error: "Gagal mengambil pengaturan" });
+    }
+  });
+
+  app.post("/api/admin/settings", async (req, res) => {
+    try {
+      const { geminiApiKey } = req.body;
+      if (geminiApiKey === undefined) {
+        return res.status(400).json({ error: "geminiApiKey tidak boleh kosong" });
+      }
+      
+      await (prisma as any).api_key.create({
+        data: {
+          key_value: geminiApiKey,
+          provider: "Gemini"
+        }
+      });
+      
+      res.json({ success: true, message: "Pengaturan berhasil disimpan" });
+    } catch (error) {
+      console.error("[POST Settings Error]", error);
+      res.status(500).json({ error: "Gagal menyimpan pengaturan" });
+    }
+  });
+
   // AI Integration Endpoint
   app.post("/api/analyze-external", async (req, res) => {
     const { url } = req.body;
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = await getGeminiApiKey();
 
     if (!url) {
       return res.status(400).json({ error: "URL is required" });
@@ -169,7 +235,7 @@ async function startServer() {
   app.post("/api/ai/analyze-priority", async (req, res) => {
     try {
       const { task } = req.body;
-      const apiKey = process.env.GEMINI_API_KEY;
+      const apiKey = await getGeminiApiKey();
       
       const isApiKeyInvalid = !apiKey || apiKey === "your_gemini_api_key_here" || apiKey.trim() === "";
 
@@ -208,7 +274,7 @@ async function startServer() {
   app.post("/api/ai/generate-report", async (req, res) => {
     try {
       const { task, documentation, user } = req.body;
-      const apiKey = process.env.GEMINI_API_KEY;
+      const apiKey = await getGeminiApiKey();
       
       const isApiKeyInvalid = !apiKey || apiKey === "your_gemini_api_key_here" || apiKey.trim() === "";
 
@@ -320,7 +386,7 @@ async function startServer() {
   app.post("/api/ai/sort-tasks", async (req, res) => {
     try {
       const { tasks } = req.body;
-      const apiKey = process.env.GEMINI_API_KEY;
+      const apiKey = await getGeminiApiKey();
 
       const isApiKeyInvalid = !apiKey || apiKey === "your_gemini_api_key_here" || apiKey.trim() === "";
 
@@ -365,7 +431,7 @@ async function startServer() {
   app.post("/api/ai/consultation", async (req, res) => {
     try {
       const { question, context, language } = req.body;
-      const apiKey = process.env.GEMINI_API_KEY;
+      const apiKey = await getGeminiApiKey();
 
       const isApiKeyInvalid = !apiKey || apiKey === "your_gemini_api_key_here" || apiKey.trim() === "";
 
@@ -993,7 +1059,7 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
   app.post("/api/proyek-templates/generate", async (req, res) => {
     try {
       const { nama_template, deskripsi, kategori, tipe_tugas, mode_kanban } = req.body;
-      const apiKey = process.env.GEMINI_API_KEY;
+      const apiKey = await getGeminiApiKey();
 
       const isApiKeyInvalid = !apiKey || apiKey === "your_gemini_api_key_here" || apiKey.trim() === "";
 
@@ -1447,7 +1513,7 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
   app.post("/api/webhook/kroombox-server-status", async (req, res) => {
     try {
       const { serverId, serverName, status, metric, value, description } = req.body;
-      const apiKey = process.env.GEMINI_API_KEY;
+      const apiKey = await getGeminiApiKey();
       
       let aiChecklist: string[] = [
         "Periksa CPU/Memory usage via SSH (perintah 'top' atau 'htop')",

@@ -88,7 +88,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
 
       <div className="mx-8 grid grid-cols-1 lg:grid-cols-3 gap-10">
         <div className="lg:col-span-1 space-y-6">
-          <div className="bg-white dark:bg-slate-800 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-700 shadow-sm text-center">
+          <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm text-center">
             <div className="relative inline-block group cursor-pointer">
               <input 
                 type="file" 
@@ -114,7 +114,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
         </div>
 
         <div className="lg:col-span-2">
-          <form onSubmit={handleSubmit} className="bg-white dark:bg-slate-800 p-10 rounded-[2.5rem] border border-slate-100 dark:border-slate-700 shadow-sm space-y-8">
+          <form onSubmit={handleSubmit} className="bg-white dark:bg-slate-800 p-10 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm space-y-8">
             {errorMsg && (
               <div className="p-4 bg-rose-50 dark:bg-rose-950/30 border border-rose-100 dark:border-rose-900/50 rounded-2xl flex items-center gap-3 text-rose-600 dark:text-rose-400 text-sm font-medium animate-in fade-in slide-in-from-top-2">
                 <AlertCircle size={20} className="shrink-0" />
@@ -136,7 +136,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('name')}</label>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('fullName')}</label>
                   <div className="relative">
                     <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
                     <input 

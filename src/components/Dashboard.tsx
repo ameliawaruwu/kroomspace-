@@ -129,7 +129,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       if (bP !== aP) return bP - aP;
       return new Date(a.deadline || '').getTime() - new Date(b.deadline || '').getTime();
     })
-    .slice(0, 3);
+    .slice(0, 4);
 
   const myOverdueTasks = myActiveTasks.filter(t => t.deadline && new Date(t.deadline) < now);
   const myOnTimeTasks = myDoneTasks.filter(t => {
@@ -207,7 +207,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <h1 className={cn("text-3xl font-black tracking-tight", C.text)}>{t('adminDashboardHeader')}</h1>
           <p className={cn("mt-1 font-medium text-sm", C.sub)}>{t('adminDashboardSub')}</p>
         </div>
-        <div className="flex items-center gap-2 px-4 py-2.5 rounded-2xl border shadow-sm"
+        <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl border shadow-sm"
           style={{ 
             background: darkMode ? 'rgba(63,169,245,0.1)' : 'rgba(63,169,245,0.08)',
             borderColor: 'rgba(63,169,245,0.25)'
@@ -233,7 +233,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.08 }}
             className={cn(
-              "p-6 rounded-[2rem] border shadow-sm flex items-center gap-4 hover:shadow-md transition-all group hover:-translate-y-0.5",
+              "p-6 rounded-2xl border shadow-sm flex items-center gap-4 hover:shadow-md transition-all group hover:-translate-y-0.5",
               C.card, C.cardBorder
             )}
           >
@@ -251,7 +251,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 px-8 pb-10">
         <div className="lg:col-span-2 space-y-6">
           {/* User Performance */}
-          <section className={cn("p-8 rounded-[2.5rem] border shadow-sm", C.card, C.cardBorder)}>
+          <section className={cn("p-8 rounded-2xl border shadow-sm", C.card, C.cardBorder)}>
             <h2 className={cn("text-xl font-bold tracking-tight mb-8 flex items-center gap-3", C.text)}>
               <div className="p-2 rounded-xl" style={{ background: 'rgba(63,169,245,0.12)' }}>
                 <TrendingUp size={18} style={{ color: C.primary }} />
@@ -293,7 +293,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </section>
 
           {/* Kanban Distribution */}
-          <section className={cn("p-8 rounded-[2.5rem] border shadow-sm", C.card, C.cardBorder)}>
+          <section className={cn("p-8 rounded-2xl border shadow-sm", C.card, C.cardBorder)}>
             <h2 className={cn("text-xl font-bold tracking-tight mb-8 flex items-center gap-3", C.text)}>
               <div className="p-2 rounded-xl" style={{ background: 'rgba(63,169,245,0.12)' }}>
                 <Monitor size={18} style={{ color: C.primary }} />
@@ -329,7 +329,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         {/* Right column */}
         <div className="space-y-6">
           {/* Project Stats */}
-          <section className="p-8 rounded-[2.5rem] text-white shadow-xl overflow-hidden relative"
+          <section className="p-8 rounded-2xl text-white shadow-xl overflow-hidden relative"
             style={{ background: 'linear-gradient(135deg, #142B6F 0%, #1E3A8A 50%, #2D7FEA 100%)' }}>
             <div className="absolute top-0 right-0 w-40 h-40 rounded-full blur-3xl opacity-30" style={{ background: '#3FA9F5' }} />
             <div className="absolute bottom-0 left-0 w-32 h-32 rounded-full blur-2xl opacity-20" style={{ background: '#67C6FF' }} />
@@ -359,10 +359,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </section>
 
           {/* Quick Stats Card */}
-          <section className={cn("p-6 rounded-[2.5rem] border shadow-sm", C.card, C.cardBorder)}>
+          <section className={cn("p-6 rounded-2xl border shadow-sm", C.card, C.cardBorder)}>
             <h3 className={cn("text-sm font-black uppercase tracking-widest mb-5 flex items-center gap-2", C.sub)}>
               <Activity size={14} style={{ color: C.primary }} />
-              Tim Overview
+              {t('teamOverview')}
             </h3>
             <div className="space-y-4">
               <div className="flex items-center gap-4">
@@ -371,7 +371,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 </div>
                 <div>
                   <p className={cn("text-lg font-black", C.text)}>{users.length}</p>
-                  <p className={cn("text-[10px] font-bold uppercase tracking-widest", C.sub)}>Anggota Tim</p>
+                  <p className={cn("text-[10px] font-bold uppercase tracking-widest", C.sub)}>{t('teamMembers')}</p>
                 </div>
               </div>
               <div className="flex items-center gap-4">
@@ -380,7 +380,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 </div>
                 <div>
                   <p className={cn("text-lg font-black", C.text)}>{allDoneTasks.length}</p>
-                  <p className={cn("text-[10px] font-bold uppercase tracking-widest", C.sub)}>Tugas Selesai</p>
+                  <p className={cn("text-[10px] font-bold uppercase tracking-widest", C.sub)}>{t('completedTasksLabel')}</p>
                 </div>
               </div>
               <div className="flex items-center gap-4">
@@ -389,7 +389,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 </div>
                 <div>
                   <p className={cn("text-lg font-black", C.text)}>{allActiveTasks.filter(t => t.deadline && new Date(t.deadline) < now).length}</p>
-                  <p className={cn("text-[10px] font-bold uppercase tracking-widest", C.sub)}>Tugas Terlambat</p>
+                  <p className={cn("text-[10px] font-bold uppercase tracking-widest", C.sub)}>{t('overdueTasksLabel')}</p>
                 </div>
               </div>
             </div>
@@ -414,7 +414,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </h1>
           <p className={cn("mt-1 font-medium text-sm", C.sub)}>{t('dashboardSubHeader')}</p>
         </div>
-        <div className="flex items-center gap-2 px-4 py-2.5 rounded-2xl border shadow-sm"
+        <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl border shadow-sm"
           style={{ 
             background: darkMode ? 'rgba(63,169,245,0.1)' : 'rgba(63,169,245,0.08)',
             borderColor: 'rgba(63,169,245,0.25)'
@@ -432,14 +432,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <Star size={18} className="text-amber-400 fill-amber-400" />
           <h2 className={cn("text-lg font-bold tracking-tight", C.text)}>{t('priorityToday')}</h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5">
           {recommendedTasks.length > 0 ? recommendedTasks.map((task, i) => (
             <motion.div
               key={task.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
-              className={cn("p-6 rounded-[2rem] border shadow-sm hover:shadow-lg transition-all group relative overflow-hidden hover:-translate-y-0.5", C.card, C.cardBorder)}
+              className={cn("p-6 rounded-2xl border shadow-sm hover:shadow-lg transition-all group relative overflow-hidden hover:-translate-y-0.5", C.card, C.cardBorder)}
               style={{ boxShadow: `0 4px 20px rgba(63,169,245,0.05)` }}
             >
               {/* AI badge */}
@@ -461,9 +461,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     {t(task.priority.toLowerCase())}
                   </span>
                 </div>
-                <h3 className={cn("font-bold group-hover:text-[#2D7FEA] transition-colors line-clamp-2 mb-2", C.text)}>{task.title}</h3>
+                <h3 className={cn("font-bold group-hover:text-[#2D7FEA] transition-colors line-clamp-2 mb-2", C.text)}>{t(task.title)}</h3>
                 <p className={cn("text-[11px] line-clamp-2 mb-6 leading-relaxed", C.sub)}>
-                  {task.description || t('noDescription')}
+                  {t(task.description) || t('noDescription')}
                 </p>
                 <div className="mt-auto flex items-center justify-between">
                   <div className={cn("flex items-center gap-2 text-[10px] font-bold", C.sub)}>
@@ -487,7 +487,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </div>
             </motion.div>
           )) : (
-            <div className={cn("col-span-full py-12 rounded-[2rem] border border-dashed flex flex-col items-center justify-center", C.sub, C.cardBorder)}
+            <div className={cn("col-span-full py-12 rounded-2xl border border-dashed flex flex-col items-center justify-center", C.sub, C.cardBorder)}
               style={{ background: darkMode ? 'rgba(63,169,245,0.03)' : 'rgba(63,169,245,0.04)' }}>
               <CheckCircle2 size={40} className="mb-3 opacity-20" style={{ color: C.primary }} />
               <p className="text-sm font-bold">{t('allTasksDone')}</p>
@@ -521,7 +521,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 px-8 pb-10">
         <div className="lg:col-span-2 space-y-6">
-          <section className={cn("p-8 rounded-[2.5rem] border shadow-sm", C.card, C.cardBorder)}>
+          <section className={cn("p-8 rounded-2xl border shadow-sm", C.card, C.cardBorder)}>
             <div className="flex justify-between items-center mb-8">
               <div className="flex items-center gap-3">
                 <div className="w-1.5 h-6 rounded-full" style={{ background: 'linear-gradient(to bottom, #3FA9F5, #2D7FEA)' }} />
@@ -547,7 +547,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       "ring-[#3FA9F5]"
                     )} style={task.priority === 'Low' ? { background: C.primary } : {}} />
                     <div>
-                      <h4 className={cn("text-sm font-bold group-hover:text-[#2D7FEA] transition-colors", C.text)}>{task.title}</h4>
+                      <h4 className={cn("text-sm font-bold group-hover:text-[#2D7FEA] transition-colors", C.text)}>{t(task.title)}</h4>
                       <p className={cn("text-[10px] font-medium tracking-wide uppercase", C.sub)}>{(t('status') as any)[task.status] || task.status}</p>
                     </div>
                   </div>
@@ -558,14 +558,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </section>
         </div>        <div className="space-y-6">
           {/* Team Activity Section */}
-          <section className={cn("p-8 rounded-[2.5rem] border shadow-sm relative overflow-hidden flex flex-col", C.card, C.cardBorder)}>
+          <section className={cn("p-8 rounded-2xl border shadow-sm relative overflow-hidden flex flex-col", C.card, C.cardBorder)}>
             <div className="absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl opacity-20" style={{ background: '#3FA9F5' }} />
             <div className="flex items-center gap-3 mb-6 relative z-10">
               <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950 text-[#3FA9F5] border border-blue-100 dark:border-blue-900">
                 <Users size={18} />
               </div>
               <h2 className={cn("text-base font-bold tracking-tight", C.text)}>
-                {language === 'en' ? 'Team Activity' : 'Aktivitas Tim'}
+                {t('teamActivity')}
               </h2>
             </div>
             
@@ -598,7 +598,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   </div>
                   <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400 shrink-0">
                     <CheckCircle2 size={11} />
-                    <span className="text-[10px] font-black">{member.completedCount} Selesai</span>
+                    <span className="text-[10px] font-black">{member.completedCount} {t('taskPercentComplete')}</span>
                   </div>
                 </div>
               ))}
@@ -619,7 +619,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <motion.div 
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className={cn("w-full max-w-md rounded-[2.5rem] p-10 shadow-2xl border", C.card, C.cardBorder)}
+            className={cn("w-full max-w-md rounded-3xl p-10 shadow-2xl border", C.card, C.cardBorder)}
           >
             <div className="flex items-center gap-3 mb-2">
               <div className="p-2.5 rounded-xl" style={{ background: 'linear-gradient(135deg, #3FA9F5, #2D7FEA)' }}>
@@ -627,7 +627,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </div>
               <h3 className={cn("text-xl font-bold", C.text)}>{t('completeTask')}</h3>
             </div>
-            <p className={cn("text-sm mb-8 font-medium", C.sub)}>{executingTask.title}</p>
+            <p className={cn("text-sm mb-8 font-medium", C.sub)}>{t(executingTask.title)}</p>
             
             <div className="space-y-6">
               <div>
@@ -666,7 +666,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 <button 
                   onClick={() => fileInputRef.current?.click()}
                   className={cn(
-                    "w-full border-2 border-dashed rounded-[2rem] p-8 flex flex-col items-center justify-center gap-3 transition-all group overflow-hidden",
+                    "w-full border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center gap-3 transition-all group overflow-hidden",
                     darkMode 
                       ? "border-[#1E3A5F] hover:border-[#3FA9F5]/50 bg-[#1E3A5F]/20" 
                       : "border-[#BFDFFF] hover:border-[#3FA9F5]/50 hover:bg-[#EBF5FF]/30"
