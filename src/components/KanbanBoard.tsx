@@ -460,13 +460,13 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
       }
     }
 
-    // Additional Validation for "In Progress"
+    // Soft Validation for "In Progress" — warn but allow
     if (destStatus === 'In Progress' && !task.assignee) {
       onAddNotification(
         t('assigneeRequired'),
-        'Alert'
+        'Warning'
       );
-      return;
+      // Continue — do not return, let the move proceed
     }
 
     // Reordering logic within the project
@@ -529,7 +529,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
       {!isBoardOpen ? (
         <>
           <header className={cn(
-            "flex flex-col md:flex-row justify-between items-start md:items-center sticky top-0 z-30 px-8 py-6 backdrop-blur-xl border-b transition-all gap-4",
+            "flex flex-col md:flex-row justify-between items-start md:items-center sticky top-0 z-30 px-4 md:px-6 py-4 md:py-5 backdrop-blur-xl border-b transition-all gap-4",
             darkMode 
               ? "bg-[#0D1B35]/90 border-[#1E3A5F]/40" 
               : "bg-[#F4F8FC]/90 border-[#BFDFFF]/30"
@@ -540,7 +540,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
             </div>
           </header>
 
-          <div className="px-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+          <div className="px-4 md:px-6 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-5 md:gap-6">
             {projects.map((project) => {
               const projectTasks = tasks.filter(t => t.projectId === project.id);
               const completedCount = projectTasks.filter(t => t.status === 'Done').length;
@@ -650,8 +650,8 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
           </div>
         </>
       ) : (
-        <div className="flex flex-col overflow-hidden" style={{ height: 'calc(100vh - 5rem)' }}>
-          <header className="px-4 md:px-8 py-4 md:py-5 border-b border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl sticky top-0 z-30 transition-all">
+        <div className="flex flex-col" style={{ height: 'calc(100vh - 4rem)' }}>
+          <header className="px-4 md:px-6 py-3 md:py-4 border-b border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl sticky top-0 z-30 transition-all">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
               <div className="flex items-start gap-4">
                  <button 
@@ -719,50 +719,10 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                         )}
                       </AnimatePresence>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <div className="px-2 py-0.5 bg-blue-50 dark:bg-blue-500/10 text-[9px] font-black text-blue-600 dark:text-blue-400 rounded-md border border-blue-100 dark:border-blue-500/20 uppercase tracking-widest">
-                        {t('aiEnhanced')}
-                      </div>
-                      <div className={cn(
-                        "px-2 py-0.5 text-[9px] font-black rounded-md border uppercase tracking-widest",
-                        isOperational 
-                          ? "bg-sky-50 dark:bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-100 dark:border-sky-500/20"
-                          : "bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-500/20"
-                      )}>
-                        {isOperational ? 'Operational' : 'Project'}
-                      </div>
-                    </div>
                   </div>
-                  <p className="text-slate-400 dark:text-slate-500 text-xs font-medium max-w-md line-clamp-1 italic">
-                    {currentProject?.description || 'Manage and track your team\'s progress.'}
-                  </p>
                 </div>
               </div>
-
               <div className="flex items-center gap-3 xl:gap-4 shrink-0">
-                <div className="bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-center shadow-inner">
-                  <button 
-                    onClick={() => setFilterMode('my')}
-                    className={cn(
-                      "px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2",
-                      filterMode === 'my' ? "bg-white dark:bg-slate-700 text-blue-600 shadow-sm" : "text-slate-400 hover:text-slate-600"
-                    )}
-                  >
-                    <UserIcon size={14} />
-                    {t('myTasks')}
-                  </button>
-                  <button 
-                    onClick={() => setFilterMode('all')}
-                    className={cn(
-                      "px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2",
-                      filterMode === 'all' ? "bg-white dark:bg-slate-700 text-blue-600 shadow-sm" : "text-slate-400 hover:text-slate-600"
-                    )}
-                  >
-                    <Layout size={14} />
-                    {t('allTasks')}
-                  </button>
-                </div>
-
                 <div className="flex -space-x-2 mr-2">
                   {allProjectUsers.map((u: any) => (
                     <div key={u.id} className="w-9 h-9 rounded-full border-2 border-white dark:border-slate-900 overflow-hidden shadow-sm group hover:translate-y-[-4px] transition-all cursor-pointer relative" title={u.name}>
@@ -782,14 +742,6 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                 <div className="h-8 w-px bg-slate-200 dark:bg-slate-700 mx-1 hidden lg:block" />
 
                 <div className="flex items-center gap-3">
-                  <button 
-                    onClick={() => handleAddTask()}
-                    className="px-6 py-2.5 bg-blue-600 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all flex items-center gap-2.5 shadow-lg shadow-blue-500/20"
-                  >
-                    <Plus size={16} strokeWidth={3} />
-                    {t('addTask')}
-                  </button>
-
                   <div className="relative">
                     <button 
                       onClick={() => setActiveMenu(activeMenu === 'more-actions' ? null : 'more-actions')}
@@ -808,6 +760,16 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                             exit={{ opacity: 0, scale: 0.95, y: -10 }}
                             className="absolute right-0 mt-4 w-64 bg-white dark:bg-slate-800 rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-700 py-2.5 z-20 overflow-hidden"
                           >
+                            <button 
+                              onClick={() => {
+                                handleAddTask();
+                                setActiveMenu(null);
+                              }}
+                              className="w-full px-5 py-3 text-left text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-blue-600 flex items-center gap-3 transition-all"
+                            >
+                              <Plus size={18} className="text-blue-500" />
+                              {t('addTask')}
+                            </button>
                             {!isOperational && (
                               <button 
                                 onClick={() => {
@@ -895,11 +857,11 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
             </div>
           ) : (
             <DragDropContext onDragStart={onDragStart} onDragEnd={onDragEnd}>
-              <div className="flex-1 flex gap-4 md:gap-5 overflow-x-auto pb-8 px-4 md:px-6 pt-6 scrollbar-hide items-start" style={{ background: 'transparent' }}>
+              <div className="flex gap-4 md:gap-5 pb-4 px-4 md:px-6 pt-4 scrollbar-hide items-stretch overflow-y-hidden" style={{ overflowX: 'auto', flex: 1 }}>
                 {boardColumns.map((column, index) => (
-                  <div key={column.id} className="flex flex-shrink-0">
+                  <div key={column.id} className="flex flex-shrink-0 h-full">
                     <div className={cn(
-                      "w-[280px] md:w-[300px] flex-shrink-0 flex flex-col pt-4 pb-4 px-3 rounded-2xl select-none",
+                      "w-[240px] sm:w-[260px] md:w-[280px] flex-shrink-0 flex flex-col pt-3 pb-2 px-2.5 rounded-2xl select-none h-full",
                       darkMode 
                         ? "bg-[#0D1E3A]" 
                         : "bg-[#EBF5FF]"
@@ -1012,17 +974,20 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                       </div>
                     </div>
 
-                    <Droppable droppableId={column.status}>
+                    <Droppable droppableId={column.status} ignoreContainerClipping>
                       {(provided, snapshot) => (
                         <div
                           {...provided.droppableProps}
                           ref={provided.innerRef}
                           className={cn(
-                            "rounded-xl transition-all duration-300 px-1 py-1 min-h-[100px]",
+                            "rounded-xl transition-all duration-200 px-1 py-1 overflow-y-auto scrollbar-hide flex-1",
                             snapshot.isDraggingOver 
-                              ? darkMode ? "bg-[#3FA9F5]/8" : "bg-[#3FA9F5]/8" 
+                              ? darkMode ? "bg-[#3FA9F5]/10 ring-1 ring-[#3FA9F5]/20" : "bg-[#3FA9F5]/8 ring-1 ring-[#3FA9F5]/15" 
                               : ""
                           )}
+                          style={{ 
+                            minHeight: snapshot.isDraggingOver ? '120px' : '40px'
+                          }}
                         >
                           {filteredTasks
                             .filter((t) => t.status === column.status)
@@ -1061,7 +1026,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                                         }
                                       }}
                                       className={cn(
-                                        "rounded-xl border cursor-pointer mb-3 transition-all duration-200 overflow-hidden",
+                                        "rounded-xl border cursor-pointer mb-2 transition-all duration-200 overflow-hidden",
                                         darkMode
                                           ? "bg-[#1C2B45] border-[#1E3A5F]/60 hover:border-[#3FA9F5]/50 hover:shadow-lg hover:shadow-[#3FA9F5]/10"
                                           : "bg-white border-slate-200/80 hover:border-slate-300 hover:shadow-md hover:shadow-slate-200/60",
@@ -1069,52 +1034,40 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                                         recommendedTask?.id === task.id && (darkMode ? "ring-1 ring-[#3FA9F5]/50" : "ring-1 ring-[#3FA9F5]/30")
                                       )}
                                     >
-                                      <div className="p-4 space-y-3">
-                                        {/* Row 1: Status badge + more menu */}
-                                        <div className="flex items-center justify-between">
-                                          <span id={`task-status-badge-${task.id}`} className={cn(
-                                            "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold border",
-                                            darkMode
-                                              ? task.status === 'Done' ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30' :
-                                                task.status === 'In Progress' ? 'text-[#3FA9F5] bg-[#3FA9F5]/10 border-[#3FA9F5]/30' :
-                                                task.status === 'Review' ? 'text-violet-400 bg-violet-500/10 border-violet-500/30' :
-                                                'text-slate-400 bg-slate-700/50 border-slate-600/30'
-                                              : statusBadge.color
-                                          )}>
-                                            <span className={cn("w-1.5 h-1.5 rounded-full", darkMode ? statusBadge.dot : statusBadge.dot)} />
-                                            {statusBadge.label}
-                                          </span>
+                                      <div className="p-3 space-y-2">
+                                        {/* Row 1: More menu (Status badge removed) */}
+                                        <div className="flex items-center justify-end">
                                           <button
                                             onClick={(e) => { e.stopPropagation(); setActiveMenu(activeMenu === task.id ? null : task.id); }}
-                                            className={cn("p-1 rounded-lg transition-colors", darkMode ? "text-slate-500 hover:text-slate-300 hover:bg-white/5" : "text-slate-300 hover:text-slate-500 hover:bg-slate-100")}
+                                            className={cn("p-0.5 rounded-lg transition-colors", darkMode ? "text-slate-500 hover:text-slate-300 hover:bg-white/5" : "text-slate-300 hover:text-slate-500 hover:bg-slate-100")}
                                           >
-                                            <MoreHorizontal size={15} />
+                                            <MoreHorizontal size={14} />
                                           </button>
                                         </div>
 
                                         {/* Row 2: Title */}
-                                        <h4 id={`task-title-${task.id}`} className={cn("font-bold text-[14px] leading-snug line-clamp-2", darkMode ? "text-white" : "text-slate-800")}>
+                                        <h4 id={`task-title-${task.id}`} className={cn("font-bold text-[13px] leading-snug line-clamp-2", darkMode ? "text-white" : "text-slate-800")}>
                                           {t(task.title)}
                                         </h4>
 
                                         {/* Row 3: Description */}
                                         {task.description && (
-                                          <p className={cn("text-[11px] line-clamp-2 leading-relaxed", darkMode ? "text-slate-400" : "text-slate-500")}>
+                                          <p className={cn("text-[10px] line-clamp-2 leading-relaxed", darkMode ? "text-slate-400" : "text-slate-500")}>
                                             {t(task.description)}
                                           </p>
                                         )}
 
                                         {/* Row 4: Assignees label + avatars */}
                                         <div className="flex items-center justify-between">
-                                          <div className="flex items-center gap-2">
-                                            <span className={cn("text-[11px] font-medium", darkMode ? "text-slate-500" : "text-slate-400")}>{t('assignees')} :</span>
+                                          <div className="flex items-center gap-1.5">
+                                            <span className={cn("text-[10px] font-medium", darkMode ? "text-slate-500" : "text-slate-400")}>{t('assignees')} :</span>
                                             <div className="flex -space-x-1.5">
                                               {assigneeUser && (
                                                 <img
                                                   src={assigneeUser.avatar}
                                                   title={assigneeUser.name}
                                                   alt={assigneeUser.name}
-                                                  className="w-6 h-6 rounded-full border-2 border-white dark:border-[#1C2B45] shadow-sm object-cover"
+                                                  className="w-5 h-5 rounded-full border-2 border-white dark:border-[#1C2B45] shadow-sm object-cover"
                                                 />
                                               )}
                                               {contributors.slice(0, 2).map((u: any) => (
@@ -1123,23 +1076,17 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                                                   src={u.avatar}
                                                   title={u.name}
                                                   alt={u.name}
-                                                  className="w-6 h-6 rounded-full border-2 border-white dark:border-[#1C2B45] shadow-sm object-cover"
+                                                  className="w-5 h-5 rounded-full border-2 border-white dark:border-[#1C2B45] shadow-sm object-cover"
                                                 />
                                               ))}
                                             </div>
                                           </div>
                                         </div>
 
-                                        {/* Row 5: Date + Priority */}
-                                        <div className="flex items-center justify-between">
-                                          <div className={cn("flex items-center gap-1.5 text-[11px] font-medium", darkMode ? "text-slate-400" : "text-slate-500")}>
-                                            <Flag size={11} className={isOverdue ? "text-rose-400" : darkMode ? "text-slate-500" : "text-slate-400"} />
-                                            <span className={isOverdue ? "text-rose-400 font-bold" : ""}>
-                                              {task.deadline || '—'}
-                                            </span>
-                                          </div>
+                                        {/* Row 5: Priority */}
+                                        <div className="flex items-center justify-end">
                                           <span className={cn(
-                                            "px-2.5 py-0.5 rounded-full text-[10px] font-bold border",
+                                            "px-2 py-0.5 rounded-full text-[9px] font-bold border",
                                             darkMode
                                               ? task.priority === 'High' ? 'text-rose-400 bg-rose-500/10 border-rose-500/30' :
                                                 task.priority === 'Medium' ? 'text-amber-400 bg-amber-500/10 border-amber-500/30' :
@@ -1151,64 +1098,61 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                                         </div>
 
                                         {/* Row 6: Footer counts */}
-                                        <div className={cn("flex items-center gap-4 pt-2 border-t text-[11px]", darkMode ? "border-[#1E3A5F]/50" : "border-slate-100")}>
+                                        <div className={cn("flex items-center gap-3 pt-2 border-t text-[10px]", darkMode ? "border-[#1E3A5F]/50" : "border-slate-100")}>
                                           <div className={cn("flex items-center gap-1", darkMode ? "text-slate-500" : "text-slate-400")}>
-                                            <MessageSquare size={11} />
-                                            <span>{task.comments?.length || 0} {t('comments')}</span>
+                                            <MessageSquare size={10} />
+                                            <span>{task.comments?.length || 0}</span>
                                           </div>
                                           <div className={cn("flex items-center gap-1", darkMode ? "text-slate-500" : "text-slate-400")}>
-                                            <Paperclip size={11} />
-                                            <span>{task.attachments?.filter(a => a.type === 'link').length || 0} {t('links')}</span>
+                                            <Paperclip size={10} />
+                                            <span>{task.attachments?.filter(a => a.type === 'link').length || 0}</span>
                                           </div>
                                           {checkTotal > 0 && (
                                             <div className={cn("flex items-center gap-1", darkMode ? "text-slate-500" : "text-slate-400")}>
-                                              <CheckCircle2 size={11} />
+                                              <CheckCircle2 size={10} />
                                               <span>{checkDone}/{checkTotal}</span>
                                             </div>
                                           )}
                                         </div>
 
                                         {/* Row 7: Documentation buttons */}
-                                        <div className={cn(
-                                          "flex items-center gap-2 pt-2 border-t",
-                                          darkMode ? "border-[#1E3A5F]/50" : "border-slate-100"
-                                        )}>
-                                          <button
-                                            id={`btn-lihat-dok-${task.id}`}
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              setDocDrawerTask(task);
-                                              setDocDrawerMode('view');
-                                            }}
-                                            className={cn(
-                                              "flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-[10px] font-bold border transition-all hover:scale-[1.02]",
-                                              darkMode
-                                                ? "border-[#1E3A5F]/60 text-slate-400 hover:text-[#3FA9F5] hover:border-[#3FA9F5]/40 hover:bg-[#3FA9F5]/5"
-                                                : "border-slate-200 text-slate-500 hover:text-[#2D7FEA] hover:border-[#3FA9F5]/40 hover:bg-[#EBF5FF]"
-                                            )}
-                                          >
-                                            <BookOpen size={11} />
-                                            {t('docView')}
-                                            {documentations.filter(d => d.taskId === task.id).length > 0 && (
-                                              <span className="ml-0.5 w-4 h-4 rounded-full text-white text-[8px] font-black flex items-center justify-center" style={{ background: '#3FA9F5' }}>
-                                                {documentations.filter(d => d.taskId === task.id).length}
-                                              </span>
-                                            )}
-                                          </button>
-                                          <button
-                                            id={`btn-tambah-dok-${task.id}`}
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              setDocDrawerTask(task);
-                                              setDocDrawerMode('add');
-                                            }}
-                                            className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-[10px] font-bold text-white transition-all hover:scale-[1.02] shadow-sm btn-tambah-dok"
-                                            style={{ background: 'linear-gradient(135deg, #3FA9F5, #2D7FEA)', boxShadow: '0 2px 10px rgba(63,169,245,0.25)' }}
-                                          >
-                                            <FilePlus size={11} />
-                                            {t('docAdd')}
-                                          </button>
-                                        </div>
+                                        {task.status === 'Done' && (
+                                          <div className={cn(
+                                            "flex items-center gap-1.5 pt-2 border-t",
+                                            darkMode ? "border-[#1E3A5F]/50" : "border-slate-100"
+                                          )}>
+                                            <button
+                                              id={`btn-lihat-dok-${task.id}`}
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                setDocDrawerTask(task);
+                                                setDocDrawerMode('view');
+                                              }}
+                                              className={cn(
+                                                "flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg text-[9px] font-bold border transition-all hover:scale-[1.02]",
+                                                darkMode
+                                                  ? "border-[#1E3A5F]/60 text-slate-400 hover:text-[#3FA9F5] hover:border-[#3FA9F5]/40 hover:bg-[#3FA9F5]/5"
+                                                  : "border-slate-200 text-slate-500 hover:text-[#2D7FEA] hover:border-[#3FA9F5]/40 hover:bg-[#EBF5FF]"
+                                              )}
+                                            >
+                                              <BookOpen size={10} />
+                                              {t('docView')}
+                                            </button>
+                                            <button
+                                              id={`btn-tambah-dok-${task.id}`}
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                setDocDrawerTask(task);
+                                                setDocDrawerMode('add');
+                                              }}
+                                              className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg text-[9px] font-bold text-white transition-all hover:scale-[1.02] shadow-sm btn-tambah-dok"
+                                              style={{ background: 'linear-gradient(135deg, #3FA9F5, #2D7FEA)', boxShadow: '0 2px 10px rgba(63,169,245,0.25)' }}
+                                            >
+                                              <FilePlus size={10} />
+                                              {t('docAdd')}
+                                            </button>
+                                          </div>
+                                        )}
                                       </div>
                                     </div>
                                   )}
@@ -1219,14 +1163,14 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                             <button 
                               onClick={() => handleAddTask(column.status)}
                               className={cn(
-                                "w-full mt-2 py-3 rounded-xl flex items-center justify-center gap-2 transition-all group border-2 border-dashed",
+                                "w-full mt-1 py-2 rounded-lg flex items-center justify-center gap-2 transition-all group border-2 border-dashed",
                                 darkMode
                                   ? "border-[#1E3A5F] text-slate-600 hover:text-[#3FA9F5] hover:border-[#3FA9F5]/50 hover:bg-[#3FA9F5]/5"
-                                  : "border-slate-200 text-slate-400 hover:text-[#2D7FEA] hover:border-[#3FA9F5]/40 hover:bg-[#3FA9F5]/5"
+                                  : "border-slate-200 text-slate-400 hover:text-[#2D7FEA] hover:border-[#3FA9F5]/40 hover:bg-[#EBF5FF]"
                               )}
                             >
-                              <Plus size={15} className="group-hover:scale-110 transition-transform" />
-                              <span className="text-[11px] font-bold">{t('addTask')}</span>
+                              <Plus size={13} className="group-hover:scale-110 transition-transform" />
+                              <span className="text-[10px] font-bold">{t('addTask')}</span>
                             </button>
                           </div>
                         )}
@@ -1235,8 +1179,8 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   </div>
                 ))}
                 {!isOperational && (
-                  <div className="flex-shrink-0 w-80 flex flex-col pt-2 pr-10">
-                    <div className="flex items-center justify-between mb-5 px-3">
+                  <div className="flex-shrink-0 w-72 flex flex-col pt-2 pr-4">
+                    <div className="flex items-center justify-between mb-4 px-3">
                       <h3 className="font-bold text-slate-400 dark:text-slate-600 tracking-tight uppercase text-[10px] tracking-[0.2em]">{t('newColumn')}</h3>
                     </div>
                     <button 
@@ -1257,7 +1201,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                           onSuccess(t('columnAdded'));
                         }
                       }}
-                      className="w-full h-[500px] border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col items-center justify-center gap-4 text-slate-400 hover:text-blue-500 hover:bg-white dark:hover:bg-slate-800 hover:border-blue-200 transition-all group shadow-sm hover:shadow-xl hover:shadow-blue-500/5"
+                      className="w-full border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col items-center justify-center gap-4 text-slate-400 hover:text-blue-500 hover:bg-white dark:hover:bg-slate-800 hover:border-blue-200 transition-all group shadow-sm hover:shadow-xl hover:shadow-blue-500/5 py-12"
                     >
                       <div className="w-12 h-12 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center group-hover:scale-110 transition-all border border-slate-100 dark:border-slate-700">
                         <Plus size={24} />
@@ -1382,7 +1326,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
 
               <div className="space-y-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">{t('name')}</label>
+                  <label className="text-[10px] font-black text-slate-400 dark:border-slate-500 uppercase tracking-widest ml-1">{t('name')}</label>
                   <input 
                     type="text"
                     value={newProjectName}
@@ -1394,7 +1338,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">{t('desc')}</label>
+                  <label className="text-[10px] font-black text-slate-400 dark:border-slate-500 uppercase tracking-widest ml-1">{t('desc')}</label>
                   <textarea 
                     value={newProjectDesc}
                     onChange={(e) => setNewProjectDesc(e.target.value)}
@@ -1408,7 +1352,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
 
 
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">{t('boardMode')}</label>
+                  <label className="text-[10px] font-black text-slate-400 dark:border-slate-500 uppercase tracking-widest ml-1">{t('boardMode')}</label>
                   <div className="grid grid-cols-2 gap-4">
                     <button 
                       onClick={() => setNewProjectMode('Project')}
@@ -1560,7 +1504,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
               </div>
 
               {/* Modal Content - Two Columns */}
-              <div className="flex-1 overflow-y-auto p-8 grid grid-cols-1 lg:grid-cols-3 gap-8 custom-scrollbar">
+              <div className="flex-1 overflow-y-auto p-4 md:p-6 grid grid-cols-1 xl:grid-cols-3 gap-5 md:gap-6 custom-scrollbar">
                 
                 {/* Left Column: Core task details (Title, desc, checklist, comments, attachments) */}
                 <div className="lg:col-span-2 space-y-8">

@@ -198,13 +198,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
     <div className="space-y-8 animate-in fade-in duration-700">
       {/* Header */}
       <header className={cn(
-        "flex flex-col md:flex-row justify-between items-start md:items-center sticky top-0 z-30 px-8 py-6 backdrop-blur-xl border-b transition-all gap-4",
+        "flex flex-col md:flex-row justify-between items-start md:items-center sticky top-0 z-30 px-4 md:px-6 py-4 md:py-5 backdrop-blur-xl border-b transition-all gap-4",
         darkMode 
           ? "bg-[#0D1B35]/90 border-[#1E3A5F]/40" 
           : "bg-[#F4F8FC]/90 border-[#BFDFFF]/30"
       )}>
         <div>
-          <h1 className={cn("text-3xl font-black tracking-tight", C.text)}>{t('adminDashboardHeader')}</h1>
+          <h1 className={cn("text-2xl font-black tracking-tight", C.text)}>{t('adminDashboardHeader')}</h1>
           <p className={cn("mt-1 font-medium text-sm", C.sub)}>{t('adminDashboardSub')}</p>
         </div>
         <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl border shadow-sm"
@@ -220,7 +220,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       </header>
 
       {/* Global Metrics */}
-      <section className="px-8 grid grid-cols-1 md:grid-cols-4 gap-5">
+      <section className="px-4 md:px-6 grid grid-cols-2 xl:grid-cols-4 gap-4">
         {[
           { label: t('totalTasks'), value: tasks.length, icon: LayoutGrid, gradient: 'from-[#3FA9F5] to-[#2D7FEA]', glow: 'shadow-[#3FA9F5]/20' },
           { label: t('activeProjects'), value: allProjectsCount, icon: Trello, gradient: 'from-[#67C6FF] to-[#3FA9F5]', glow: 'shadow-[#67C6FF]/20' },
@@ -233,12 +233,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.08 }}
             className={cn(
-              "p-6 rounded-2xl border shadow-sm flex items-center gap-4 hover:shadow-md transition-all group hover:-translate-y-0.5",
+              "p-5 rounded-2xl border shadow-sm flex items-center gap-4 hover:shadow-md transition-all group hover:-translate-y-0.5",
               C.card, C.cardBorder
             )}
           >
-            <div className={cn("p-3.5 rounded-2xl bg-gradient-to-br text-white shadow-lg", stat.gradient, stat.glow)}>
-              <stat.icon size={22} />
+            <div className={cn("p-2.5 rounded-2xl bg-gradient-to-br text-white shadow-lg", stat.gradient, stat.glow)}>
+              <stat.icon size={20} />
             </div>
             <div>
               <p className={cn("text-[10px] font-black uppercase tracking-widest", C.sub)}>{stat.label}</p>
@@ -248,10 +248,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
         ))}
       </section>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 px-8 pb-10">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 px-4 md:px-8 pb-10">
         <div className="lg:col-span-2 space-y-6">
           {/* User Performance */}
-          <section className={cn("p-8 rounded-2xl border shadow-sm", C.card, C.cardBorder)}>
+          <section className={cn("p-6 rounded-2xl border shadow-sm", C.card, C.cardBorder)}>
             <h2 className={cn("text-xl font-bold tracking-tight mb-8 flex items-center gap-3", C.text)}>
               <div className="p-2 rounded-xl" style={{ background: 'rgba(63,169,245,0.12)' }}>
                 <TrendingUp size={18} style={{ color: C.primary }} />
@@ -293,14 +293,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </section>
 
           {/* Kanban Distribution */}
-          <section className={cn("p-8 rounded-2xl border shadow-sm", C.card, C.cardBorder)}>
+          <section className={cn("p-6 rounded-2xl border shadow-sm", C.card, C.cardBorder)}>
             <h2 className={cn("text-xl font-bold tracking-tight mb-8 flex items-center gap-3", C.text)}>
               <div className="p-2 rounded-xl" style={{ background: 'rgba(63,169,245,0.12)' }}>
                 <Monitor size={18} style={{ color: C.primary }} />
               </div>
               {t('monitoringAndControl')}
             </h2>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               {[
                 { status: 'Backlog', color: '#94A3B8', bg: darkMode ? 'rgba(148,163,184,0.08)' : '#F8FAFC' },
                 { status: 'To Do', color: '#3FA9F5', bg: darkMode ? 'rgba(63,169,245,0.08)' : '#EBF5FF' },
@@ -312,7 +312,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 return (
                   <div key={status} className={cn("p-5 rounded-3xl border transition-all hover:-translate-y-0.5 hover:shadow-md", C.cardBorder)} style={{ background: bg }}>
                     <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-2" style={{ color }}>{status}</p>
-                    <h3 className={cn("text-3xl font-black mb-2", C.text)}>{count}</h3>
+                    <h3 className={cn("text-2xl font-black mb-2", C.text)}>{count}</h3>
                     <div className="flex items-center gap-2">
                       <span className="text-[10px] font-black" style={{ color }}>{percent}%</span>
                       <div className={cn("h-1.5 flex-1 rounded-full overflow-hidden", darkMode ? "bg-white/10" : "bg-white/80")}>
@@ -329,7 +329,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         {/* Right column */}
         <div className="space-y-6">
           {/* Project Stats */}
-          <section className="p-8 rounded-2xl text-white shadow-xl overflow-hidden relative"
+          <section className="p-6 rounded-2xl text-white shadow-xl overflow-hidden relative"
             style={{ background: 'linear-gradient(135deg, #142B6F 0%, #1E3A8A 50%, #2D7FEA 100%)' }}>
             <div className="absolute top-0 right-0 w-40 h-40 rounded-full blur-3xl opacity-30" style={{ background: '#3FA9F5' }} />
             <div className="absolute bottom-0 left-0 w-32 h-32 rounded-full blur-2xl opacity-20" style={{ background: '#67C6FF' }} />
@@ -359,7 +359,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </section>
 
           {/* Quick Stats Card */}
-          <section className={cn("p-6 rounded-2xl border shadow-sm", C.card, C.cardBorder)}>
+          <section className={cn("p-5 rounded-2xl border shadow-sm", C.card, C.cardBorder)}>
             <h3 className={cn("text-sm font-black uppercase tracking-widest mb-5 flex items-center gap-2", C.sub)}>
               <Activity size={14} style={{ color: C.primary }} />
               {t('teamOverview')}
@@ -403,36 +403,27 @@ export const Dashboard: React.FC<DashboardProps> = ({
     <div className="space-y-8 animate-in fade-in duration-700">
       {/* Header */}
       <header className={cn(
-        "flex flex-col md:flex-row justify-between items-start md:items-center sticky top-0 z-30 px-8 py-6 backdrop-blur-xl border-b transition-all gap-4",
+        "flex flex-col md:flex-row justify-between items-start md:items-center sticky top-0 z-30 px-4 md:px-6 py-4 md:py-5 backdrop-blur-xl border-b transition-all gap-4",
         darkMode 
           ? "bg-[#0D1B35]/90 border-[#1E3A5F]/40" 
           : "bg-[#F4F8FC]/90 border-[#BFDFFF]/30"
       )}>
         <div>
-          <h1 className={cn("text-3xl font-black tracking-tight", C.text)}>
+          <h1 className={cn("text-2xl font-black tracking-tight", C.text)}>
             {t('hi')}, <span style={{ color: C.primary }}>{user.name.split(' ')[0]}</span>!
           </h1>
           <p className={cn("mt-1 font-medium text-sm", C.sub)}>{t('dashboardSubHeader')}</p>
         </div>
-        <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl border shadow-sm"
-          style={{ 
-            background: darkMode ? 'rgba(63,169,245,0.1)' : 'rgba(63,169,245,0.08)',
-            borderColor: 'rgba(63,169,245,0.25)'
-          }}>
-          <Zap size={14} style={{ color: C.primary }} className="fill-current" />
-          <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: C.primary }}>
-            {t('productivity')}: {myOnTimeRate}%
-          </span>
-        </div>
+
       </header>
 
       {/* Priority Tasks */}
-      <section className="px-8 space-y-4">
+      <section className="px-4 md:px-6 space-y-4">
         <div className="flex items-center gap-2">
           <Star size={18} className="text-amber-400 fill-amber-400" />
           <h2 className={cn("text-lg font-bold tracking-tight", C.text)}>{t('priorityToday')}</h2>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 md:gap-5">
           {recommendedTasks.length > 0 ? recommendedTasks.map((task, i) => (
             <motion.div
               key={task.id}
@@ -442,11 +433,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               className={cn("p-6 rounded-2xl border shadow-sm hover:shadow-lg transition-all group relative overflow-hidden hover:-translate-y-0.5", C.card, C.cardBorder)}
               style={{ boxShadow: `0 4px 20px rgba(63,169,245,0.05)` }}
             >
-              {/* AI badge */}
-              <div className="absolute top-0 right-0 py-1.5 px-4 text-white text-[8px] font-black uppercase tracking-widest rounded-bl-xl flex items-center gap-1"
-                style={{ background: 'linear-gradient(135deg, #3FA9F5, #2D7FEA)' }}>
-                ✦ {t('aiSuggestion')}
-              </div>
+
               <div className="flex flex-col h-full">
                 <div className="mb-4 mt-2">
                   <span className={cn(
@@ -497,9 +484,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
       </section>
 
       {/* Personal KPI */}
-      <section className="px-8 space-y-4">
+      <section className="px-4 md:px-6 space-y-4">
         <h2 className={cn("text-lg font-bold tracking-tight", C.text)}>{t('personalKPI')}</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {[
             { label: t('completedTasks'), value: myDoneTasks.length, icon: CheckCircle2, gradient: 'from-[#3FA9F5] to-[#2D7FEA]', glow: 'rgba(63,169,245,0.25)' },
             { label: t('avgCompletionTime'), value: t('avgCompletionTimeValue'), icon: Clock, gradient: 'from-[#67C6FF] to-[#3FA9F5]', glow: 'rgba(103,198,255,0.25)' },
@@ -519,9 +506,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
       </section>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 px-8 pb-10">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 px-4 md:px-8 pb-10">
         <div className="lg:col-span-2 space-y-6">
-          <section className={cn("p-8 rounded-2xl border shadow-sm", C.card, C.cardBorder)}>
+          <section className={cn("p-6 rounded-2xl border shadow-sm", C.card, C.cardBorder)}>
             <div className="flex justify-between items-center mb-8">
               <div className="flex items-center gap-3">
                 <div className="w-1.5 h-6 rounded-full" style={{ background: 'linear-gradient(to bottom, #3FA9F5, #2D7FEA)' }} />
@@ -558,7 +545,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </section>
         </div>        <div className="space-y-6">
           {/* Team Activity Section */}
-          <section className={cn("p-8 rounded-2xl border shadow-sm relative overflow-hidden flex flex-col", C.card, C.cardBorder)}>
+          <section className={cn("p-6 rounded-2xl border shadow-sm relative overflow-hidden flex flex-col", C.card, C.cardBorder)}>
             <div className="absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl opacity-20" style={{ background: '#3FA9F5' }} />
             <div className="flex items-center gap-3 mb-6 relative z-10">
               <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950 text-[#3FA9F5] border border-blue-100 dark:border-blue-900">

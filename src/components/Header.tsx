@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bell, Search, Sun, Moon } from 'lucide-react';
+import { Bell, Sun, Moon } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -24,49 +24,30 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className={cn(
-      "h-16 md:h-20 flex items-center justify-between px-4 md:px-8 fixed top-0 right-0 left-0 lg:left-[300px] z-[35] transition-all duration-300",
+      "h-14 md:h-16 flex items-center justify-between px-3 md:px-6 fixed top-0 right-0 left-0 lg:left-[220px] xl:left-[250px] z-[35] transition-all duration-300",
       darkMode 
         ? "bg-[#0D1B35]/90 backdrop-blur-xl border-b border-[#1E3A5F]/50" 
         : "bg-white/90 backdrop-blur-xl border-b border-[#BFDFFF]/40 shadow-sm shadow-[#3FA9F5]/5"
     )}>
-      {/* Search Bar - hidden on mobile, visible md+ */}
-      <div className="hidden md:flex items-center gap-4 flex-1 max-w-xl">
-        <div className="relative w-full group">
-          <Search 
-            className="absolute left-4 top-1/2 -translate-y-1/2 transition-colors group-focus-within:text-[#3FA9F5]" 
-            size={18} 
-            color={darkMode ? '#4A6FA5' : '#94A3B8'}
-          />
-          <input 
-            type="text" 
-            placeholder={t('searchPlaceholder')}
-            className={cn(
-              "w-full pl-12 pr-4 py-3 rounded-2xl text-sm outline-none transition-all placeholder:text-slate-400 font-medium border",
-              darkMode 
-                ? "bg-[#1E3A5F]/40 border-[#1E3A5F]/60 focus:ring-2 focus:ring-[#3FA9F5]/30 focus:border-[#3FA9F5]/50 text-white" 
-                : "bg-[#F0F9FF] border-[#BFDFFF]/60 focus:ring-2 focus:ring-[#3FA9F5]/20 focus:border-[#3FA9F5]/50 text-slate-700 focus:bg-white"
-            )}
-          />
-        </div>
-      </div>
+
       {/* Mobile title placeholder */}
       <div className="md:hidden flex-1 pl-10">
         <span className="font-black text-sm tracking-wider bg-gradient-to-r from-[#3FA9F5] to-[#2D7FEA] bg-clip-text text-transparent">KroomSpace</span>
       </div>
 
-      <div className="flex items-center gap-2 md:gap-4">
+      <div className="flex items-center gap-2 md:gap-4 ml-auto">
         {/* Dark Mode Toggle */}
         <button 
           id="btn_dark_mode"
           onClick={() => setDarkMode(!darkMode)}
           className={cn(
-            "p-3 rounded-2xl border transition-all flex items-center justify-center hover:scale-105",
+            "p-2 md:p-2.5 rounded-2xl border transition-all flex items-center justify-center hover:scale-105",
             darkMode 
               ? "bg-[#1E3A5F]/50 border-[#1E3A5F]/60 text-amber-400 hover:bg-[#1E3A5F] shadow-inner" 
               : "bg-[#F0F9FF] border-[#BFDFFF]/60 text-[#2D7FEA] hover:bg-[#DBEEFF] hover:shadow-md hover:shadow-[#3FA9F5]/10"
           )}
         >
-          {darkMode ? <Sun size={18} className="pointer-events-none" /> : <Moon size={18} className="pointer-events-none" />}
+          {darkMode ? <Sun size={16} className="pointer-events-none" /> : <Moon size={16} className="pointer-events-none" />}
         </button>
 
         {/* Language Switcher */}
@@ -110,15 +91,16 @@ export const Header: React.FC<HeaderProps> = ({
           id="btn_notification"
           onClick={onNotificationClick}
           className={cn(
-            "p-3 rounded-2xl border shadow-sm transition-all relative group hover:scale-105",
+            "p-2 md:p-2.5 rounded-2xl border shadow-sm transition-all relative group hover:scale-105",
             darkMode 
               ? "bg-[#1E3A5F]/50 border-[#1E3A5F]/60 text-slate-400 hover:text-[#3FA9F5] hover:bg-[#1E3A5F]" 
               : "bg-[#F0F9FF] border-[#BFDFFF]/60 text-slate-400 hover:text-[#2D7FEA] hover:bg-[#DBEEFF] hover:shadow-md hover:shadow-[#3FA9F5]/10"
           )}
         >
-          <Bell size={18} className="group-hover:rotate-12 transition-transform pointer-events-none" />
+          <Bell size={16} className="md:hidden group-hover:rotate-12 transition-transform pointer-events-none" />
+          <Bell size={18} className="hidden md:block group-hover:rotate-12 transition-transform pointer-events-none" />
           {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 w-5 h-5 text-white text-[9px] font-black flex items-center justify-center rounded-full border-2 border-white shadow-lg animate-in zoom-in"
+            <span className="absolute -top-1 -right-1 w-4 h-4 md:w-5 md:h-5 text-white text-[9px] font-black flex items-center justify-center rounded-full border-2 border-white shadow-lg animate-in zoom-in"
               style={{ background: 'linear-gradient(135deg, #EF4444, #DC2626)' }}>
               {unreadCount}
             </span>
@@ -129,7 +111,7 @@ export const Header: React.FC<HeaderProps> = ({
         <button 
           onClick={onProfileClick}
           className={cn(
-            "flex items-center gap-3 pl-3 pr-4 py-2 rounded-2xl border group transition-all hover:scale-[1.02]",
+            "p-1.5 rounded-2xl border transition-all flex items-center justify-center hover:scale-105 shrink-0",
             darkMode 
               ? "bg-[#1E3A5F]/50 border-[#1E3A5F]/60 hover:bg-[#1E3A5F] hover:border-[#3FA9F5]/40" 
               : "bg-[#F0F9FF] border-[#BFDFFF]/60 shadow-sm hover:border-[#3FA9F5]/40 hover:shadow-md hover:shadow-[#3FA9F5]/10 hover:bg-[#DBEEFF]/50"
@@ -138,14 +120,6 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="relative">
             <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-full border-2 border-white shadow-sm shrink-0" />
             <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#3FA9F5] border-2 border-white rounded-full" />
-          </div>
-          <div className="hidden md:block text-left">
-            <p className={cn("text-xs font-bold leading-none", darkMode ? "text-white" : "text-slate-800")}>
-              {user.name.split(' ')[0]}
-            </p>
-            <p className="text-[9px] font-black text-[#3FA9F5] uppercase tracking-widest mt-0.5">
-              {t('profile')}
-            </p>
           </div>
         </button>
       </div>

@@ -211,28 +211,28 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
     <div className="min-h-screen w-full flex bg-white overflow-hidden font-sans">
       {/* Tombol Kembali ke Landing Page */}
       <button 
-        onClick={() => window.location.reload()} // Asumsi: Reload mereset state di App.tsx atau Anda memiliki props onBack. Disini karena Auth dirender langsung, kita bisa reload atau gunakan state. Jika ada state lain, harus dilempar dari parent. Saya gunakan link sementara jika tidak ada props.
-        className="absolute top-6 left-6 z-50 flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur border border-slate-200 text-slate-600 rounded-full text-sm font-semibold hover:bg-slate-50 hover:text-[#1E3A8A] transition-all shadow-sm"
+        onClick={() => window.location.reload()}
+        className="absolute top-4 left-4 md:top-6 md:left-6 z-50 flex items-center gap-2 px-3 py-2 md:px-4 md:py-2 bg-white/80 backdrop-blur border border-slate-200 text-slate-600 rounded-full text-xs md:text-sm font-semibold hover:bg-slate-50 hover:text-[#1E3A8A] transition-all shadow-sm"
       >
-        <ArrowLeft size={16} />
+        <ArrowLeft size={14} className="md:size-4" />
         Kembali ke Beranda
       </button>
 
       {/* Kolom Kiri: Formulir Auth */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 relative">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-6 md:p-8 relative">
         <motion.div 
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           className="w-full max-w-md"
         >
-          <div className="flex flex-col items-center text-center mb-10">
-            <div className="mb-4 group relative">
-              <img src="https://i.ibb.co.com/Fk4YB1cM/logo-ks.png" alt="KroomSpace Logo" className="h-[120px] object-contain relative group-hover:scale-105 transition-transform duration-500" />
+          <div className="flex flex-col items-center text-center mb-8 md:mb-10">
+            <div className="mb-3 md:mb-4 group relative">
+              <img src="https://i.ibb.co.com/Fk4YB1cM/logo-ks.png" alt="KroomSpace Logo" className="h-[80px] sm:h-[100px] md:h-[120px] object-contain relative group-hover:scale-105 transition-transform duration-500" />
             </div>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight">
+            <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">
               {forgotMode !== 'none' ? t('resetPassword') : (isLogin ? t('welcomeBack') : t('createAccount'))}
             </h1>
-            <p className="text-slate-500 mt-2 font-medium text-sm">{t('authSub')}</p>
+            <p className="text-slate-500 mt-2 font-medium text-xs md:text-sm">{t('authSub')}</p>
           </div>
 
           {forgotMode !== 'none' ? (

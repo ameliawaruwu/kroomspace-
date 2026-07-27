@@ -84,25 +84,25 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ users, setUsers, current
 
   return (
     <div className="space-y-8 relative">
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 sticky top-0 z-20 px-8 py-6 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-transparent transition-all">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6 sticky top-0 z-20 px-4 md:px-6 py-4 md:py-5 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-transparent transition-all">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">{t('User Management')}</h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium">{t('adminSubHeader')}</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t('User Management')}</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-sm">{t('adminSubHeader')}</p>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="relative w-72 group">
+        <div className="flex items-center gap-2 md:gap-4 flex-wrap">
+          <div className="relative w-full max-w-[200px] sm:max-w-[240px] md:max-w-sm group">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-500 group-focus-within:text-blue-500 transition-colors" size={20} />
             <input
               type="text"
               placeholder={t('searchUsers')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500/50 transition-all shadow-sm font-medium"
+              className="w-full pl-11 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm font-medium"
             />
           </div>
           <button
             onClick={handleOpenAdd}
-            className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20"
+            className="flex items-center gap-2 px-5 py-3 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20 text-sm"
           >
             <Plus size={20} />
             {t('addUser')}
@@ -110,15 +110,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ users, setUsers, current
         </div>
       </header>
 
-      <div className="mx-8 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-xl overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+      <div className="mx-4 md:mx-6 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-xl overflow-hidden">
+        <div className="overflow-x-auto table-responsive">
+          <table className="w-full text-left border-collapse min-w-[600px]">
             <thead>
               <tr className="bg-slate-50/50 dark:bg-slate-900/30 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] border-b border-slate-100 dark:border-slate-700">
-                <th className="px-10 py-6">{t('fullName')}</th>
-                <th className="px-10 py-6">Role</th>
-                <th className="px-10 py-6">{t('whatsapp')}</th>
-                <th className="px-10 py-6 text-right">{t('actions')}</th>
+                <th className="px-6 py-4">{t('fullName')}</th>
+                <th className="px-6 py-4">Role</th>
+                <th className="px-6 py-4">{t('whatsapp')}</th>
+                <th className="px-6 py-4 text-right">{t('actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50 dark:divide-slate-700/50">
@@ -131,49 +131,49 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ users, setUsers, current
                     exit={{ opacity: 0 }}
                     className="group hover:bg-slate-50/50 dark:hover:bg-slate-700/30 transition-all"
                   >
-                    <td className="px-10 py-8">
-                      <div className="flex items-center gap-5">
-                        <img src={user.avatar} className="w-14 h-14 rounded-full border-2 border-white dark:border-slate-700 shadow-xl" alt="" />
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-4">
+                        <img src={user.avatar} className="w-12 h-12 rounded-full border-2 border-white dark:border-slate-700 shadow-lg" alt="" />
                         <div>
-                          <p className="font-bold text-base tracking-tight">{user.name}</p>
-                          <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">
-                            <Mail size={12} className="text-blue-400" />
+                          <p className="font-bold text-sm tracking-tight">{user.name}</p>
+                          <div className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+                            <Mail size={11} className="text-blue-400" />
                             {user.email}
                           </div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-10 py-8">
+                    <td className="px-6 py-4">
                       <div className={cn(
-                        "inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-colors",
+                        "inline-flex items-center gap-2 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-colors",
                         user.role === 'Admin'
                           ? "bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-500/20"
                           : "bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-200/50 dark:border-slate-800"
                       )}>
-                        {user.role === 'Admin' ? <Shield size={16} /> : <UserIcon size={16} />}
+                        {user.role === 'Admin' ? <Shield size={14} /> : <UserIcon size={14} />}
                         {user.role}
                       </div>
                     </td>
-                    <td className="px-10 py-8">
+                    <td className="px-6 py-4">
                       <span className="text-sm font-medium text-slate-600 dark:text-slate-400">{user.whatsapp || '-'}</span>
                     </td>
-                    <td className="px-10 py-8 text-right">
-                      <div className="flex items-center justify-end gap-3">
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => handleOpenEdit(user)}
-                          className="p-3 bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 rounded-2xl border border-blue-100 dark:border-blue-500/30 hover:bg-blue-600 hover:text-white transition-all shadow-sm"
+                          className="p-2 bg-slate-50 dark:bg-slate-700 text-blue-600 dark:text-blue-400 rounded-xl hover:bg-blue-50 dark:hover:bg-slate-600 transition-all"
                         >
-                          <Edit2 size={20} />
+                          <Edit2 size={18} />
                         </button>
                         <button
                           onClick={() => handleDeleteClick(user.id)}
                           disabled={user.id === currentUser.id}
                           className={cn(
-                            "p-3 bg-white dark:bg-slate-700 text-rose-500 rounded-2xl border border-rose-100 dark:border-rose-500/30 hover:bg-rose-600 hover:text-white transition-all shadow-sm",
+                            "p-2 bg-slate-50 dark:bg-slate-700 text-rose-500 rounded-xl hover:bg-rose-50 dark:hover:bg-slate-600 transition-all",
                             user.id === currentUser.id && "opacity-20 cursor-not-allowed"
                           )}
                         >
-                          <Trash2 size={20} />
+                          <Trash2 size={18} />
                         </button>
                       </div>
                     </td>
@@ -188,7 +188,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ users, setUsers, current
       {/* Modal */}
       <AnimatePresence>
         {isModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-6 sm:p-10">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -197,70 +197,70 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ users, setUsers, current
               className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
             />
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-xl bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-10 overflow-hidden"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="relative w-full max-w-lg bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-6 overflow-hidden"
             >
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="absolute top-8 right-8 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
               >
-                <X size={24} />
+                <X size={20} />
               </button>
 
-              <h2 className="text-3xl font-bold tracking-tight mb-2">
+              <h2 className="text-xl font-bold mb-1">
                 {editingUser ? t('editUser') : t('addUser')}
               </h2>
-              <p className="text-slate-500 dark:text-slate-400 font-medium mb-10">
+              <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">
                 {editingUser ? t('updateUserSub') : t('addUserSub')}
               </p>
 
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="space-y-2">
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-1.5">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('fullName')}</label>
                   <input
                     required
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-2xl text-sm outline-none focus:ring-4 focus:ring-blue-500/10"
+                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 outline-none"
                   />
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Email</label>
                     <input
                       required
                       type="email"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-2xl text-sm outline-none focus:ring-4 focus:ring-blue-500/10"
+                      className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 outline-none"
                     />
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('whatsapp')}</label>
                     <input
                       type="text"
                       placeholder="+62..."
                       value={formData.whatsapp}
                       onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
-                      className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-2xl text-sm outline-none focus:ring-4 focus:ring-blue-500/10"
+                      className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 outline-none"
                     />
                   </div>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('role')}</label>
-                  <div className="flex gap-4">
+                  <div className="flex gap-2">
                     {['Member', 'Admin'].map((role) => (
                       <button
                         key={role}
                         type="button"
                         onClick={() => setFormData({ ...formData, role: role as 'Admin' | 'Member' })}
                         className={cn(
-                          "flex-1 py-4 rounded-2xl font-bold text-sm transition-all border",
+                          "flex-1 py-3 rounded-xl font-bold text-xs transition-all border",
                           formData.role === role
-                            ? "bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-600/20"
+                            ? "bg-blue-600 text-white border-blue-600"
                             : "bg-slate-50 dark:bg-slate-900 text-slate-500 border-slate-100 dark:border-slate-700"
                         )}
                       >
@@ -269,15 +269,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ users, setUsers, current
                     ))}
                   </div>
                 </div>
-
-                <div className="pt-6">
-                  <button
-                    type="submit"
-                    className="w-full py-5 bg-blue-600 text-white rounded-2xl font-black uppercase tracking-[0.2em] text-xs hover:bg-blue-700 transition-all shadow-xl shadow-blue-100 dark:shadow-none"
-                  >
-                    {t('save')}
-                  </button>
-                </div>
+                <button
+                  type="submit"
+                  className="w-full py-3.5 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-all mt-2"
+                >
+                  {t('save')}
+                </button>
               </form>
             </motion.div>
           </div>
@@ -287,7 +284,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ users, setUsers, current
       {/* Delete Confirmation Modal */}
       <AnimatePresence>
         {isDeleteModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 sm:p-10">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -296,30 +293,26 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ users, setUsers, current
               className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
             />
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-md bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-10 overflow-hidden text-center"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="relative w-full max-w-xs bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-6 text-center"
             >
-              <div className="w-20 h-20 bg-rose-50 dark:bg-rose-500/10 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Trash2 size={32} />
+              <div className="w-16 h-16 bg-rose-50 dark:bg-rose-500/10 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Trash2 size={24} />
               </div>
-              <h2 className="text-2xl font-bold tracking-tight mb-2">
-                {t('deleteUser')}
-              </h2>
-              <p className="text-slate-500 dark:text-slate-400 font-medium mb-10">
-                {t('deleteConfirm')}
-              </p>
-              <div className="flex gap-4">
+              <h2 className="text-lg font-bold mb-1">{t('deleteUser')}</h2>
+              <p className="text-slate-500 dark:text-slate-400 text-xs mb-6">{t('deleteConfirm')}</p>
+              <div className="flex gap-3">
                 <button
                   onClick={() => setIsDeleteModalOpen(false)}
-                  className="flex-1 py-4 bg-slate-50 dark:bg-slate-900 text-slate-500 rounded-2xl font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-all border border-slate-100 dark:border-slate-700"
+                  className="flex-1 px-5 py-2.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 font-bold text-sm rounded-xl transition-all"
                 >
                   {t('cancel')}
                 </button>
                 <button
                   onClick={confirmDelete}
-                  className="flex-1 py-4 bg-rose-600 text-white rounded-2xl font-bold hover:bg-rose-700 transition-all shadow-lg shadow-rose-100 dark:shadow-none"
+                  className="flex-1 px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm rounded-xl transition-all"
                 >
                   {t('delete')}
                 </button>

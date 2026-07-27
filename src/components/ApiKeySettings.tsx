@@ -66,18 +66,18 @@ export const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({ darkMode, onSucc
   };
 
   return (
-    <div className="space-y-8 relative px-8 py-6">
-      <header className="flex flex-col gap-2 border-b border-slate-100 dark:border-slate-800 pb-6">
-        <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
-          <Key className="text-blue-500" size={32} />
+    <div className="space-y-8 relative">
+      <header className="px-4 md:px-6 py-4 md:py-5 sticky top-0 z-20 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-transparent transition-all">
+        <h1 className="text-xl font-bold tracking-tight flex items-center gap-3">
+          <Key className="text-blue-500" size={24} />
           {t('aiSettings')}
         </h1>
-        <p className="text-slate-500 dark:text-slate-400 font-medium">
+        <p className="text-slate-500 dark:text-slate-400 font-medium text-sm mt-1">
           Configurasi API Key untuk AI KroomSpace.
         </p>
       </header>
 
-      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-xl p-8 max-w-2xl">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-xl p-4 md:p-8 max-w-2xl mx-4 md:mx-6">
         <div className="flex items-start gap-4 mb-6 p-4 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-2xl">
           <ShieldAlert className="text-amber-500 shrink-0 mt-0.5" size={20} />
           <p className="text-xs text-amber-700 dark:text-amber-300 font-medium leading-relaxed">

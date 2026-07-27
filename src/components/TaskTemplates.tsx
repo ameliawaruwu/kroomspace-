@@ -381,7 +381,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
 
       {/* ── Header ── */}
       <header className={cn(
-        "flex flex-col xl:flex-row xl:items-center justify-between gap-6 px-8 py-6 sticky top-0 z-30 backdrop-blur-xl border-b transition-all",
+        "flex flex-col xl:flex-row xl:items-center justify-between gap-6 px-4 md:px-6 py-4 md:py-5 sticky top-0 z-30 backdrop-blur-xl border-b transition-all",
         darkMode ? "bg-[#0D1B35]/90 border-[#1E3A5F]/40" : "bg-[#F4F8FC]/90 border-[#BFDFFF]/30"
       )}>
         <div>
@@ -389,7 +389,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
             <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#3FA9F5] to-[#2D7FEA] flex items-center justify-center shadow-lg shadow-[#2D7FEA]/20">
               <LayoutTemplate size={20} className="text-white" />
             </div>
-            <h1 className={cn("text-3xl font-black tracking-tight", darkMode ? "text-white" : "text-slate-800")}>
+            <h1 className={cn("text-2xl font-black tracking-tight", darkMode ? "text-white" : "text-slate-800")}>
               {t('templatePageTitle')}
             </h1>
           </div>
@@ -430,7 +430,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
       </header>
 
       {/* ── Category Filters ── */}
-      <div className="px-8 pt-6 pb-2">
+      <div className="px-4 md:px-6 pt-5 pb-2">
         <div className={cn(
           "inline-flex p-1.5 rounded-2xl gap-1.5 border transition-all max-w-full overflow-x-auto scrollbar-none",
           darkMode
@@ -494,11 +494,11 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
       </AnimatePresence>
 
       {/* ── Grid ── */}
-      <div className="px-8 pt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className="px-4 md:px-6 pt-5 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-5 md:gap-6">
         {loading ? (
           [...Array(6)].map((_, i) => (
             <div key={i} className={cn(
-              "rounded-2xl p-8 animate-pulse h-72",
+              "rounded-2xl p-6 animate-pulse h-72",
               darkMode ? "bg-slate-800" : "bg-slate-100"
             )} />
           ))
@@ -529,7 +529,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
 
 
               <div>
-                <div className="p-6">
+                <div className="p-5">
                   {/* Icon + Category + Title */}
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3 min-w-0">
@@ -541,13 +541,13 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                       </div>
                       <div className="flex flex-col min-w-0 pr-8">
                         <span className={cn(
-                          "inline-flex w-max text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md border mb-1",
+                          "inline-flex w-max text-[11px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg border mb-1",
                           getCategoryBg(template.kategori, darkMode)
                         )}>
                           {t(template.kategori)}
                         </span>
                         <h3 className={cn(
-                          "text-base font-black tracking-tight leading-tight line-clamp-2",
+                          "text-lg font-black tracking-tight leading-tight line-clamp-2",
                           darkMode ? "text-white" : "text-slate-900"
                         )}>
                           {t(template.name)}
@@ -568,7 +568,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
 
                   {/* Description */}
                   <p className={cn(
-                    "text-xs font-medium leading-relaxed line-clamp-2 mb-4 min-h-[2.25rem]",
+                    "text-sm font-medium leading-relaxed mb-4",
                     darkMode ? "text-slate-400" : "text-slate-500"
                   )}>
                     {t(template.description) || t('noDescription')}
@@ -581,8 +581,8 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                         <ListChecks size={14} />
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-[9px] text-slate-400 font-medium leading-none mb-0.5">{t('tugasLabel')}</span>
-                        <span className={cn("font-bold text-[11px]", darkMode ? "text-slate-200" : "text-slate-700")}>{totalTugas(template)} {t('tugasLabel')}</span>
+                        <span className="text-[10px] text-slate-400 font-semibold leading-none mb-1">{t('tugasLabel')}</span>
+                        <span className={cn("font-bold text-xs", darkMode ? "text-slate-200" : "text-slate-700")}>{totalTugas(template)} {t('tugasLabel')}</span>
                       </div>
                     </div>
 
@@ -591,8 +591,8 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                         <CheckSquare size={14} />
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-[9px] text-slate-400 font-medium leading-none mb-0.5">Checklist</span>
-                        <span className={cn("font-bold text-[11px]", darkMode ? "text-slate-200" : "text-slate-700")}>{totalChecklist(template)} Item</span>
+                        <span className="text-[10px] text-slate-400 font-semibold leading-none mb-1">Checklist</span>
+                        <span className={cn("font-bold text-xs", darkMode ? "text-slate-200" : "text-slate-700")}>{totalChecklist(template)} Item</span>
                       </div>
                     </div>
 
@@ -601,8 +601,8 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                         <Clock size={14} />
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-[9px] text-slate-400 font-medium leading-none mb-0.5">{t('estimasiLabel')}</span>
-                        <span className={cn("font-bold text-[11px]", darkMode ? "text-slate-200" : "text-slate-700")}>{meta.duration}</span>
+                        <span className="text-[10px] text-slate-400 font-semibold leading-none mb-1">{t('estimasiLabel')}</span>
+                        <span className={cn("font-bold text-xs", darkMode ? "text-slate-200" : "text-slate-700")}>{meta.duration}</span>
                       </div>
                     </div>
 
@@ -611,8 +611,8 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                         <Users size={14} />
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-[9px] text-slate-400 font-medium leading-none mb-0.5">{t('rekomendasiLabel')}</span>
-                        <span className={cn("font-bold text-[11px]", darkMode ? "text-slate-200" : "text-slate-700")}>{meta.teamSize}</span>
+                        <span className="text-[10px] text-slate-400 font-semibold leading-none mb-1">{t('rekomendasiLabel')}</span>
+                        <span className={cn("font-bold text-xs", darkMode ? "text-slate-200" : "text-slate-700")}>{meta.teamSize}</span>
                       </div>
                     </div>
 
@@ -621,10 +621,10 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                         <Layers size={14} />
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-[9px] text-slate-400 font-medium leading-none mb-0.5">{t('complexityLabel')}</span>
+                        <span className="text-[10px] text-slate-400 font-semibold leading-none mb-1">{t('complexityLabel')}</span>
                         <div className="flex items-center gap-1.5 mt-0.5">
                           <span className={cn(
-                            "px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border",
+                            "px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border",
                             meta.complexity === 'Tinggi'
                               ? 'bg-rose-50 text-rose-600 border-rose-100 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20'
                               : meta.complexity === 'Sedang'
@@ -638,29 +638,38 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                     </div>
                   </div>
 
-                  {/* Preview tasks (first 2) */}
-                  <div className="space-y-2 mb-5">
-                    {(template.tasks ?? []).slice(0, 2).map((task, idx) => (
-                      <div key={idx} className={cn(
-                        "flex items-center gap-2 text-xs font-medium py-2 px-3 rounded-xl border",
-                        darkMode
-                          ? "bg-slate-900/40 text-slate-400 border-slate-800/80"
-                          : "bg-slate-50 text-slate-500 border-slate-100"
-                      )}>
-                        <CheckCircle2 size={12} className="text-[#2D7FEA] shrink-0" />
-                        <span className="truncate">{t(task.title)}</span>
-                      </div>
-                    ))}
-                    {(template.tasks ?? []).length > 2 && (
-                      <p className={cn(
-                        "text-[10px] font-bold pl-2.5 flex items-center gap-1.5",
-                        darkMode ? "text-slate-500" : "text-slate-400"
-                      )}>
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#2D7FEA]" />
-                        +{template.tasks.length - 2} {t('moreTasksBlueprint')}
-                      </p>
-                    )}
-                  </div>
+                  {/* Collapsible Task List (Dropdown) */}
+                  <details 
+                    className="group/details mb-5 text-sm"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <summary className={cn(
+                      "list-none cursor-pointer flex items-center justify-between py-2.5 px-3 rounded-xl border font-bold select-none transition-all",
+                      darkMode
+                        ? "bg-slate-900/60 text-slate-300 border-slate-700/80 hover:bg-slate-900"
+                        : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                    )}>
+                      <span className="flex items-center gap-2">
+                        <ListChecks size={14} className="text-[#2D7FEA]" />
+                        {t('tugasLabel')} ({template.tasks?.length || 0})
+                      </span>
+                      <ChevronRight size={14} className="transition-transform duration-200 group-open/details:rotate-90 text-slate-400" />
+                    </summary>
+                    <div className={cn(
+                      "mt-2 py-2 px-3.5 space-y-2 rounded-xl text-left border border-slate-100 dark:border-slate-800",
+                      darkMode ? "bg-slate-900/30" : "bg-slate-50"
+                    )}>
+                      {(template.tasks ?? []).map((task, idx) => (
+                        <div key={idx} className={cn(
+                          "flex items-start gap-2 py-0.5 text-[13px] font-semibold leading-relaxed",
+                          darkMode ? "text-slate-300" : "text-slate-600"
+                        )}>
+                          <span className="text-[#2D7FEA] shrink-0 mt-1.5 w-1.5 h-1.5 rounded-full bg-[#2D7FEA]" />
+                          <span>{t(task.title)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </details>
                 </div>
               </div>
 
@@ -672,7 +681,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                     setPreviewTemplate(template);
                   }}
                   className={cn(
-                    "py-3 rounded-xl text-xs font-black transition-all border flex items-center justify-center gap-1.5",
+                    "py-3 rounded-xl text-sm font-black transition-all border flex items-center justify-center gap-1.5",
                     darkMode
                       ? "bg-slate-900 text-slate-300 border-slate-700 hover:bg-slate-800 hover:text-white"
                       : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-900"
@@ -688,7 +697,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                     setApplyTemplate(template);
                   }}
                   className={cn(
-                    "py-3 rounded-xl text-xs font-black text-white flex items-center justify-center gap-1.5 transition-all",
+                    "py-3 rounded-xl text-sm font-black text-white flex items-center justify-center gap-1.5 transition-all",
                     "bg-gradient-to-r from-[#3FA9F5] to-[#2D7FEA] shadow-md shadow-[#2D7FEA]/10 hover:shadow-lg hover:shadow-[#2D7FEA]/20 hover:scale-[1.02] active:scale-100"
                   )}
                 >

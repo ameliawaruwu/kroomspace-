@@ -81,14 +81,16 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
 
   return (
     <div className="space-y-8 relative">
-      <header className="px-8 py-6 sticky top-0 z-20 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-transparent transition-all">
-        <h1 className="text-3xl font-bold tracking-tight">{t('profileSettings')}</h1>
-        <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium">{t('profileSettingsSub')}</p>
+      <header className="px-4 md:px-6 py-4 md:py-5 border-b border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl sticky top-0 z-30 transition-all">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          {t('profileSettings')}
+        </h1>
+        <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-sm">{t('profileSettingsSub')}</p>
       </header>
 
-      <div className="mx-8 grid grid-cols-1 lg:grid-cols-3 gap-10">
+      <div className="mx-4 md:mx-6 grid grid-cols-1 xl:grid-cols-3 gap-6 md:gap-8 max-w-7xl pb-10">
         <div className="lg:col-span-1 space-y-6">
-          <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm text-center">
+          <div className="bg-white dark:bg-slate-800 p-6 md:p-8 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm text-center">
             <div className="relative inline-block group cursor-pointer">
               <input 
                 type="file" 

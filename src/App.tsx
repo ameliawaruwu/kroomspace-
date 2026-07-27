@@ -705,7 +705,7 @@ export default function App() {
 
   return (
     <div className={cn(
-      "min-h-screen flex overflow-hidden selection:bg-blue-100 uppercase-none transition-colors duration-300",
+      "min-h-screen flex overflow-x-hidden selection:bg-blue-100 transition-colors duration-300",
       darkMode ? "bg-slate-900 text-slate-100" : "bg-slate-50 text-slate-900"
     )}>
       {/* Success Toast */}
@@ -734,7 +734,7 @@ export default function App() {
         darkMode={darkMode}
       />
       
-      <main className="flex-1 lg:ml-[300px] min-h-screen flex flex-col relative overflow-hidden">
+      <main className="flex-1 lg:ml-[220px] xl:ml-[250px] min-h-screen flex flex-col relative overflow-x-hidden">
         <Header 
           darkMode={darkMode}
           setDarkMode={setDarkMode}
@@ -743,7 +743,7 @@ export default function App() {
           user={currentUser}
           unreadCount={notifications.filter(n => !n.read && (!n.userId || n.userId === currentUser.id)).length}
         />
-        <div className="flex-1 overflow-y-auto scroll-smooth pt-20">
+        <div className="flex-1 overflow-y-auto scroll-smooth pt-14 md:pt-16">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
