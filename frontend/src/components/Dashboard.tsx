@@ -203,9 +203,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
       )}>
         <div>
           <h1 className={cn("text-2xl font-extrabold tracking-tight", darkMode ? "text-white" : "text-slate-900")}>
-            {language === 'en' 
-              ? `Welcome, ${user.name}` 
-              : `Selamat Datang, ${user.name}`}
+            {language === 'en' ? 'Welcome, ' : 'Selamat Datang, '}
+            <span className="text-[#3498DB]">{user.name}</span>
           </h1>
         </div>
         <div className="flex items-center gap-3 mt-4 sm:mt-0">
