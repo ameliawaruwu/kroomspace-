@@ -6,7 +6,7 @@ Aplikasi ini menggunakan arsitektur **Unified React (Vite) + Express (Node.js)**
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 - **Frontend**: React.js (TypeScript), Vite, Tailwind CSS, Lucide Icons, Motion/Framer Motion.
 - **Backend**: Node.js (Express), TypeScript, TSX Watch.
@@ -16,24 +16,24 @@ Aplikasi ini menggunakan arsitektur **Unified React (Vite) + Express (Node.js)**
 
 ---
 
-## 📁 Struktur Proyek
+## Struktur Proyek
 
 Proyek ini telah dipisahkan secara struktural untuk memudahkan pengembangan:
 
 ```
 Kroomspace/
-├── frontend/             # 🎨 Client-side (React + Vite)
+├── frontend/             # Client-side (React + Vite)
 │   ├── index.html
 │   └── src/
 │       ├── components/   # Komponen UI (Landing, Kanban, Admin, dll.)
 │       ├── context/      # Language & App states
 │       ├── services/     # API Integration & Mock data
 │       └── ...
-├── backend/              # ⚙️ Server-side (Express.js)
+├── backend/              # Server-side (Express.js)
 │   ├── server.ts         # Main Entrypoint API Server
 │   └── lib/
 │       └── prisma.ts     # Inisialisasi Prisma Client (Aman)
-├── prisma/               # 🗄️ Skema Database & Seeder
+├── prisma/               # Skema Database & Seeder
 │   ├── schema.prisma
 │   └── seed.ts           # Seeder database utama
 ├── package.json          # Script & Dependensi Node.js
@@ -43,7 +43,7 @@ Kroomspace/
 
 ---
 
-## 🚀 Cara Menjalankan Secara Lokal
+## Cara Menjalankan Secara Lokal
 
 ### **Prasyarat:**
 - Node.js (versi LTS direkomendasikan)
@@ -81,7 +81,7 @@ Kroomspace/
 
 ---
 
-## 🛡️ Keamanan Sistem
+## Keamanan Sistem
 
 Aplikasi ini telah dilengkapi dengan beberapa lapisan keamanan standar produksi:
 - **Password Hashing**: Menggunakan `bcryptjs` untuk mengamankan data pengguna di database.
