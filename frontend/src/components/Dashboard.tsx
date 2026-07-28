@@ -207,8 +207,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </h1>
           <p className={cn("text-sm mt-0.5", darkMode ? "text-slate-400" : "text-slate-500")}>
             {language === 'en' 
-              ? `Welcome back, ${user.name.split(' ')[0]}. Here is your workspace summary.` 
-              : `Selamat datang kembali, ${user.name.split(' ')[0]}. Berikut ringkasan ruang kerja Anda.`}
+              ? `Welcome, ${user.name}` 
+              : `Selamat Datang, ${user.name}`}
           </p>
         </div>
         <div className="flex items-center gap-3 mt-4 sm:mt-0">
