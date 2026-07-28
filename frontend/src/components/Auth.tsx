@@ -30,6 +30,40 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [name, setName] = useState('');
   const [error, setError] = useState('');
+  const [cooldown, setCooldown] = useState(0);
+
+  // Timer Effect untuk cooldown
+  React.useEffect(() => {
+    if (cooldown > 0) {
+      const timer = setTimeout(() => setCooldown(cooldown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [cooldown]);
+
+  const handleResendOtp = async () => {
+    if (cooldown > 0) return;
+    setError('');
+    
+    const targetEmail = forgotMode !== 'none' ? resetEmail.trim().toLowerCase() : email.trim().toLowerCase();
+    const endpoint = forgotMode !== 'none' ? '/api/auth/forgot-password' : '/api/auth/send-register-otp';
+    
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: targetEmail })
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setError('✓ OTP baru telah dikirim ke email Anda');
+        setCooldown(30); // reset cooldown ke 30 detik
+      } else {
+        setError(data.error || 'Gagal mengirim ulang OTP');
+      }
+    } catch (err) {
+      setError("Gagal terhubung ke server");
+    }
+  };
 
   const handleForgotPasswordFlow = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,6 +84,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
         if (response.ok) {
           setError('✓ OTP telah dikirim ke email Anda');
           setForgotMode('otp');
+          setCooldown(30); // Mulai hitung mundur 30 detik
         } else {
           setError(data.error || t('invalidCredentials'));
         }
@@ -162,6 +197,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
           if (response.ok) {
             setError('✓ OTP telah dikirim ke email Anda');
             setRegisterMode('otp');
+            setCooldown(30); // Mulai hitung mundur 30 detik
           } else {
             setError(data.error || t('emailExists'));
           }
@@ -273,6 +309,21 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
                       required
                     />
                   </div>
+                  <div className="flex justify-end px-1 mt-1">
+                    <button
+                      type="button"
+                      disabled={cooldown > 0}
+                      onClick={handleResendOtp}
+                      className={cn(
+                        "text-xs font-bold transition-colors",
+                        cooldown > 0 
+                          ? "text-slate-400 cursor-not-allowed" 
+                          : "text-blue-500 hover:text-blue-600 cursor-pointer"
+                      )}
+                    >
+                      {cooldown > 0 ? `Kirim ulang dalam ${cooldown}s` : "Kirim Ulang OTP"}
+                    </button>
+                  </div>
                 </div>
               )}
               {forgotMode === 'reset' && (
@@ -376,6 +427,21 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
                       maxLength={4}
                       required
                     />
+                  </div>
+                  <div className="flex justify-end px-1 mt-1">
+                    <button
+                      type="button"
+                      disabled={cooldown > 0}
+                      onClick={handleResendOtp}
+                      className={cn(
+                        "text-xs font-bold transition-colors",
+                        cooldown > 0 
+                          ? "text-slate-400 cursor-not-allowed" 
+                          : "text-blue-500 hover:text-blue-600 cursor-pointer"
+                      )}
+                    >
+                      {cooldown > 0 ? `Kirim ulang dalam ${cooldown}s` : "Kirim Ulang OTP"}
+                    </button>
                   </div>
                 </div>
               ) : (
@@ -513,13 +579,13 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
       </div>
 
       {/* Kolom Kanan: Animasi Manajemen Proyek (Tersembunyi di Mobile) */}
-      <div className="hidden lg:flex w-1/2 relative bg-gradient-to-br from-[#1E3A8A] via-[#1E3A8A] to-[#3498DB] overflow-hidden items-center justify-center">
+      <div className="hidden lg:flex w-1/2 relative bg-gradient-to-br from-[#0B1727] via-[#0B1727] to-[#152844] overflow-hidden items-center justify-center border-l border-white/5">
         {/* Latar Belakang Geometris */}
-        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 20px 20px, white 2px, transparent 0)', backgroundSize: '40px 40px' }} />
+        <div className="absolute inset-0 opacity-5" style={{ backgroundImage: 'radial-gradient(circle at 20px 20px, white 2px, transparent 0)', backgroundSize: '40px 40px' }} />
 
         {/* Orb Cahaya */}
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-white/10 rounded-full blur-[100px] pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-[#3498DB]/30 rounded-full blur-[80px] pointer-events-none" />
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#3498DB]/10 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-[#1E3A8A]/10 rounded-full blur-[100px] pointer-events-none" />
 
         <div className="relative w-full max-w-md h-[400px] flex items-center justify-center">
 
@@ -528,24 +594,24 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 1, ease: "easeOut" }}
-            className="absolute z-20 bg-white/10 backdrop-blur-xl border border-white/20 p-6 rounded-[1.5rem] shadow-2xl flex flex-col items-center justify-center w-56 h-56"
+            className="absolute z-20 bg-[#152844]/65 backdrop-blur-xl border border-slate-800/80 p-6 rounded-[1.8rem] shadow-2xl flex flex-col items-center justify-center w-56 h-56"
           >
             <div className="relative">
-              <Kanban size={52} className="text-white mb-4 drop-shadow-md" />
+              <Kanban size={52} className="text-[#3498DB] mb-4 drop-shadow-md" />
               <motion.div
                 animate={{ rotate: 360 }}
                 transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-                className="absolute -top-1 -right-1 text-yellow-300 drop-shadow-lg"
+                className="absolute -top-1 -right-1 text-amber-400 drop-shadow-lg"
               >
                 <Settings size={16} />
               </motion.div>
             </div>
-            <div className="w-32 h-2 bg-white/30 rounded-full mb-3" />
-            <div className="w-20 h-2 bg-white/30 rounded-full mb-6" />
+            <div className="w-32 h-2 bg-white/20 rounded-full mb-3" />
+            <div className="w-20 h-2 bg-white/20 rounded-full mb-6" />
             <div className="flex gap-2.5">
-              <motion.div animate={{ y: [0, -3, 0] }} transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 0 }} className="w-8 h-8 rounded-full bg-blue-300/60 shadow-inner border border-white/30" />
-              <motion.div animate={{ y: [0, -3, 0] }} transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 0.3 }} className="w-8 h-8 rounded-full bg-cyan-300/60 shadow-inner border border-white/30" />
-              <motion.div animate={{ y: [0, -3, 0] }} transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 0.6 }} className="w-8 h-8 rounded-full bg-[#1E3A8A]/60 shadow-inner border border-white/30" />
+              <motion.div animate={{ y: [0, -3, 0] }} transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 0 }} className="w-8 h-8 rounded-full bg-[#3498DB]/80 shadow-inner border border-[#3498DB]/30" />
+              <motion.div animate={{ y: [0, -3, 0] }} transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 0.3 }} className="w-8 h-8 rounded-full bg-[#2ECC71]/80 shadow-inner border border-[#2ECC71]/30" />
+              <motion.div animate={{ y: [0, -3, 0] }} transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 0.6 }} className="w-8 h-8 rounded-full bg-[#9B59B6]/80 shadow-inner border border-[#9B59B6]/30" />
             </div>
           </motion.div>
 
@@ -553,7 +619,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
           <motion.div
             animate={{ y: [0, -15, 0], rotate: [0, 10, -5, 0] }}
             transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute top-8 right-20 z-10 bg-white p-3.5 rounded-xl shadow-xl shadow-black/20 flex items-center justify-center text-[#1E3A8A]"
+            className="absolute top-8 right-20 z-10 bg-[#9B59B6]/10 p-3.5 rounded-xl shadow-xl shadow-black/20 flex items-center justify-center text-[#9B59B6] border border-[#9B59B6]/20 backdrop-blur-md"
           >
             <Settings size={22} />
           </motion.div>
@@ -562,7 +628,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
           <motion.div
             animate={{ y: [0, 20, 0], x: [0, 5, 0] }}
             transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-            className="absolute bottom-16 left-12 z-30 bg-emerald-500 p-3.5 rounded-xl shadow-xl shadow-black/20 flex items-center justify-center text-white border border-emerald-400"
+            className="absolute bottom-16 left-12 z-30 bg-[#2ECC71]/10 p-3.5 rounded-xl shadow-xl shadow-black/20 flex items-center justify-center text-[#2ECC71] border border-[#2ECC71]/20 backdrop-blur-md"
           >
             <CheckCircle2 size={22} />
           </motion.div>
@@ -571,7 +637,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
           <motion.div
             animate={{ y: [0, -20, 0], x: [0, -10, 0] }}
             transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 2.5 }}
-            className="absolute bottom-24 right-12 z-10 bg-amber-500 p-3.5 rounded-xl shadow-xl shadow-black/20 flex items-center justify-center text-white border border-amber-400"
+            className="absolute bottom-24 right-12 z-10 bg-[#E67E22]/10 p-3.5 rounded-xl shadow-xl shadow-black/20 flex items-center justify-center text-[#E67E22] border border-[#E67E22]/20 backdrop-blur-md"
           >
             <Wrench size={22} />
           </motion.div>
@@ -580,7 +646,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
           <motion.div
             animate={{ y: [0, 15, 0] }}
             transition={{ duration: 5.5, repeat: Infinity, ease: "easeInOut", delay: 0.8 }}
-            className="absolute top-16 left-16 z-10 bg-white p-3.5 rounded-xl shadow-xl shadow-black/20 flex items-center justify-center text-[#3498DB]"
+            className="absolute top-16 left-16 z-10 bg-[#3498DB]/10 p-3.5 rounded-xl shadow-xl shadow-black/20 flex items-center justify-center text-[#3498DB] border border-[#3498DB]/20 backdrop-blur-md"
           >
             <LayoutDashboard size={22} />
           </motion.div>
