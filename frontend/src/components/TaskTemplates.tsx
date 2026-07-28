@@ -527,32 +527,17 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
               onClick={() => setPreviewTemplate(template)}
             >
 
-
               <div>
                 <div className="p-5">
-                  {/* Icon + Category + Title */}
+                  {/* Title + Admin Controls */}
                   <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className={cn(
-                        "w-12 h-12 rounded-xl flex items-center justify-center border shrink-0",
-                        getCategoryBg(template.kategori, darkMode)
+                    <div className="flex flex-col min-w-0 pr-2">
+                      <h3 className={cn(
+                        "text-lg font-black tracking-tight leading-tight line-clamp-2",
+                        darkMode ? "text-white" : "text-slate-900"
                       )}>
-                        {getCategoryIcon(template.kategori, 20)}
-                      </div>
-                      <div className="flex flex-col min-w-0 pr-8">
-                        <span className={cn(
-                          "inline-flex w-max text-[11px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg border mb-1",
-                          getCategoryBg(template.kategori, darkMode)
-                        )}>
-                          {t(template.kategori)}
-                        </span>
-                        <h3 className={cn(
-                          "text-lg font-black tracking-tight leading-tight line-clamp-2",
-                          darkMode ? "text-white" : "text-slate-900"
-                        )}>
-                          {t(template.name)}
-                        </h3>
-                      </div>
+                        {t(template.name)}
+                      </h3>
                     </div>
 
                     {/* Admin controls */}

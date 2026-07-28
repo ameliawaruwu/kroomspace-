@@ -20,10 +20,24 @@ export const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({ darkMode, onSucc
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingSettings, setIsLoadingSettings] = useState(false);
 
+  // Helper: baca currentUser dari localStorage dan inject sebagai auth header
+  const getAuthHeaders = (): Record<string, string> => {
+    try {
+      const saved = localStorage.getItem('currentUser');
+      const user = saved ? JSON.parse(saved) : null;
+      if (user?.id && user?.role) {
+        return { 'X-User-Id': user.id, 'X-User-Role': user.role };
+      }
+    } catch (_) {}
+    return {};
+  };
+
   const fetchSettings = async () => {
     setIsLoadingSettings(true);
     try {
-      const res = await fetch('/api/admin/settings');
+      const res = await fetch('/api/admin/settings', {
+        headers: { ...getAuthHeaders() }
+      });
       if (res.ok) {
         const data = await res.json();
         setSettingsStatus(data);
@@ -46,7 +60,8 @@ export const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({ darkMode, onSucc
       const res = await fetch('/api/admin/settings', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify({ geminiApiKey: apiKeyInput })
       });

@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { 
   MoreHorizontal, 
+  MoreVertical,
   Plus, 
   Calendar, 
   MessageSquare, 
@@ -32,7 +33,9 @@ import {
   Tag,
   BookOpen,
   FilePlus,
-  FolderKanban
+  FolderKanban,
+  Menu,
+  Pencil
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Task, TaskStatus, Priority, Project, TaskTemplate, ChecklistItem, KanbanMode, Documentation } from '../types';
@@ -538,6 +541,20 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
               <h1 className={cn("text-3xl font-black tracking-tight", darkMode ? "text-white" : "text-slate-800")}>{t('boards')}</h1>
               <p className={cn("mt-1 font-medium text-sm", darkMode ? "text-slate-400" : "text-slate-500")}>{t('select')}</p>
             </div>
+            <button
+              onClick={() => {
+                setEditingProjectId(null);
+                setNewProjectName('');
+                setNewProjectDesc('');
+                setNewProjectMode('Project');
+                setShowCreateModal(true);
+              }}
+              id="btn_create_project"
+              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-[#1E3A8A] to-[#3498DB] text-white text-sm font-bold rounded-xl shadow-md hover:shadow-lg hover:shadow-blue-500/25 active:scale-95 transition-all"
+            >
+              <Plus size={16} />
+              {t('createProject')}
+            </button>
           </header>
 
           <div className="px-4 md:px-6 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-5 md:gap-6">
@@ -550,39 +567,83 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                 <motion.div
                   key={project.id}
                   id={`project-card-${project.name.toLowerCase().replace(/\s+/g, '-')}`}
-                  whileHover={{ y: -8 }}
+                  whileHover={{ y: -6 }}
                   onClick={() => {
                     setCurrentProjectId(project.id);
                     setIsBoardOpen(true);
                   }}
-                  className="bg-white dark:bg-slate-800 p-8 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-2xl hover:shadow-blue-500/10 hover:border-blue-100 dark:hover:border-blue-500/30 transition-all cursor-pointer group"
+                  className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-2xl hover:shadow-blue-500/10 hover:border-blue-100 dark:hover:border-blue-500/30 transition-all cursor-pointer group relative self-start"
                 >
-                  <div className="flex justify-between items-start mb-6">
-                    <div className={cn(
-                      "p-3.5 rounded-2xl shadow-sm",
-                      project.type === 'Maintenance' ? "bg-sky-50 dark:bg-sky-500/10 text-sky-500 dark:text-sky-400" : "bg-blue-50 dark:bg-blue-500/10 text-blue-500 dark:text-blue-400"
-                    )}>
-                      {project.type === 'Maintenance' ? <Zap size={24} /> : <Trello size={24} />}
+                  {/* Options Menu */}
+                  <div className="absolute top-4 right-4" onClick={e => e.stopPropagation()}>
+                    <div className="relative">
+                      <button
+                        id={`btn_menu_${project.id}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const menu = document.getElementById(`menu_dropdown_${project.id}`);
+                          if (menu) menu.classList.toggle('hidden');
+                        }}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all"
+                      >
+                        <MoreVertical size={16} />
+                      </button>
+                      <div
+                        id={`menu_dropdown_${project.id}`}
+                        className="hidden absolute right-0 top-8 z-20 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl overflow-hidden min-w-[140px]"
+                      >
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            document.getElementById(`menu_dropdown_${project.id}`)?.classList.add('hidden');
+                            setNewProjectName(project.name);
+                            setNewProjectDesc(project.description);
+                            setNewProjectMode(project.mode);
+                            setEditingProjectId(project.id);
+                            setShowCreateModal(true);
+                          }}
+                          className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-blue-500/10 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                          id="btn_edit_proyek"
+                        >
+                          <Pencil size={14} />
+                          Edit
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            document.getElementById(`menu_dropdown_${project.id}`)?.classList.add('hidden');
+                            setProjectToDelete(project);
+                          }}
+                          className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
+                          id="btn-hapus-proyek"
+                        >
+                          <Trash2 size={14} />
+                          Hapus
+                        </button>
+                      </div>
                     </div>
-                    <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
-                      {project.createdAt}
-                    </span>
                   </div>
 
-                  <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2 group-hover:text-blue-600 transition-colors">
+                  {/* Title */}
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 group-hover:text-blue-600 transition-colors pr-8">
                     {t(project.name)}
                   </h3>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 mb-8 font-medium leading-relaxed">{t(project.description)}</p>
 
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-end text-[10px] font-black uppercase tracking-wider">
-                      <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                  {/* Description */}
+                  <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 mb-6 font-medium leading-relaxed">
+                    {t(project.description)}
+                  </p>
+
+                  {/* Progress */}
+                  <div className="space-y-3 mb-6">
+                    <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-wider">
+                      <span className="text-slate-400 dark:text-slate-500">
                         {progress}% {t('taskPercentComplete')}
                       </span>
                       <span className="text-slate-400 dark:text-slate-500">{completedCount} / {projectTasks.length} {t('tasksLabel')}</span>
                     </div>
                     <div className="h-2 bg-slate-50 dark:bg-slate-900 rounded-full overflow-hidden border border-slate-100 dark:border-slate-800">
-                      <motion.div 
+                      <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${progress}%` }}
                         className="h-full bg-blue-500 rounded-full shadow-sm"
@@ -590,146 +651,37 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                     </div>
                   </div>
 
-                  <div className="mt-8 pt-6 border-t border-slate-50 dark:border-slate-700 flex justify-between items-center relative">
-                    <div className="flex -space-x-2">
-                      {mockUsers.slice(0, 3).map(user => (
-                        <img key={user.id} src={user.avatar} className="w-8 h-8 rounded-full border-2 border-white dark:border-slate-800 shadow-sm" alt="" />
-                      ))}
-                    </div>
+                  {/* Open Board */}
+                  <div className="flex justify-end">
                     <div className="flex items-center gap-1.5 text-blue-500 dark:text-blue-400 font-bold text-xs uppercase tracking-tight">
                       {t('openBoard')} <ChevronRight size={14} />
-                    </div>
-                    
-                    <div className="absolute -top-12 right-0 flex gap-2 transition-all opacity-80 hover:opacity-100">
-                      <button 
-                        onClick={(e) => { 
-                          e.stopPropagation(); 
-                           setNewProjectName(project.name);
-                           setNewProjectDesc(project.description);
-                           setNewProjectMode(project.mode);
-                           setEditingProjectId(project.id); // Set the editing ID correctly!
-                           setShowCreateModal(true); 
-                        }}
-                        className="p-2 bg-white dark:bg-slate-900 text-slate-400 hover:text-blue-600 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm transition-all"
-                        id="btn_edit_proyek"
-                      >
-                        <Settings size={16} />
-                      </button>
-                      <button 
-                        onClick={(e) => { 
-                          e.stopPropagation(); 
-                          setProjectToDelete(project);
-                        }}
-                        className="p-2 bg-white dark:bg-slate-900 text-slate-400 hover:text-rose-600 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm transition-all"
-                        id="btn-hapus-proyek"
-                      >
-                        <Trash2 size={16} />
-                      </button>
                     </div>
                   </div>
                 </motion.div>
               );
             })}
 
-            <button 
-              onClick={() => {
-                setEditingProjectId(null);
-                setNewProjectName('');
-                setNewProjectDesc('');
-                setNewProjectMode('Project');
-                setShowCreateModal(true);
-              }}
-              className="h-full min-h-[320px] bg-white/50 dark:bg-slate-800/50 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl flex flex-col items-center justify-center gap-4 text-slate-400 hover:text-blue-500 hover:bg-white dark:hover:bg-slate-800 hover:border-blue-200 transition-all group shadow-sm hover:shadow-xl hover:shadow-blue-500/5"
-              id="btn_create_project"
-            >
-              <div className="w-16 h-16 rounded-full bg-white dark:bg-slate-700 flex items-center justify-center group-hover:shadow-lg transition-all border border-slate-100 dark:border-slate-600">
-                <Plus size={32} />
-              </div>
-              <span className="font-bold text-sm tracking-wide">{t('createProject')}</span>
-            </button>
           </div>
         </>
       ) : (
         <div className="flex flex-col" style={{ height: 'calc(100vh - 4rem)' }}>
           <header className="px-4 md:px-6 py-3 md:py-4 border-b border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl sticky top-0 z-30 transition-all">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-              <div className="flex items-start gap-4">
+              <div className="flex items-center gap-2">
                  <button 
                    onClick={() => setIsBoardOpen(false)}
-                   className="mt-1 p-2.5 bg-white dark:bg-slate-800 text-slate-400 hover:text-blue-600 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-all shrink-0"
+                   className="p-1.5 text-slate-400 hover:text-blue-600 rounded-xl transition-all shrink-0"
                    id="btn_back_to_project_list"
                  >
-                   <ChevronLeft size={20} />
+                   <ChevronLeft size={22} />
                  </button>
-                <div className="space-y-1">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <div className="relative group">
-                      <button 
-                        onClick={() => setActiveMenu(activeMenu === 'project-switcher' ? null : 'project-switcher')}
-                        className="flex items-center gap-2 text-2xl font-black text-slate-900 dark:text-white transition-colors hover:text-blue-600 group"
-                      >
-                        {currentProject?.name || 'Project Board'}
-                        <ChevronRight size={20} className={cn("text-slate-300 transition-all group-hover:text-blue-500", activeMenu === 'project-switcher' ? "rotate-90" : "rotate-0")} />
-                      </button>
-                      <AnimatePresence>
-                        {activeMenu === 'project-switcher' && (
-                          <>
-                            <div className="fixed inset-0 z-10" onClick={() => setActiveMenu(null)} />
-                            <motion.div 
-                              initial={{ opacity: 0, scale: 0.95, y: -10 }}
-                              animate={{ opacity: 1, scale: 1, y: 0 }}
-                              exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                              className="absolute left-0 mt-4 w-72 bg-white dark:bg-slate-800 rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-700 py-3 z-20 overflow-hidden"
-                            >
-                              <div className="px-4 py-2 border-b border-slate-50 dark:border-slate-700 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/30">
-                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('boards')}</span>
-                                <button 
-                                  onClick={() => {
-                                    setShowCreateModal(true);
-                                    setActiveMenu(null);
-                                  }}
-                                  className="p-1.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-                                >
-                                  <Plus size={14} />
-                                </button>
-                              </div>
-                              <div className="max-h-64 overflow-y-auto">
-                                {projects.map(p => (
-                                  <button 
-                                    key={p.id}
-                                    onClick={() => {
-                                      setCurrentProjectId(p.id);
-                                      setActiveMenu(null);
-                                    }}
-                                    className={cn(
-                                      "w-full px-5 py-3 text-left text-sm font-bold transition-all flex items-center justify-between group",
-                                      p.id === currentProjectId ? "bg-blue-50 dark:bg-blue-500/10 text-blue-600 shadow-inner" : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
-                                    )}
-                                  >
-                                    <div className="flex items-center gap-3">
-                                      <div className={cn("w-2 h-2 rounded-full", p.mode === 'Operational' ? "bg-[#3FA9F5]" : "bg-[#2D7FEA]")} />
-                                      {p.name}
-                                    </div>
-                                    {p.id === currentProjectId && <CheckCircle2 size={14} className="text-blue-500" />}
-                                  </button>
-                                ))}
-                              </div>
-                            </motion.div>
-                          </>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  </div>
-                </div>
+                 <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                   {currentProject?.name || 'Project Board'}
+                 </h2>
               </div>
               <div className="flex items-center gap-3 xl:gap-4 shrink-0">
                 <div className="flex -space-x-2 mr-2">
-                  {allProjectUsers.map((u: any) => (
-                    <div key={u.id} className="w-9 h-9 rounded-full border-2 border-white dark:border-slate-900 overflow-hidden shadow-sm group hover:translate-y-[-4px] transition-all cursor-pointer relative" title={u.name}>
-                      <img src={u.avatar} alt={u.name} className="w-full h-full object-cover transition-all" />
-                      <div className="absolute inset-0 bg-blue-500/0 group-hover:bg-blue-500/10 transition-all" />
-                    </div>
-                  ))}
+
                   <button 
                     onClick={() => setShowAddMemberModal(true)}
                     className="w-9 h-9 rounded-full border-2 border-dashed border-slate-300 dark:border-slate-600 flex items-center justify-center bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-blue-500 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all cursor-pointer z-10"
@@ -743,11 +695,11 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
 
                 <div className="flex items-center gap-3">
                   <div className="relative">
-                    <button 
+                     <button 
                       onClick={() => setActiveMenu(activeMenu === 'more-actions' ? null : 'more-actions')}
                       className="p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-400 hover:text-blue-600 hover:border-blue-200 transition-all shadow-sm"
                     >
-                      <MoreHorizontal size={20} />
+                      <MoreVertical size={20} />
                     </button>
 
                     <AnimatePresence>
@@ -992,8 +944,24 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                           {filteredTasks
                             .filter((t) => t.status === column.status)
                             .map((task: Task, index: number) => {
-                              const assigneeUser = mockUsers.find(u => u.id === task.assignee);
-                              const contributors = (task.contributors || []).map(cId => mockUsers.find(u => u.id === cId)).filter(Boolean);
+                              const getDbUser = (idObj: any) => {
+                                const id = typeof idObj === 'object' && idObj !== null ? (idObj.id_pengguna || idObj.id) : idObj;
+                                if (!id) return undefined;
+                                let resUser: any = null;
+                                const dbU = dbUsers.find(u => String(u.id) === String(id));
+                                if (dbU) {
+                                  resUser = { id: dbU.id, name: dbU.nama || dbU.name, avatar: dbU.foto_profil || dbU.avatar || null };
+                                } else {
+                                  const mockU = mockUsers.find(u => String(u.id) === String(id));
+                                  if (mockU) resUser = { ...mockU };
+                                }
+                                if (resUser && resUser.avatar && String(resUser.avatar).includes('ui-avatars.com')) {
+                                  resUser.avatar = null;
+                                }
+                                return resUser;
+                              };
+                              const assigneeUser = getDbUser(task.assignee);
+                              const contributors = (task.contributors || []).map(cId => getDbUser(cId)).filter(Boolean);
                               const isOverdue = task.deadline && new Date(task.deadline) < new Date();
                               const checkDone = task.checklist?.filter(c => c.completed).length || 0;
                               const checkTotal = task.checklist?.length || 0;
@@ -1035,15 +1003,6 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                                       )}
                                     >
                                       <div className="p-3 space-y-2">
-                                        {/* Row 1: More menu (Status badge removed) */}
-                                        <div className="flex items-center justify-end">
-                                          <button
-                                            onClick={(e) => { e.stopPropagation(); setActiveMenu(activeMenu === task.id ? null : task.id); }}
-                                            className={cn("p-0.5 rounded-lg transition-colors", darkMode ? "text-slate-500 hover:text-slate-300 hover:bg-white/5" : "text-slate-300 hover:text-slate-500 hover:bg-slate-100")}
-                                          >
-                                            <MoreHorizontal size={14} />
-                                          </button>
-                                        </div>
 
                                         {/* Row 2: Title */}
                                         <h4 id={`task-title-${task.id}`} className={cn("font-bold text-[13px] leading-snug line-clamp-2", darkMode ? "text-white" : "text-slate-800")}>
@@ -1057,29 +1016,27 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                                           </p>
                                         )}
 
-                                        {/* Row 4: Assignees label + avatars */}
-                                        <div className="flex items-center justify-between">
-                                          <div className="flex items-center gap-1.5">
-                                            <span className={cn("text-[10px] font-medium", darkMode ? "text-slate-500" : "text-slate-400")}>{t('assignees')} :</span>
-                                            <div className="flex -space-x-1.5">
+                                        {/* Row 4: Assignees avatars */}
+                                        <div className="flex items-center">
+                                          <div className="flex -space-x-1.5">
                                               {assigneeUser && (
-                                                <img
-                                                  src={assigneeUser.avatar}
-                                                  title={assigneeUser.name}
-                                                  alt={assigneeUser.name}
-                                                  className="w-5 h-5 rounded-full border-2 border-white dark:border-[#1C2B45] shadow-sm object-cover"
-                                                />
+                                                assigneeUser.avatar ? (
+                                                  <img src={assigneeUser.avatar} title={assigneeUser.name} alt={assigneeUser.name} className="w-5 h-5 rounded-full border-2 border-white dark:border-[#1C2B45] shadow-sm object-cover" />
+                                                ) : (
+                                                  <div title={assigneeUser.name} className="w-5 h-5 rounded-full border-2 border-white dark:border-[#1C2B45] shadow-sm bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 overflow-hidden">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M234-276q51-39 114-61.5T480-360q69 0 132 22.5T726-276q35-41 54.5-93T800-480q0-133-93.5-226.5T480-800q-133 0-226.5 93.5T160-480q0 59 19.5 111t54.5 93Zm146.5-204.5Q340-521 340-580t40.5-99.5Q421-720 480-720t99.5 40.5Q620-639 620-580t-40.5 99.5Q539-440 480-440t-99.5-40.5ZM480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm100-95.5q47-15.5 86-44.5-39-29-86-44.5T480-280q-53 0-100 15.5T294-220q39 29 86 44.5T480-160q53 0 100-15.5ZM523-537q17-17 17-43t-17-43q-17-17-43-17t-43 17q-17 17-17 43t17 43q17 17 43 17t43-17Zm-43-43Zm0 360Z"/></svg>
+                                                  </div>
+                                                )
                                               )}
                                               {contributors.slice(0, 2).map((u: any) => (
-                                                <img
-                                                  key={u.id}
-                                                  src={u.avatar}
-                                                  title={u.name}
-                                                  alt={u.name}
-                                                  className="w-5 h-5 rounded-full border-2 border-white dark:border-[#1C2B45] shadow-sm object-cover"
-                                                />
+                                                u.avatar ? (
+                                                  <img key={u.id} src={u.avatar} title={u.name} alt={u.name} className="w-5 h-5 rounded-full border-2 border-white dark:border-[#1C2B45] shadow-sm object-cover" />
+                                                ) : (
+                                                  <div key={u.id} title={u.name} className="w-5 h-5 rounded-full border-2 border-white dark:border-[#1C2B45] shadow-sm bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 overflow-hidden">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M234-276q51-39 114-61.5T480-360q69 0 132 22.5T726-276q35-41 54.5-93T800-480q0-133-93.5-226.5T480-800q-133 0-226.5 93.5T160-480q0 59 19.5 111t54.5 93Zm146.5-204.5Q340-521 340-580t40.5-99.5Q421-720 480-720t99.5 40.5Q620-639 620-580t-40.5 99.5Q539-440 480-440t-99.5-40.5ZM480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm100-95.5q47-15.5 86-44.5-39-29-86-44.5T480-280q-53 0-100 15.5T294-220q39 29 86 44.5T480-160q53 0 100-15.5ZM523-537q17-17 17-43t-17-43q-17-17-43-17t-43 17q-17 17-17 43t17 43q17 17 43 17t43-17Zm-43-43Zm0 360Z"/></svg>
+                                                  </div>
+                                                )
                                               ))}
-                                            </div>
                                           </div>
                                         </div>
 
@@ -1178,38 +1135,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                     </div>
                   </div>
                 ))}
-                {!isOperational && (
-                  <div className="flex-shrink-0 w-72 flex flex-col pt-2 pr-4">
-                    <div className="flex items-center justify-between mb-4 px-3">
-                      <h3 className="font-bold text-slate-400 dark:text-slate-600 tracking-tight uppercase text-[10px] tracking-[0.2em]">{t('newColumn')}</h3>
-                    </div>
-                    <button 
-                      onClick={() => {
-                        const newColName = prompt(t('newColumnName'));
-                        if (newColName && currentProject) {
-                          const newCol = {
-                            id: `col-${Date.now()}`,
-                            title: newColName,
-                            status: newColName,
-                            order: boardColumns.length
-                          };
-                          const updatedProject = {
-                            ...currentProject,
-                            columns: [...(currentProject.columns || boardColumns), newCol]
-                          };
-                          onAddProject(updatedProject, tasks);
-                          onSuccess(t('columnAdded'));
-                        }
-                      }}
-                      className="w-full border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col items-center justify-center gap-4 text-slate-400 hover:text-blue-500 hover:bg-white dark:hover:bg-slate-800 hover:border-blue-200 transition-all group shadow-sm hover:shadow-xl hover:shadow-blue-500/5 py-12"
-                    >
-                      <div className="w-12 h-12 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center group-hover:scale-110 transition-all border border-slate-100 dark:border-slate-700">
-                        <Plus size={24} />
-                      </div>
-                      <span className="font-bold text-[10px] uppercase tracking-widest">{t('addColumn')}</span>
-                    </button>
-                  </div>
-                )}
+
               </div>
             </DragDropContext>
           )}

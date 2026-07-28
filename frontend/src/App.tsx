@@ -104,6 +104,7 @@ export default function App() {
   const [darkMode, setDarkMode] = useState(() => {
     return localStorage.getItem('darkMode') === 'true';
   });
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   useEffect(() => {
     localStorage.setItem('darkMode', darkMode.toString());
@@ -331,7 +332,15 @@ export default function App() {
   };
 
   if (showLanding && !isLoggedIn) {
-    return <LandingPage onStart={() => setShowLanding(false)} language={language} setLanguage={setLanguage} />;
+    return (
+      <LandingPage 
+        onStart={() => setShowLanding(false)} 
+        language={language} 
+        setLanguage={setLanguage} 
+        darkMode={darkMode}
+        setDarkMode={setDarkMode}
+      />
+    );
   }
 
   if (!isLoggedIn) {
@@ -732,9 +741,13 @@ export default function App() {
         user={currentUser}
         onLogout={handleLogout}
         darkMode={darkMode}
+        onCollapse={setIsSidebarCollapsed}
       />
       
-      <main className="flex-1 lg:ml-[220px] xl:ml-[250px] min-h-screen flex flex-col relative overflow-x-hidden">
+      <main className={cn(
+        "flex-1 min-h-screen flex flex-col relative overflow-x-hidden transition-all duration-300",
+        isSidebarCollapsed ? "lg:ml-[72px]" : "lg:ml-[250px]"
+      )}>
         <Header 
           darkMode={darkMode}
           setDarkMode={setDarkMode}
@@ -742,6 +755,7 @@ export default function App() {
           onProfileClick={() => setActiveTab('settings')}
           user={currentUser}
           unreadCount={notifications.filter(n => !n.read && (!n.userId || n.userId === currentUser.id)).length}
+          sidebarCollapsed={isSidebarCollapsed}
         />
         <div className="flex-1 overflow-y-auto scroll-smooth pt-14 md:pt-16">
           <AnimatePresence mode="wait">

@@ -1,4 +1,4 @@
-import { prisma } from './src/lib/prisma';
+import { prisma } from './backend/lib/prisma';
 import dotenv from 'dotenv';
 dotenv.config();
 

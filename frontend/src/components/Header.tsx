@@ -10,6 +10,7 @@ interface HeaderProps {
   onProfileClick: () => void;
   user: any;
   unreadCount?: number;
+  sidebarCollapsed?: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({ 
@@ -18,13 +19,15 @@ export const Header: React.FC<HeaderProps> = ({
   onNotificationClick,
   onProfileClick,
   user,
-  unreadCount = 0
+  unreadCount = 0,
+  sidebarCollapsed = false
 }) => {
   const { language, setLanguage, t } = useLanguage();
 
   return (
     <header className={cn(
-      "h-14 md:h-16 flex items-center justify-between px-3 md:px-6 fixed top-0 right-0 left-0 lg:left-[220px] xl:left-[250px] z-[35] transition-all duration-300",
+      "h-14 md:h-16 flex items-center justify-between px-3 md:px-6 fixed top-0 right-0 z-[35] transition-all duration-300",
+      sidebarCollapsed ? "left-0 lg:left-[72px]" : "left-0 lg:left-[250px]",
       darkMode 
         ? "bg-[#0D1B35]/90 backdrop-blur-xl border-b border-[#1E3A5F]/50" 
         : "bg-white/90 backdrop-blur-xl border-b border-[#BFDFFF]/40 shadow-sm shadow-[#3FA9F5]/5"

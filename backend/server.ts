@@ -1,15 +1,55 @@
-import express from "express";
+import express, { Request, Response, NextFunction } from "express";
 import { createServer as createViteServer } from "vite";
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
 import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from "dotenv";
-import { prisma } from "./src/lib/prisma";
-import { generateId } from "./src/lib/idGenerator";
+import { prisma } from "./lib/prisma";
+import { generateId } from "../frontend/src/lib/idGenerator";
 import nodemailer from "nodemailer";
+import bcrypt from "bcryptjs";
+import rateLimit from "express-rate-limit";
 
 dotenv.config();
+
+// ─── Rate Limiters ─────────────────────────────────────────────────────────
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 menit
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Terlalu banyak percobaan login, coba lagi dalam 15 menit." },
+});
+
+const otpLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 menit
+  max: 3,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Terlalu banyak permintaan OTP, tunggu beberapa menit." },
+});
+
+// ─── Admin Auth Middleware ──────────────────────────────────────────────────
+async function requireAdmin(req: Request, res: Response, next: NextFunction) {
+  const userId = req.headers["x-user-id"] as string;
+  const userRole = req.headers["x-user-role"] as string;
+
+  if (!userId) {
+    return res.status(401).json({ error: "Unauthorized: Anda harus login terlebih dahulu." });
+  }
+
+  // Verifikasi role ke database (bukan hanya dari header)
+  try {
+    const user = await prisma.pengguna.findUnique({ where: { id_pengguna: userId } });
+    if (!user || user.peran !== "Admin") {
+      return res.status(403).json({ error: "Forbidden: Hanya Admin yang dapat mengakses fitur ini." });
+    }
+    next();
+  } catch (err) {
+    return res.status(500).json({ error: "Gagal memverifikasi akses." });
+  }
+}
 
 async function getGeminiApiKey(): Promise<string> {
   try {
@@ -104,11 +144,11 @@ async function startServer() {
   const app = express();
   const PORT = parseInt(process.env.PORT || '3000', 10);
 
-  app.use(express.json({ limit: '50mb' }));
-  app.use(express.urlencoded({ limit: '50mb', extended: true }));
+  app.use(express.json({ limit: '5mb' }));
+  app.use(express.urlencoded({ limit: '5mb', extended: true }));
 
   // Admin Settings Endpoints
-  app.get("/api/admin/settings", async (req, res) => {
+  app.get("/api/admin/settings", requireAdmin, async (req, res) => {
     try {
       const keyRecord = await (prisma as any).api_key.findFirst({
         orderBy: { id: 'desc' }
@@ -137,7 +177,7 @@ async function startServer() {
     }
   });
 
-  app.post("/api/admin/settings", async (req, res) => {
+  app.post("/api/admin/settings", requireAdmin, async (req, res) => {
     try {
       const { geminiApiKey } = req.body;
       if (geminiApiKey === undefined) {
@@ -555,7 +595,7 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
   });
 
   // --- API Authentication ---
-  app.post("/api/auth/send-register-otp", async (req, res) => {
+  app.post("/api/auth/send-register-otp", otpLimiter, async (req, res) => {
     try {
       const { email } = req.body;
       if (!email || typeof email !== 'string' || !email.includes('@')) {
@@ -627,12 +667,13 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
       }
 
       const newId = await generateId('pengguna', 'id_pengguna');
+      const hashedPassword = await bcrypt.hash(password, 12);
       const newUser = await prisma.pengguna.create({
         data: {
           id_pengguna: newId,
           nama: name,
           email,
-          kata_sandi: password, // In production, hash this password!
+          kata_sandi: hashedPassword,
           foto_profil: avatar,
           peran: 'Member'
         }
@@ -640,12 +681,11 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
       
       otpStore.delete(`register_${email}`);
 
-      // Map back to frontend expected format
+      // Map back to frontend expected format — password TIDAK disertakan
       res.status(201).json({
         id: newUser.id_pengguna,
         name: newUser.nama,
         email: newUser.email,
-        password: newUser.kata_sandi,
         role: newUser.peran,
         avatar: newUser.foto_profil,
         whatsapp: newUser.whatsapp || ''
@@ -656,20 +696,21 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
     }
   });
 
-  app.post("/api/auth/login", async (req, res) => {
+  app.post("/api/auth/login", authLimiter, async (req, res) => {
     try {
       const { email, password } = req.body;
       const user = await prisma.pengguna.findUnique({ where: { email } });
-      
-      if (!user || user.kata_sandi !== password) {
+
+      const isValid = user ? await bcrypt.compare(password, user.kata_sandi) : false;
+      if (!user || !isValid) {
         return res.status(401).json({ error: "Email atau kata sandi salah" });
       }
 
+      // Password TIDAK disertakan dalam response
       res.json({
         id: user.id_pengguna,
         name: user.nama,
         email: user.email,
-        password: user.kata_sandi,
         role: user.peran,
         avatar: user.foto_profil,
         whatsapp: user.whatsapp || ''
@@ -680,7 +721,7 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
     }
   });
 
-   app.post("/api/auth/forgot-password", async (req, res) => {
+   app.post("/api/auth/forgot-password", otpLimiter, async (req, res) => {
      try {
        const { email } = req.body;
        
@@ -699,7 +740,8 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
        const expiresAt = Date.now() + 5 * 60 * 1000; // 5 minutes expiry
        otpStore.set(email, { otp, expiresAt });
 
-       console.log(`[OTP Generated] Email: ${email}, OTP: ${otp}, Expires at: ${new Date(expiresAt).toISOString()}`);
+       // OTP tidak dicetak ke log untuk keamanan
+       console.log(`[OTP Generated] Email: ${email}, Expires at: ${new Date(expiresAt).toISOString()}`);
 
        const info = await transporter.sendMail({
          from: emailFrom,
@@ -809,11 +851,11 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
   app.get("/api/users", async (req, res) => {
     try {
       const users = await prisma.pengguna.findMany();
+      // Password TIDAK disertakan dalam response
       res.json(users.map(u => ({
         id: u.id_pengguna,
         name: u.nama,
         email: u.email,
-        password: u.kata_sandi,
         role: u.peran,
         avatar: u.foto_profil,
         whatsapp: u.whatsapp || ''
@@ -1680,6 +1722,254 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
     } catch (error) {
       console.error(error);
       res.status(500).json({ error: "Gagal menghapus notifikasi" });
+    }
+  });
+
+  // REST API Endpoint for KroomSpace Dashboard
+  app.get("/api/dashboard", async (req, res) => {
+    try {
+      const { userId } = req.query;
+      
+      let user = null;
+      if (userId) {
+        user = await prisma.pengguna.findUnique({
+          where: { id_pengguna: String(userId) }
+        });
+      }
+
+      const isMember = user && user.peran === 'Member';
+      
+      const tasksWhereClause = isMember ? {
+        OR: [
+          { id_penanggung_jawab: String(userId) },
+          { kontributor: { some: { id_pengguna: String(userId) } } },
+          {
+            proyek: {
+              OR: [
+                { id_pengguna: String(userId) },
+                { anggota: { some: { id_pengguna: String(userId) } } }
+              ]
+            }
+          }
+        ]
+      } : undefined;
+
+      const allTasks = await prisma.tugas.findMany({
+        where: tasksWhereClause,
+        include: {
+          penanggung_jawab: true,
+          proyek: true
+        }
+      });
+
+      // Calculate completed tasks
+      const completedTasks = allTasks.filter(t => t.status === 'Done');
+      const totalCompleted = completedTasks.length;
+
+      // Calculate On-Time Rate: tasks completed on or before deadline
+      const completedWithDeadline = completedTasks.filter(t => t.tanggal_selesai !== null);
+      const completedOnTime = completedWithDeadline.filter(t => {
+        const deadline = new Date(t.tanggal_selesai!);
+        const completionDate = new Date(t.diperbarui_pada);
+        return completionDate <= deadline;
+      });
+      const onTimeRate = completedWithDeadline.length > 0 
+        ? Math.round((completedOnTime.length / completedWithDeadline.length) * 100) 
+        : 100;
+
+      // Calculate AI Project Health
+      const activeTasks = allTasks.filter(t => t.status !== 'Done');
+      const now = new Date();
+      const overdueTasks = activeTasks.filter(t => t.tanggal_selesai && new Date(t.tanggal_selesai) < now);
+      const blockedTasks = activeTasks.filter(t => t.apakah_diblokir);
+      
+      let aiProjectHealth = 100;
+      if (allTasks.length > 0) {
+        const healthyTasksCount = allTasks.length - overdueTasks.length - blockedTasks.length;
+        aiProjectHealth = Math.max(0, Math.round((healthyTasksCount / allTasks.length) * 100));
+      }
+
+      // Open Maintenance Tickets
+      const openMaintenanceTickets = activeTasks.filter(t => t.tipe === 'Maintenance').length;
+
+      // Generate sparklines (7 data points representing counts over the last 7 days)
+      const sparklineCompleted: number[] = [];
+      const sparklineOnTimeRate: number[] = [];
+      const sparklineHealth: number[] = [];
+      const sparklineMaintenance: number[] = [];
+
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        d.setHours(23, 59, 59, 999);
+        const cutoff = d;
+
+        // Completed
+        const complAtDay = completedTasks.filter(t => new Date(t.diperbarui_pada) <= cutoff).length;
+        sparklineCompleted.push(complAtDay);
+
+        // On-Time
+        const complDeadlineAtDay = completedTasks.filter(t => t.tanggal_selesai && new Date(t.diperbarui_pada) <= cutoff);
+        const onTimeAtDay = complDeadlineAtDay.filter(t => new Date(t.diperbarui_pada) <= new Date(t.tanggal_selesai!)).length;
+        sparklineOnTimeRate.push(complDeadlineAtDay.length > 0 ? Math.round((onTimeAtDay / complDeadlineAtDay.length) * 100) : 100);
+
+        // Health
+        const tasksUpToDay = allTasks.filter(t => new Date(t.dibuat_pada) <= cutoff);
+        const activeUpToDay = tasksUpToDay.filter(t => t.status !== 'Done' || new Date(t.diperbarui_pada) > cutoff);
+        const overdueUpToDay = activeUpToDay.filter(t => t.tanggal_selesai && new Date(t.tanggal_selesai) < cutoff);
+        const blockedUpToDay = activeUpToDay.filter(t => t.apakah_diblokir);
+        const healthAtDay = tasksUpToDay.length > 0 
+          ? Math.max(0, Math.round(((tasksUpToDay.length - overdueUpToDay.length - blockedUpToDay.length) / tasksUpToDay.length) * 100))
+          : 100;
+        sparklineHealth.push(healthAtDay);
+
+        // Maintenance
+        const maintAtDay = activeUpToDay.filter(t => t.tipe === 'Maintenance').length;
+        sparklineMaintenance.push(maintAtDay);
+      }
+
+      // Trends (relative comparison)
+      const lastWeekDate = new Date();
+      lastWeekDate.setDate(lastWeekDate.getDate() - 7);
+      const twoWeeksAgoDate = new Date();
+      twoWeeksAgoDate.setDate(twoWeeksAgoDate.getDate() - 14);
+
+      const completedLastWeek = completedTasks.filter(t => new Date(t.diperbarui_pada) >= lastWeekDate).length;
+      const completedPrevWeek = completedTasks.filter(t => new Date(t.diperbarui_pada) >= twoWeeksAgoDate && new Date(t.diperbarui_pada) < lastWeekDate).length;
+      
+      let completedTrend = 0;
+      if (completedPrevWeek > 0) {
+        completedTrend = Math.round(((completedLastWeek - completedPrevWeek) / completedPrevWeek) * 100);
+      } else if (completedLastWeek > 0) {
+        completedTrend = 100;
+      }
+
+      const onTimeRateTrend = onTimeRate >= 90 ? 3 : -2;
+      const healthTrend = aiProjectHealth >= 80 ? 2 : -5;
+      const maintTrend = openMaintenanceTickets > 8 ? 12 : -5;
+
+      // Task Status Distribution (Pie chart data)
+      const statuses = ['Backlog', 'To Do', 'In Progress', 'Review', 'Done'];
+      const statusDistribution = statuses.map(status => ({
+        name: status,
+        value: allTasks.filter(t => t.status === status).length
+      }));
+
+      // Task Completion Trend Chart
+      const trendChart: { date: string; completed: number; active: number }[] = [];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        
+        const startOfDay = new Date(d);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(d);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        const dayCompleted = completedTasks.filter(t => {
+          const compDate = new Date(t.diperbarui_pada);
+          return compDate >= startOfDay && compDate <= endOfDay;
+        }).length;
+
+        const dayActive = allTasks.filter(t => {
+          const created = new Date(t.dibuat_pada);
+          const finished = t.status === 'Done' ? new Date(t.diperbarui_pada) : null;
+          return created <= endOfDay && (finished === null || finished > endOfDay);
+        }).length;
+
+        trendChart.push({
+          date: dateStr,
+          completed: dayCompleted,
+          active: dayActive
+        });
+      }
+
+      // My Tasks panel (limited to top 5 active tasks)
+      const myTasks = allTasks
+        .filter(t => t.id_penanggung_jawab === userId && t.status !== 'Done')
+        .slice(0, 5)
+        .map(t => ({
+          id: t.id_tugas,
+          title: t.judul_tugas,
+          status: t.status,
+          priority: t.prioritas,
+          deadline: t.tanggal_selesai,
+          projectName: t.proyek?.nama_proyek || 'KroomSpace'
+        }));
+
+      // Team Activity Log from database notifications
+      const latestNotifications = await prisma.notifikasi.findMany({
+        where: isMember ? { id_pengguna: String(userId) } : undefined,
+        orderBy: { waktu: 'desc' },
+        take: 6,
+        include: {
+          pengguna: true
+        }
+      });
+
+      const teamActivity = latestNotifications.map(n => ({
+        id: n.id_notifikasi,
+        user: {
+          name: n.pengguna.nama,
+          avatar: n.pengguna.foto_profil || `https://api.dicebear.com/7.x/avataaars/svg?seed=${n.pengguna.nama}`
+        },
+        action: n.pesan,
+        time: n.waktu,
+        type: n.tipe
+      }));
+
+      // Maintenance Overview active tickets
+      const maintenanceTasks = allTasks
+        .filter(t => t.tipe === 'Maintenance')
+        .slice(0, 5)
+        .map(t => ({
+          id: t.id_tugas,
+          title: t.judul_tugas,
+          status: t.status,
+          priority: t.prioritas,
+          assignee: t.penanggung_jawab ? {
+            name: t.penanggung_jawab.nama,
+            avatar: t.penanggung_jawab.foto_profil || `https://api.dicebear.com/7.x/avataaars/svg?seed=${t.penanggung_jawab.nama}`
+          } : null,
+          deadline: t.tanggal_selesai
+        }));
+
+      res.json({
+        kpis: {
+          taskCompleted: {
+            value: totalCompleted,
+            trend: completedTrend,
+            sparkline: sparklineCompleted
+          },
+          onTimeRate: {
+            value: onTimeRate,
+            trend: onTimeRateTrend,
+            sparkline: sparklineOnTimeRate
+          },
+          aiProjectHealth: {
+            value: aiProjectHealth,
+            trend: healthTrend,
+            sparkline: sparklineHealth
+          },
+          openMaintenance: {
+            value: openMaintenanceTickets,
+            trend: maintTrend,
+            sparkline: sparklineMaintenance
+          }
+        },
+        charts: {
+          statusDistribution,
+          trendChart
+        },
+        myTasks,
+        teamActivity,
+        maintenanceOverview: maintenanceTasks
+      });
+
+    } catch (error) {
+      console.error("[GET /api/dashboard] Error:", error);
+      res.status(500).json({ error: "Gagal memproses data dashboard" });
     }
   });
 

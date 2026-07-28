@@ -7,12 +7,19 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
 
   return {
+    root: 'frontend',
+
     plugins: [react(), tailwindcss()],
 
     resolve: {
       alias: {
-        '@': path.resolve(__dirname, '.'),
+        '@': path.resolve(__dirname, 'frontend'),
       },
+    },
+
+    build: {
+      outDir: '../dist',
+      emptyOutDir: true,
     },
 
     server: {
