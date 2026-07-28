@@ -579,12 +579,12 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
       </div>
 
       {/* Kolom Kanan: Animasi Manajemen Proyek (Tersembunyi di Mobile) */}
-      <div className="hidden lg:flex w-1/2 relative bg-gradient-to-br from-[#0B1727] via-[#0B1727] to-[#152844] overflow-hidden items-center justify-center border-l border-white/5">
+      <div className="hidden lg:flex w-1/2 relative bg-gradient-to-br from-[#F0F6FF] via-[#F8FAFC] to-[#E0F2FE] overflow-hidden items-center justify-center border-l border-slate-100">
         {/* Latar Belakang Geometris */}
-        <div className="absolute inset-0 opacity-5" style={{ backgroundImage: 'radial-gradient(circle at 20px 20px, white 2px, transparent 0)', backgroundSize: '40px 40px' }} />
+        <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 20px 20px, #3498DB 1px, transparent 0)', backgroundSize: '40px 40px' }} />
 
         {/* Orb Cahaya */}
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#3498DB]/10 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#3498DB]/15 rounded-full blur-[120px] pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-[#1E3A8A]/10 rounded-full blur-[100px] pointer-events-none" />
 
         <div className="relative w-full max-w-md h-[400px] flex items-center justify-center">
@@ -594,24 +594,24 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 1, ease: "easeOut" }}
-            className="absolute z-20 bg-[#152844]/65 backdrop-blur-xl border border-slate-800/80 p-6 rounded-[1.8rem] shadow-2xl flex flex-col items-center justify-center w-56 h-56"
+            className="absolute z-20 bg-white/70 backdrop-blur-xl border border-white/80 p-6 rounded-[1.8rem] shadow-[0_20px_50px_rgba(30,58,138,0.1)] flex flex-col items-center justify-center w-56 h-56"
           >
             <div className="relative">
-              <Kanban size={52} className="text-[#3498DB] mb-4 drop-shadow-md" />
+              <Kanban size={52} className="text-[#1E3A8A] mb-4 drop-shadow-sm" />
               <motion.div
                 animate={{ rotate: 360 }}
                 transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-                className="absolute -top-1 -right-1 text-amber-400 drop-shadow-lg"
+                className="absolute -top-1 -right-1 text-amber-500 drop-shadow-md"
               >
                 <Settings size={16} />
               </motion.div>
             </div>
-            <div className="w-32 h-2 bg-white/20 rounded-full mb-3" />
-            <div className="w-20 h-2 bg-white/20 rounded-full mb-6" />
+            <div className="w-32 h-2 bg-[#1E3A8A]/10 rounded-full mb-3" />
+            <div className="w-20 h-2 bg-[#1E3A8A]/10 rounded-full mb-6" />
             <div className="flex gap-2.5">
-              <motion.div animate={{ y: [0, -3, 0] }} transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 0 }} className="w-8 h-8 rounded-full bg-[#3498DB]/80 shadow-inner border border-[#3498DB]/30" />
-              <motion.div animate={{ y: [0, -3, 0] }} transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 0.3 }} className="w-8 h-8 rounded-full bg-[#2ECC71]/80 shadow-inner border border-[#2ECC71]/30" />
-              <motion.div animate={{ y: [0, -3, 0] }} transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 0.6 }} className="w-8 h-8 rounded-full bg-[#9B59B6]/80 shadow-inner border border-[#9B59B6]/30" />
+              <motion.div animate={{ y: [0, -3, 0] }} transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 0 }} className="w-8 h-8 rounded-full bg-[#3498DB] shadow-md border border-white" />
+              <motion.div animate={{ y: [0, -3, 0] }} transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 0.3 }} className="w-8 h-8 rounded-full bg-[#2ECC71] shadow-md border border-white" />
+              <motion.div animate={{ y: [0, -3, 0] }} transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 0.6 }} className="w-8 h-8 rounded-full bg-[#9B59B6] shadow-md border border-white" />
             </div>
           </motion.div>
 
@@ -619,7 +619,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
           <motion.div
             animate={{ y: [0, -15, 0], rotate: [0, 10, -5, 0] }}
             transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute top-8 right-20 z-10 bg-[#9B59B6]/10 p-3.5 rounded-xl shadow-xl shadow-black/20 flex items-center justify-center text-[#9B59B6] border border-[#9B59B6]/20 backdrop-blur-md"
+            className="absolute top-8 right-20 z-10 bg-white/90 p-3.5 rounded-xl shadow-lg shadow-blue-900/5 flex items-center justify-center text-[#9B59B6] border border-white/60 backdrop-blur-md"
           >
             <Settings size={22} />
           </motion.div>
@@ -628,7 +628,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
           <motion.div
             animate={{ y: [0, 20, 0], x: [0, 5, 0] }}
             transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-            className="absolute bottom-16 left-12 z-30 bg-[#2ECC71]/10 p-3.5 rounded-xl shadow-xl shadow-black/20 flex items-center justify-center text-[#2ECC71] border border-[#2ECC71]/20 backdrop-blur-md"
+            className="absolute bottom-16 left-12 z-30 bg-white/90 p-3.5 rounded-xl shadow-lg shadow-blue-900/5 flex items-center justify-center text-[#2ECC71] border border-white/60 backdrop-blur-md"
           >
             <CheckCircle2 size={22} />
           </motion.div>
@@ -637,7 +637,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
           <motion.div
             animate={{ y: [0, -20, 0], x: [0, -10, 0] }}
             transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 2.5 }}
-            className="absolute bottom-24 right-12 z-10 bg-[#E67E22]/10 p-3.5 rounded-xl shadow-xl shadow-black/20 flex items-center justify-center text-[#E67E22] border border-[#E67E22]/20 backdrop-blur-md"
+            className="absolute bottom-24 right-12 z-10 bg-white/90 p-3.5 rounded-xl shadow-lg shadow-blue-900/5 flex items-center justify-center text-[#E67E22] border border-white/60 backdrop-blur-md"
           >
             <Wrench size={22} />
           </motion.div>
@@ -646,7 +646,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
           <motion.div
             animate={{ y: [0, 15, 0] }}
             transition={{ duration: 5.5, repeat: Infinity, ease: "easeInOut", delay: 0.8 }}
-            className="absolute top-16 left-16 z-10 bg-[#3498DB]/10 p-3.5 rounded-xl shadow-xl shadow-black/20 flex items-center justify-center text-[#3498DB] border border-[#3498DB]/20 backdrop-blur-md"
+            className="absolute top-16 left-16 z-10 bg-white/90 p-3.5 rounded-xl shadow-lg shadow-blue-900/5 flex items-center justify-center text-[#3498DB] border border-white/60 backdrop-blur-md"
           >
             <LayoutDashboard size={22} />
           </motion.div>
@@ -658,7 +658,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5, duration: 1 }}
-            className="text-2xl font-black text-white mb-3 tracking-wide"
+            className="text-2xl font-black text-[#1E3A8A] mb-3 tracking-wide"
           >
             Pusat Manajemen Proyek & Maintenance
           </motion.h2>
@@ -666,7 +666,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.8, duration: 1 }}
-            className="text-blue-100 text-sm leading-relaxed"
+            className="text-slate-600 text-sm font-semibold leading-relaxed"
           >
             Solusi terpadu untuk efisiensi kolaborasi tim Anda. Pantau progress tugas harian, atur jadwal maintenance aset, dan selesaikan pekerjaan lebih cepat tanpa hambatan.
           </motion.p>
