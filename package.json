@@ -6,7 +6,7 @@
   "scripts": {
     "start": "tsx backend/server.ts",
     "dev": "tsx watch backend/server.ts",
-    "build": "vite build",
+    "build": "npx prisma generate && vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
@@ -19,6 +19,7 @@
     "@google/genai": "^1.29.0",
     "@hello-pangea/dnd": "^18.0.1",
     "@prisma/client": "^6.19.3",
+    "prisma": "^6.19.3",
     "@tailwindcss/vite": "^4.1.14",
     "@types/bcryptjs": "^2.4.6",
     "@types/express-rate-limit": "^5.1.3",
