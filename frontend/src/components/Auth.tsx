@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { LogIn, UserPlus, User as UserIcon, Mail, Lock, ArrowRight, ArrowLeft, Eye, EyeOff, KeyRound, Settings, Wrench, Kanban, LayoutDashboard, CheckCircle2 } from 'lucide-react';
+import { LogIn, UserPlus, User as UserIcon, Mail, Lock, ArrowRight, ArrowLeft, Eye, EyeOff, KeyRound, Settings, Wrench, Kanban, LayoutDashboard, CheckCircle2, Loader2, RefreshCw, MailCheck } from 'lucide-react';
 import { User } from '../types';
 import { cn } from '../lib/utils';
 import { useLanguage } from '../context/LanguageContext';
@@ -213,12 +213,17 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
         return;
       }
       setLoading(true);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+
       try {
         const response = await fetch('/api/auth/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: trimmedEmail, password: trimmedPassword })
+          body: JSON.stringify({ email: trimmedEmail, password: trimmedPassword }),
+          signal: controller.signal
         });
+        clearTimeout(timeoutId);
 
         const data = await response.json();
         if (response.ok) {
@@ -226,49 +231,72 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
         } else {
           setError(data.error || t('invalidCredentials'));
         }
-      } catch (err) {
-        setError("Gagal terhubung ke server");
+      } catch (err: any) {
+        clearTimeout(timeoutId);
+        if (err.name === 'AbortError') {
+          setError("Waktu koneksi habis. Silakan coba masuk lagi.");
+        } else {
+          setError("Gagal terhubung ke server");
+        }
       } finally {
         setLoading(false);
       }
     } else {
-      if (!name || !email || !password || !confirmPassword) {
-        setError(t('allFieldsRequired'));
-        return;
-      }
-      if (password !== confirmPassword) {
-        setError(t('passwordMismatch'));
-        return;
-      }
-
       if (registerMode === 'form') {
+        if (!name.trim() || !trimmedEmail || !trimmedPassword || !confirmPassword.trim()) {
+          setError(t('allFieldsRequired'));
+          return;
+        }
+        if (password !== confirmPassword) {
+          setError(t('passwordMismatch'));
+          return;
+        }
+        if (password.length < 6) {
+          setError('Password minimal 6 karakter');
+          return;
+        }
+
         setLoading(true);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
         try {
           const response = await fetch('/api/auth/send-register-otp', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: trimmedEmail })
+            body: JSON.stringify({ email: trimmedEmail }),
+            signal: controller.signal
           });
+          clearTimeout(timeoutId);
+
           const data = await response.json();
           if (response.ok) {
-            setError('✓ OTP telah dikirim ke email Anda');
+            setError('✓ Kode OTP verifikasi telah dikirim ke email Anda');
             setRegisterMode('otp');
-            setCooldown(30); // Mulai hitung mundur 30 detik
+            setCooldown(30);
           } else {
             setError(data.error || t('emailExists'));
           }
-        } catch (err) {
-          setError("Gagal terhubung ke server");
+        } catch (err: any) {
+          clearTimeout(timeoutId);
+          if (err.name === 'AbortError') {
+            setError("Waktu pengiriman habis. Periksa koneksi internet Anda lalu coba lagi.");
+          } else {
+            setError("Gagal terhubung ke server. Silakan coba lagi.");
+          }
         } finally {
           setLoading(false);
         }
       } else if (registerMode === 'otp') {
         const cleanOtp = registerOtpInput.trim().replace(/\s+/g, '');
         if (cleanOtp.length !== 6) {
-          setError('OTP harus 6 digit');
+          setError('OTP harus 6 digit angka');
           return;
         }
         setLoading(true);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
         try {
           const response = await fetch('/api/auth/register', {
             method: 'POST',
@@ -279,25 +307,32 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
               password: trimmedPassword,
               avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${name.trim()}`,
               otp: cleanOtp
-            })
+            }),
+            signal: controller.signal
           });
+          clearTimeout(timeoutId);
 
           const data = await response.json();
           if (response.ok) {
             setUsers([...users, data]);
             setIsLogin(true);
             setRegisterMode('form');
-            setEmail('');
+            setEmail(trimmedEmail);
             setPassword('');
             setConfirmPassword('');
             setName('');
             setRegisterOtpInput('');
-            setError(t('regSuccess'));
+            setError('✓ Pendaftaran berhasil! Silakan masuk dengan akun Anda.');
           } else {
             setError(data.error || t('emailExists'));
           }
-        } catch (err) {
-          setError("Gagal terhubung ke server");
+        } catch (err: any) {
+          clearTimeout(timeoutId);
+          if (err.name === 'AbortError') {
+            setError("Waktu verifikasi habis. Silakan coba lagi.");
+          } else {
+            setError("Gagal terhubung ke server");
+          }
         } finally {
           setLoading(false);
         }
@@ -333,9 +368,19 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
               />
             </div>
             <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">
-              {forgotMode !== 'none' ? t('resetPassword') : (isLogin ? t('welcomeBack') : t('createAccount'))}
+              {forgotMode !== 'none' 
+                ? t('resetPassword') 
+                : (isLogin 
+                    ? t('welcomeBack') 
+                    : (registerMode === 'otp' ? 'Verifikasi Email' : t('createAccount')))}
             </h1>
-            <p className="text-slate-500 mt-2 font-medium text-xs md:text-sm">{t('authSub')}</p>
+            <p className="text-slate-500 mt-2 font-medium text-xs md:text-sm">
+              {forgotMode !== 'none' 
+                ? t('authSub') 
+                : (isLogin 
+                    ? t('authSub') 
+                    : (registerMode === 'otp' ? 'Langkah 2/2: Masukkan 6 digit kode OTP aktivasi' : 'Langkah 1/2: Kelola proyek Anda dengan efisiensi bertenaga AI'))}
+            </p>
           </div>
 
           {forgotMode !== 'none' ? (
@@ -474,78 +519,22 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
             </form>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
-              <AnimatePresence mode="wait">
-                {!isLogin && registerMode === 'form' && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="space-y-1.5"
-                  >
-                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">{t('fullName')}</label>
-                    <div className="relative">
-                      <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                      <input
-                        type="text"
-                        id="reg_name"
-                        name="reg_name"
-                        autoComplete="off"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-100 focus:border-blue-500/20 focus:bg-white rounded-2xl outline-none transition-all font-medium text-slate-900 placeholder:text-slate-300"
-                        placeholder="John Doe"
-                      />
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {(!isLogin && registerMode === 'otp') ? (
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">{t('enterOtp')}</label>
-                  <div className="relative">
-                    <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                    <input
-                      type="text"
-                      value={registerOtpInput}
-                      onChange={(e) => setRegisterOtpInput(e.target.value.replace(/\D/g, ''))}
-                      className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-100 focus:border-blue-500/20 focus:bg-white rounded-2xl outline-none transition-all font-medium text-slate-900 tracking-[0.4em] text-center"
-                      placeholder="123456"
-                      maxLength={6}
-                      required
-                    />
-                  </div>
-                  <div className="flex justify-end px-1 mt-1">
-                    <button
-                      type="button"
-                      disabled={cooldown > 0}
-                      onClick={handleResendOtp}
-                      className={cn(
-                        "text-xs font-bold transition-colors",
-                        cooldown > 0 
-                          ? "text-slate-400 cursor-not-allowed" 
-                          : "text-blue-500 hover:text-blue-600 cursor-pointer"
-                      )}
-                    >
-                      {cooldown > 0 ? `Kirim ulang dalam ${cooldown}s` : "Kirim Ulang OTP"}
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <>
+              {isLogin && (
+                <div className="space-y-3.5">
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">{t('emailAddress')}</label>
                     <div className="relative">
                       <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                       <input
                         type="email"
-                        id={isLogin ? "username" : "reg_email"}
-                        name={isLogin ? "username" : "reg_email"}
-                        autoComplete={isLogin ? "username" : "off"}
+                        id="username"
+                        name="username"
+                        autoComplete="username"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-100 focus:border-blue-500/20 focus:bg-white rounded-2xl outline-none transition-all font-medium text-slate-900 placeholder:text-slate-300"
                         placeholder="name@company.com"
+                        required
                       />
                     </div>
                   </div>
@@ -556,13 +545,14 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
                       <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                       <input
                         type={showPassword ? "text" : "password"}
-                        id={isLogin ? "password" : "reg_password"}
-                        name={isLogin ? "password" : "reg_password"}
-                        autoComplete={isLogin ? "current-password" : "new-password"}
+                        id="password"
+                        name="password"
+                        autoComplete="current-password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         className="w-full pl-12 pr-12 py-3.5 bg-slate-50 border border-slate-100 focus:border-blue-500/20 focus:bg-white rounded-2xl outline-none transition-all font-medium text-slate-900 placeholder:text-slate-300"
                         placeholder="••••••••"
+                        required
                       />
                       <button
                         type="button"
@@ -574,51 +564,156 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
                     </div>
                   </div>
 
-                  <AnimatePresence mode="wait">
-                    {!isLogin && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="space-y-1.5 overflow-hidden"
-                      >
-                        <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">{t('confirmPass')}</label>
-                        <div className="relative">
-                          <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                          <input
-                            type={showPassword ? "text" : "password"}
-                            id="reg_confirm_password"
-                            name="reg_confirm_password"
-                            autoComplete="new-password"
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
-                            className="w-full pl-12 pr-12 py-3.5 bg-slate-50 border border-slate-100 focus:border-blue-500/20 focus:bg-white rounded-2xl outline-none transition-all font-medium text-slate-900 placeholder:text-slate-300"
-                            placeholder="••••••••"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-600 transition-colors"
-                            title={showPassword ? "Sembunyikan password" : "Tampilkan password"}
-                          >
-                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                          </button>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </>
+                  <div className="text-right">
+                    <button
+                      type="button"
+                      onClick={() => { setForgotMode('email'); setError(''); }}
+                      className="text-sm font-semibold text-[#3498DB] hover:text-[#2980B9] transition-colors"
+                    >
+                      {t('forgotPassword')}
+                    </button>
+                  </div>
+                </div>
               )}
 
-              {isLogin && (
-                <div className="text-right">
-                  <button
-                    type="button"
-                    onClick={() => { setForgotMode('email'); setError(''); }}
-                    className="text-sm font-semibold text-[#3498DB] hover:text-[#2980B9] transition-colors"
-                  >
-                    {t('forgotPassword')}
-                  </button>
+              {!isLogin && registerMode === 'form' && (
+                <div className="space-y-3.5">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">{t('fullName')}</label>
+                    <div className="relative">
+                      <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                      <input
+                        type="text"
+                        id="reg_name"
+                        name="reg_name"
+                        autoComplete="off"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-100 focus:border-blue-500/20 focus:bg-white rounded-2xl outline-none transition-all font-medium text-slate-900 placeholder:text-slate-300"
+                        placeholder="Nama Lengkap"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">{t('emailAddress')}</label>
+                    <div className="relative">
+                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                      <input
+                        type="email"
+                        id="reg_email"
+                        name="reg_email"
+                        autoComplete="off"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-100 focus:border-blue-500/20 focus:bg-white rounded-2xl outline-none transition-all font-medium text-slate-900 placeholder:text-slate-300"
+                        placeholder="name@company.com"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">{t('password')}</label>
+                    <div className="relative">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        id="reg_password"
+                        name="reg_password"
+                        autoComplete="new-password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="w-full pl-12 pr-12 py-3.5 bg-slate-50 border border-slate-100 focus:border-blue-500/20 focus:bg-white rounded-2xl outline-none transition-all font-medium text-slate-900 placeholder:text-slate-300"
+                        placeholder="Minimal 6 karakter"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-600 transition-colors"
+                      >
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">{t('confirmPass')}</label>
+                    <div className="relative">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        id="reg_confirm_password"
+                        name="reg_confirm_password"
+                        autoComplete="new-password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className="w-full pl-12 pr-12 py-3.5 bg-slate-50 border border-slate-100 focus:border-blue-500/20 focus:bg-white rounded-2xl outline-none transition-all font-medium text-slate-900 placeholder:text-slate-300"
+                        placeholder="Ulangi kata sandi"
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {!isLogin && registerMode === 'otp' && (
+                <div className="space-y-4">
+                  <div className="p-4 bg-blue-50/70 border border-blue-100 rounded-2xl text-center space-y-2">
+                    <div className="w-12 h-12 bg-blue-100 text-[#1E3A8A] rounded-full flex items-center justify-center mx-auto mb-1">
+                      <MailCheck size={24} />
+                    </div>
+                    <p className="text-xs text-slate-600 font-medium">
+                      Kode 6 digit OTP verifikasi telah dikirimkan ke:
+                    </p>
+                    <span className="inline-block bg-white px-3 py-1 rounded-full text-xs font-bold text-[#1E3A8A] border border-blue-200 shadow-sm">
+                      {email}
+                    </span>
+                    <p className="text-[11px] text-slate-400">
+                      Periksa kotak masuk (Inbox) atau folder Spam email Anda.
+                    </p>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">{t('enterOtp')}</label>
+                    <div className="relative">
+                      <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                      <input
+                        type="text"
+                        autoFocus
+                        value={registerOtpInput}
+                        onChange={(e) => setRegisterOtpInput(e.target.value.replace(/\D/g, ''))}
+                        className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white rounded-2xl outline-none transition-all font-bold text-slate-900 tracking-[0.5em] text-center text-lg placeholder:tracking-normal placeholder:font-normal placeholder:text-sm"
+                        placeholder="123456"
+                        maxLength={6}
+                        required
+                      />
+                    </div>
+                    <div className="flex justify-between items-center px-1 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => { setRegisterMode('form'); setError(''); }}
+                        className="text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors"
+                      >
+                        ← Ubah data diri
+                      </button>
+                      <button
+                        type="button"
+                        disabled={cooldown > 0 || loading}
+                        onClick={handleResendOtp}
+                        className={cn(
+                          "text-xs font-bold transition-colors",
+                          (cooldown > 0 || loading)
+                            ? "text-slate-400 cursor-not-allowed" 
+                            : "text-[#3498DB] hover:text-[#2980B9] cursor-pointer"
+                        )}
+                      >
+                        {cooldown > 0 ? `Kirim ulang (${cooldown}s)` : "Kirim Ulang OTP"}
+                      </button>
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -638,28 +733,33 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
 
               <button
                 type="submit"
-                id="login-form-submit"
+                id="auth-form-submit"
                 disabled={loading}
                 className={cn(
                   "w-full group flex items-center justify-center gap-3 p-4 bg-[#1E3A8A] hover:bg-[#152a65] text-white rounded-2xl transition-all duration-300 shadow-lg shadow-[#1E3A8A]/20 font-bold mt-6",
-                  loading && "opacity-60 cursor-not-allowed"
+                  loading && "opacity-80 cursor-wait"
                 )}
               >
-                {loading ? "Memproses..." : (isLogin ? t('login') : (!isLogin && registerMode === 'otp' ? t('verifyOtp') : t('register')))}
-                {!loading && <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />}
+                {loading ? (
+                  <div className="flex items-center gap-2">
+                    <Loader2 size={18} className="animate-spin" />
+                    <span>
+                      {isLogin
+                        ? "Memproses..."
+                        : (registerMode === 'otp' ? "Memverifikasi akun..." : "Mengirim kode OTP...")}
+                    </span>
+                  </div>
+                ) : (
+                  <>
+                    <span>
+                      {isLogin
+                        ? t('login')
+                        : (registerMode === 'otp' ? "Verifikasi & Buat Akun" : "Daftar & Kirim OTP")}
+                    </span>
+                    <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                  </>
+                )}
               </button>
-
-              {!isLogin && registerMode === 'otp' && (
-                <div className="mt-4 text-center">
-                  <button
-                    type="button"
-                    onClick={() => { setRegisterMode('form'); setError(''); }}
-                    className="text-sm font-bold text-slate-400 hover:text-[#3498DB] transition-colors"
-                  >
-                    Kembali
-                  </button>
-                </div>
-              )}
             </form>
           )}
 

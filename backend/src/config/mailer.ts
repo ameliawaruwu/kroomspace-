@@ -25,7 +25,10 @@ export async function initMail() {
       },
       tls: {
         rejectUnauthorized: false
-      }
+      },
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 15000
     });
     console.log(`[Nodemailer] SMTP Configured (${mailHost}:${mailPort}) for user: ${mailUser}`);
   } else {
