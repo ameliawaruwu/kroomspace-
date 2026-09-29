@@ -636,11 +636,12 @@ async function main() {
   console.log('👤 [2/8] Seeding Pengguna...');
   await prisma.pengguna.createMany({
     data: [
-      { id_pengguna: 'P001', nama: 'Amelia Waruwu',  email: 'amelia@kroombox.com', whatsapp: '+6281234567890', kata_sandi: 'admin',   peran: 'Admin',  foto_profil: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Amelia' },
-      { id_pengguna: 'P002', nama: 'Budi Santoso',   email: 'budi@kroombox.com',   whatsapp: '+6282345678901', kata_sandi: 'user123', peran: 'Member', foto_profil: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Budi'   },
-      { id_pengguna: 'P003', nama: 'Citra Dewi',     email: 'citra@kroombox.com',  whatsapp: '+6283456789012', kata_sandi: 'user',    peran: 'Member', foto_profil: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Citra'  },
-      { id_pengguna: 'P004', nama: 'Deni Kurniawan', email: 'deni@kroombox.com',   whatsapp: '+6284567890123', kata_sandi: 'user',    peran: 'Member', foto_profil: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Deni'   },
-      { id_pengguna: 'P005', nama: 'Eva Susanti',    email: 'eva@kroombox.com',    whatsapp: '+6285678901234', kata_sandi: 'user',    peran: 'Member', foto_profil: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Eva'    },
+      // Default dummy password: 'password123' ter-hash dengan bcrypt ($2b$10$...)
+      { id_pengguna: 'P001', nama: 'Amelia Waruwu',  email: 'amelia@kroombox.com', whatsapp: '+6281234567890', kata_sandi: '$2b$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6L656qBcx7J9V42C',   peran: 'Admin',  foto_profil: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Amelia' },
+      { id_pengguna: 'P002', nama: 'Budi Santoso',   email: 'budi@kroombox.com',   whatsapp: '+6282345678901', kata_sandi: '$2b$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6L656qBcx7J9V42C', peran: 'Member', foto_profil: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Budi'   },
+      { id_pengguna: 'P003', nama: 'Citra Dewi',     email: 'citra@kroombox.com',  whatsapp: '+6283456789012', kata_sandi: '$2b$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6L656qBcx7J9V42C',    peran: 'Member', foto_profil: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Citra'  },
+      { id_pengguna: 'P004', nama: 'Deni Kurniawan', email: 'deni@kroombox.com',   whatsapp: '+6284567890123', kata_sandi: '$2b$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6L656qBcx7J9V42C',    peran: 'Member', foto_profil: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Deni'   },
+      { id_pengguna: 'P005', nama: 'Eva Susanti',    email: 'eva@kroombox.com',    whatsapp: '+6285678901234', kata_sandi: '$2b$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6L656qBcx7J9V42C',    peran: 'Member', foto_profil: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Eva'    },
     ]
   });
   console.log('   ✅ 5 pengguna dibuat.\n');

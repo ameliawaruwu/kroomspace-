@@ -1693,7 +1693,7 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
             id_pengguna,
             nama: "Team Member",
             email: `${id_pengguna}@kroombox.com`,
-            kata_sandi: "password",
+            kata_sandi: bcrypt.hashSync(crypto.randomBytes(12).toString('hex'), 10),
             peran: "Member"
           }
         });
@@ -2279,7 +2279,7 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
               id_pengguna: uid,
               nama: "Team Member",
               email: `${uid}@kroombox.com`,
-              kata_sandi: "password",
+              kata_sandi: bcrypt.hashSync(crypto.randomBytes(12).toString('hex'), 10),
               peran: "Member"
             }
           });
