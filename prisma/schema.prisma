@@ -24,6 +24,8 @@ model Pengguna {
   dokumentasi        DokumentasiTugas[]
   proyek             Proyek[]
   anggota_proyek     AnggotaProyek[]
+
+  @@map("pengguna")
 }
 
 model Proyek {
@@ -42,6 +44,8 @@ model Proyek {
   pengguna     Pengguna? @relation(fields: [id_pengguna], references: [id_pengguna], onDelete: Cascade)
   
   anggota      AnggotaProyek[]
+
+  @@map("proyek")
 }
 
 model AnggotaProyek {
@@ -52,6 +56,7 @@ model AnggotaProyek {
   pengguna    Pengguna @relation(fields: [id_pengguna], references: [id_pengguna], onDelete: Cascade)
 
   @@id([id_proyek, id_pengguna])
+  @@map("anggotaproyek")
 }
 
 model KolomPapan {
@@ -62,6 +67,8 @@ model KolomPapan {
   urutan        Int
 
   proyek        Proyek  @relation(fields: [id_proyek], references: [id_proyek], onDelete: Cascade)
+
+  @@map("kolompapan")
 }
 
 model Tugas {
@@ -91,6 +98,8 @@ model Tugas {
   daftar_periksa       DaftarPeriksa[]
   notifikasi           Notifikasi[]
   dokumentasi          DokumentasiTugas[]
+
+  @@map("tugas")
 }
 
 model KontributorTugas {
@@ -101,6 +110,7 @@ model KontributorTugas {
   pengguna     Pengguna @relation(fields: [id_pengguna], references: [id_pengguna], onDelete: Cascade)
 
   @@id([id_tugas, id_pengguna])
+  @@map("kontributortugas")
 }
 
 model Komentar {
@@ -112,6 +122,8 @@ model Komentar {
 
   tugas         Tugas    @relation(fields: [id_tugas], references: [id_tugas], onDelete: Cascade)
   pengguna      Pengguna @relation(fields: [id_pengguna], references: [id_pengguna], onDelete: Cascade)
+
+  @@map("komentar")
 }
 
 model Lampiran {
@@ -123,6 +135,8 @@ model Lampiran {
   dibuat_pada    DateTime @default(now())
 
   tugas          Tugas    @relation(fields: [id_tugas], references: [id_tugas], onDelete: Cascade)
+
+  @@map("lampiran")
 }
 
 model DaftarPeriksa {
@@ -134,6 +148,8 @@ model DaftarPeriksa {
   tanggal_selesai DateTime?
 
   tugas           Tugas   @relation(fields: [id_tugas], references: [id_tugas], onDelete: Cascade)
+
+  @@map("daftarperiksa")
 }
 
 model Notifikasi {
@@ -149,6 +165,8 @@ model Notifikasi {
 
   pengguna         Pengguna @relation(fields: [id_pengguna], references: [id_pengguna], onDelete: Cascade)
   tugas            Tugas?   @relation(fields: [id_tugas], references: [id_tugas], onDelete: SetNull)
+
+  @@map("notifikasi")
 }
 
 model DokumentasiTugas {
@@ -162,6 +180,8 @@ model DokumentasiTugas {
 
   tugas            Tugas    @relation(fields: [id_tugas], references: [id_tugas], onDelete: Cascade)
   pengguna         Pengguna @relation(fields: [id_pengguna], references: [id_pengguna], onDelete: Cascade)
+
+  @@map("dokumentasitugas")
 }
 
 // Template Proyek: Blueprint proyek lengkap (kolom + tugas + checklist) dalam 1 tabel
@@ -174,6 +194,8 @@ model TemplateProyek {
   kolom_papan_json String   @db.LongText  // JSON array of board columns
   tugas_json       String   @db.LongText  // JSON array of tasks + checklist
   dibuat_pada      DateTime @default(now())
+
+  @@map("templateproyek")
 }
 
 model Api_key {
@@ -183,4 +205,6 @@ model Api_key {
   model_name   String?  @db.VarChar(100)
   endpoint_url String?  @db.Text
   updated_at   DateTime @updatedAt
+
+  @@map("api_key")
 }

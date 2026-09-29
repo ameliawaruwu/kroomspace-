@@ -16,6 +16,7 @@ const __dirname = path.dirname(__filename);
 
 async function startServer() {
   const app = express();
+  app.set('trust proxy', 1);
   const PORT = parseInt(process.env.PORT || '3000', 10);
 
   // Security Headers via Helmet
