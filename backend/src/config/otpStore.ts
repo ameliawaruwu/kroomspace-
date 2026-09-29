@@ -1,5 +1,6 @@
 export interface OtpRecord {
   otp: string;
+  previousOtp?: string;
   expiresAt: number;
   attempts: number;
 }

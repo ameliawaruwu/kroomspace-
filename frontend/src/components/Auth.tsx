@@ -31,6 +31,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [cooldown, setCooldown] = useState(0);
+  const [loading, setLoading] = useState(false);
 
   const getAlertStyle = (msg: string) => {
     if (!msg) return '';
@@ -66,8 +67,9 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
   }, [cooldown]);
 
   const handleResendOtp = async () => {
-    if (cooldown > 0) return;
+    if (cooldown > 0 || loading) return;
     setError('');
+    setLoading(true);
     
     const targetEmail = forgotMode !== 'none' ? resetEmail.trim().toLowerCase() : email.trim().toLowerCase();
     const endpoint = forgotMode !== 'none' ? '/api/auth/forgot-password' : '/api/auth/send-register-otp';
@@ -87,11 +89,14 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
       }
     } catch (err) {
       setError("Gagal terhubung ke server");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleForgotPasswordFlow = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
     setError('');
 
     if (forgotMode === 'email') {
@@ -99,6 +104,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
         setError('Format email tidak valid');
         return;
       }
+      setLoading(true);
       try {
         const response = await fetch('/api/auth/forgot-password', {
           method: 'POST',
@@ -116,17 +122,21 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
       } catch (err) {
         console.error('Forgot password error:', err);
         setError("Gagal terhubung ke server. Pastikan server sudah berjalan.");
+      } finally {
+        setLoading(false);
       }
     } else if (forgotMode === 'otp') {
-      if (otpInput.length !== 6) {
+      const cleanOtp = otpInput.trim().replace(/\s+/g, '');
+      if (cleanOtp.length !== 6) {
         setError('OTP harus 6 digit');
         return;
       }
+      setLoading(true);
       try {
         const response = await fetch('/api/auth/verify-otp', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: resetEmail.trim().toLowerCase(), otp: otpInput })
+          body: JSON.stringify({ email: resetEmail.trim().toLowerCase(), otp: cleanOtp })
         });
         const data = await response.json();
         if (response.ok) {
@@ -138,6 +148,8 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
       } catch (err) {
         console.error('OTP verification error:', err);
         setError("Gagal terhubung ke server");
+      } finally {
+        setLoading(false);
       }
     } else if (forgotMode === 'reset') {
       if (password.length < 6) {
@@ -148,11 +160,13 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
         setError(t('passwordMismatch'));
         return;
       }
+      setLoading(true);
       try {
+        const cleanOtp = otpInput.trim().replace(/\s+/g, '');
         const response = await fetch('/api/auth/reset-password', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: resetEmail.trim().toLowerCase(), password: password, otp: otpInput })
+          body: JSON.stringify({ email: resetEmail.trim().toLowerCase(), password: password, otp: cleanOtp })
         });
         const data = await response.json();
         if (response.ok) {
@@ -169,12 +183,15 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
       } catch (err) {
         console.error('Reset password error:', err);
         setError("Gagal terhubung ke server");
+      } finally {
+        setLoading(false);
       }
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
     setError('');
 
     const trimmedEmail = email.trim().toLowerCase();
@@ -185,6 +202,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
         setError(t('invalidCredentials'));
         return;
       }
+      setLoading(true);
       try {
         const response = await fetch('/api/auth/login', {
           method: 'POST',
@@ -200,6 +218,8 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
         }
       } catch (err) {
         setError("Gagal terhubung ke server");
+      } finally {
+        setLoading(false);
       }
     } else {
       if (!name || !email || !password || !confirmPassword) {
@@ -212,6 +232,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
       }
 
       if (registerMode === 'form') {
+        setLoading(true);
         try {
           const response = await fetch('/api/auth/send-register-otp', {
             method: 'POST',
@@ -228,12 +249,16 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
           }
         } catch (err) {
           setError("Gagal terhubung ke server");
+        } finally {
+          setLoading(false);
         }
       } else if (registerMode === 'otp') {
-        if (registerOtpInput.length !== 6) {
+        const cleanOtp = registerOtpInput.trim().replace(/\s+/g, '');
+        if (cleanOtp.length !== 6) {
           setError('OTP harus 6 digit');
           return;
         }
+        setLoading(true);
         try {
           const response = await fetch('/api/auth/register', {
             method: 'POST',
@@ -243,7 +268,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
               email: trimmedEmail,
               password: trimmedPassword,
               avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${name.trim()}`,
-              otp: registerOtpInput
+              otp: cleanOtp
             })
           });
 
@@ -263,6 +288,8 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
           }
         } catch (err) {
           setError("Gagal terhubung ke server");
+        } finally {
+          setLoading(false);
         }
       }
     }
@@ -415,10 +442,14 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
 
               <button
                 type="submit"
-                className="w-full group flex items-center justify-center gap-3 p-4 bg-[#1E3A8A] hover:bg-[#152a65] text-white rounded-2xl transition-all duration-300 shadow-lg shadow-[#1E3A8A]/20 font-bold mt-6"
+                disabled={loading}
+                className={cn(
+                  "w-full group flex items-center justify-center gap-3 p-4 bg-[#1E3A8A] hover:bg-[#152a65] text-white rounded-2xl transition-all duration-300 shadow-lg shadow-[#1E3A8A]/20 font-bold mt-6",
+                  loading && "opacity-60 cursor-not-allowed"
+                )}
               >
-                {forgotMode === 'email' ? t('sendOtp') : (forgotMode === 'otp' ? t('verifyOtp') : t('resetPassword'))}
-                <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                {loading ? "Memproses..." : (forgotMode === 'email' ? t('sendOtp') : (forgotMode === 'otp' ? t('verifyOtp') : t('resetPassword')))}
+                {!loading && <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />}
               </button>
 
               <div className="mt-4 text-center">
@@ -588,10 +619,14 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
               <button
                 type="submit"
                 id="login-form-submit"
-                className="w-full group flex items-center justify-center gap-3 p-4 bg-[#1E3A8A] hover:bg-[#152a65] text-white rounded-2xl transition-all duration-300 shadow-lg shadow-[#1E3A8A]/20 font-bold mt-6"
+                disabled={loading}
+                className={cn(
+                  "w-full group flex items-center justify-center gap-3 p-4 bg-[#1E3A8A] hover:bg-[#152a65] text-white rounded-2xl transition-all duration-300 shadow-lg shadow-[#1E3A8A]/20 font-bold mt-6",
+                  loading && "opacity-60 cursor-not-allowed"
+                )}
               >
-                {isLogin ? t('login') : (!isLogin && registerMode === 'otp' ? t('verifyOtp') : t('register'))}
-                <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                {loading ? "Memproses..." : (isLogin ? t('login') : (!isLogin && registerMode === 'otp' ? t('verifyOtp') : t('register')))}
+                {!loading && <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />}
               </button>
 
               {!isLogin && registerMode === 'otp' && (

@@ -693,8 +693,8 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
   // --- API Authentication ---
   app.post("/api/auth/send-register-otp", otpLimiter, async (req, res) => {
     try {
-      const { email } = req.body;
-      if (!email || typeof email !== 'string' || !email.includes('@')) {
+      const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+      if (!email || !email.includes('@')) {
         return res.status(400).json({ error: "Email tidak valid" });
       }
 
@@ -703,9 +703,28 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
         return res.status(400).json({ error: "Email sudah terdaftar" });
       }
 
-      const otp = crypto.randomInt(100000, 1000000).toString();
-      const expiresAt = Date.now() + 5 * 60 * 1000;
-      otpStore.set(`register_${email}`, { otp, expiresAt, attempts: 0 });
+      const now = Date.now();
+      const existing = otpStore.get(`register_${email}`);
+      let otp: string;
+
+      // Jika OTP sebelumnya masih aktif dan baru dibuat (< 60s), gunakan kode yang sama agar email yang sedang dikirim tidak langsung hangus
+      if (existing && existing.expiresAt > now && (existing.expiresAt - now) > 4 * 60 * 1000) {
+        otp = existing.otp;
+      } else {
+        otp = crypto.randomInt(100000, 1000000).toString();
+      }
+
+      const expiresAt = now + 5 * 60 * 1000;
+      const previousOtp = existing?.otp !== otp ? existing?.otp : existing?.previousOtp;
+
+      otpStore.set(`register_${email}`, { 
+        otp, 
+        previousOtp,
+        expiresAt, 
+        attempts: 0 
+      });
+
+      console.log(`[Register OTP] Dibuat untuk ${email}: ${otp} (Prev: ${previousOtp || 'none'})`);
 
       const info = await transporter.sendMail({
         from: emailFrom,
@@ -736,9 +755,11 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
 
   app.post("/api/auth/register", async (req, res) => {
     try {
-      const { name, email, password, avatar, otp } = req.body;
+      const { name, password, avatar } = req.body;
+      const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+      const inputOtp = typeof req.body.otp === 'string' ? req.body.otp.trim().replace(/\s+/g, '') : '';
       
-      if (!otp) {
+      if (!inputOtp) {
         return res.status(400).json({ error: "OTP wajib diisi" });
       }
 
@@ -752,7 +773,10 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
         return res.status(400).json({ error: "OTP sudah kedaluwarsa. Silakan kirim ulang OTP." });
       }
 
-      if (record.otp !== otp.trim()) {
+      const isMatch = (record.otp === inputOtp) || (record.previousOtp && record.previousOtp === inputOtp);
+      console.log(`[Register OTP Verify] Email: ${email}, Input: "${inputOtp}", Expected: "${record.otp}" (Prev: "${record.previousOtp || ''}"), Match: ${isMatch}`);
+
+      if (!isMatch) {
         record.attempts = (record.attempts || 0) + 1;
         const remaining = 3 - record.attempts;
         if (remaining <= 0) {
@@ -842,10 +866,10 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
 
    app.post("/api/auth/forgot-password", otpLimiter, async (req, res) => {
      try {
-       const { email } = req.body;
+       const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
        
        // Validasi email
-       if (!email || typeof email !== 'string' || !email.includes('@')) {
+       if (!email || !email.includes('@')) {
          return res.status(400).json({ error: "Email tidak valid" });
        }
 
@@ -855,12 +879,23 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
          return res.status(404).json({ error: "Email tidak ditemukan" });
        }
 
-       const otp = crypto.randomInt(100000, 1000000).toString();
-       const expiresAt = Date.now() + 5 * 60 * 1000; // 5 minutes expiry
-       otpStore.set(email, { otp, expiresAt, attempts: 0 });
+       const now = Date.now();
+       const existing = otpStore.get(email);
+       let otp: string;
 
-       // OTP tidak dicetak ke log untuk keamanan
-       console.log(`[OTP Generated] Email: ${email}, Expires at: ${new Date(expiresAt).toISOString()}`);
+       // Jika OTP sebelumnya masih aktif dan baru dibuat (< 60s), gunakan kode yang sama agar tidak hangus
+       if (existing && existing.expiresAt > now && (existing.expiresAt - now) > 4 * 60 * 1000) {
+         otp = existing.otp;
+       } else {
+         otp = crypto.randomInt(100000, 1000000).toString();
+       }
+
+       const expiresAt = now + 5 * 60 * 1000;
+       const previousOtp = existing?.otp !== otp ? existing?.otp : existing?.previousOtp;
+
+       otpStore.set(email, { otp, previousOtp, expiresAt, attempts: 0 });
+
+       console.log(`[Forgot Password OTP] Dibuat untuk ${email}: ${otp} (Prev: ${previousOtp || 'none'})`);
 
        const info = await transporter.sendMail({
          from: emailFrom,
@@ -891,10 +926,11 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
 
   app.post("/api/auth/verify-otp", otpLimiter, (req, res) => {
     try {
-      const { email, otp } = req.body;
+      const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+      const inputOtp = typeof req.body.otp === 'string' ? req.body.otp.trim().replace(/\s+/g, '') : '';
       
       // Validasi input
-      if (!email || !otp) {
+      if (!email || !inputOtp) {
         return res.status(400).json({ error: "Email dan OTP harus diisi" });
       }
 
@@ -910,7 +946,10 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
         return res.status(400).json({ error: "OTP sudah kedaluwarsa" });
       }
 
-      if (record.otp !== otp.trim()) {
+      const isMatch = (record.otp === inputOtp) || (record.previousOtp && record.previousOtp === inputOtp);
+      console.log(`[Verify OTP] Email: ${email}, Input: "${inputOtp}", Expected: "${record.otp}" (Prev: "${record.previousOtp || ''}"), Match: ${isMatch}`);
+
+      if (!isMatch) {
         record.attempts = (record.attempts || 0) + 1;
         const remaining = 3 - record.attempts;
         if (remaining <= 0) {
@@ -931,14 +970,16 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
 
   app.post("/api/auth/reset-password", otpLimiter, async (req, res) => {
     try {
-      const { email, password, otp } = req.body;
+      const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+      const password = req.body.password;
+      const inputOtp = typeof req.body.otp === 'string' ? req.body.otp.trim().replace(/\s+/g, '') : '';
       
       // Validasi input
-      if (!email || !password || !otp) {
+      if (!email || !password || !inputOtp) {
         return res.status(400).json({ error: "Email, password, dan OTP harus diisi" });
       }
       
-      if (password.length < 6) {
+      if (typeof password !== 'string' || password.length < 6) {
         return res.status(400).json({ error: "Password minimal 6 karakter" });
       }
 
@@ -954,7 +995,8 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
         return res.status(400).json({ error: "Sesi OTP sudah kedaluwarsa. Silakan ulangi proses lupa sandi." });
       }
 
-      if (record.otp !== otp.trim()) {
+      const isMatch = (record.otp === inputOtp) || (record.previousOtp && record.previousOtp === inputOtp);
+      if (!isMatch) {
         record.attempts = (record.attempts || 0) + 1;
         const remaining = 3 - record.attempts;
         if (remaining <= 0) {
