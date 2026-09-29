@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Shield, User as UserIcon, Trash2, UserCog, Search, Mail, Plus, X, Phone, Save, Edit2 } from 'lucide-react';
 import { User } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { cn } from '../lib/utils';
+import { cn, cleanIndonesianPhoneDigits, formatToE164Indonesian } from '../lib/utils';
 import { useLanguage } from '../context/LanguageContext';
 
 interface AdminPanelProps {
@@ -30,9 +30,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ users, setUsers, current
     u.email.toLowerCase().includes(search.toLowerCase())
   );
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const handleOpenAdd = () => {
     setEditingUser(null);
     setFormData({ name: '', email: '', whatsapp: '', role: 'Member' });
+    setFormError(null);
     setIsModalOpen(true);
   };
 
@@ -41,27 +46,75 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ users, setUsers, current
     setFormData({
       name: user.name,
       email: user.email,
-      whatsapp: user.whatsapp || '',
+      whatsapp: cleanIndonesianPhoneDigits(user.whatsapp),
       role: user.role
     });
+    setFormError(null);
     setIsModalOpen(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingUser) {
-      setUsers(users.map(u => u.id === editingUser.id ? { ...u, ...formData } : u));
-      onSuccess(t('successUpdate'));
-    } else {
-      const newUser: User = {
-        id: Date.now().toString(),
-        ...formData,
-        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${formData.name}`
-      };
-      setUsers([...users, newUser]);
-      onSuccess(t('successAdd'));
+    setIsSubmitting(true);
+    setFormError(null);
+    try {
+      const formattedWhatsapp = formatToE164Indonesian(formData.whatsapp);
+
+      if (editingUser) {
+        const res = await fetch(`/api/users/${editingUser.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-User-Id': currentUser.id,
+            'X-User-Role': currentUser.role
+          },
+          body: JSON.stringify({
+            name: formData.name,
+            email: formData.email,
+            whatsapp: formattedWhatsapp,
+            role: formData.role
+          })
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'Gagal memperbarui pengguna');
+        }
+
+        setUsers(users.map(u => u.id === editingUser.id ? { ...u, ...data } : u));
+        onSuccess(t('successUpdate'));
+        setIsModalOpen(false);
+      } else {
+        const res = await fetch('/api/users', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-User-Id': currentUser.id,
+            'X-User-Role': currentUser.role
+          },
+          body: JSON.stringify({
+            name: formData.name,
+            email: formData.email,
+            whatsapp: formattedWhatsapp,
+            role: formData.role
+          })
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'Gagal menambahkan pengguna');
+        }
+
+        setUsers([...users, data]);
+        onSuccess(t('successAdd'));
+        setIsModalOpen(false);
+      }
+    } catch (err: any) {
+      console.error(err);
+      setFormError(err.message || 'Terjadi kesalahan saat menyimpan pengguna');
+    } finally {
+      setIsSubmitting(false);
     }
-    setIsModalOpen(false);
   };
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -73,38 +126,56 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ users, setUsers, current
     setIsDeleteModalOpen(true);
   };
 
-  const confirmDelete = () => {
-    if (userToDelete) {
+  const confirmDelete = async () => {
+    if (!userToDelete) return;
+    setIsDeleting(true);
+    try {
+      const res = await fetch(`/api/users/${userToDelete}`, {
+        method: 'DELETE',
+        headers: {
+          'X-User-Id': currentUser.id,
+          'X-User-Role': currentUser.role
+        }
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Gagal menghapus pengguna');
+      }
       setUsers(users.filter(u => u.id !== userToDelete));
       onSuccess(t('successDelete'));
       setIsDeleteModalOpen(false);
       setUserToDelete(null);
+    } catch (err: any) {
+      console.error(err);
+      alert(err.message || 'Gagal menghapus pengguna');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
   return (
     <div className="space-y-8 relative">
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6 sticky top-0 z-20 px-4 md:px-6 py-4 md:py-5 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-transparent transition-all">
+      <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 px-4 md:px-6 py-4 md:py-5 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border-b border-slate-100 dark:border-slate-800 sticky top-0 z-20 transition-all">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{t('User Management')}</h1>
           <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-sm">{t('adminSubHeader')}</p>
         </div>
-        <div className="flex items-center gap-2 md:gap-4 flex-wrap">
-          <div className="relative w-full max-w-[200px] sm:max-w-[240px] md:max-w-sm group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-500 group-focus-within:text-blue-500 transition-colors" size={20} />
+        <div className="flex items-center gap-3 w-full sm:w-auto justify-end shrink-0">
+          <div className="relative w-full sm:w-56 md:w-64 group">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-blue-500 transition-colors" size={16} />
             <input
               type="text"
               placeholder={t('searchUsers')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-11 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm font-medium"
+              className="w-full pl-9 pr-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm font-medium shadow-2xs"
             />
           </div>
           <button
             onClick={handleOpenAdd}
-            className="flex items-center gap-2 px-5 py-3 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20 text-sm"
+            className="flex items-center gap-2 px-4 md:px-5 py-2.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-md shadow-blue-600/25 active:scale-95 text-sm shrink-0 cursor-pointer"
           >
-            <Plus size={20} />
+            <Plus size={18} />
             {t('addUser')}
           </button>
         </div>
@@ -216,6 +287,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ users, setUsers, current
                 {editingUser ? t('updateUserSub') : t('addUserSub')}
               </p>
 
+              {formError && (
+                <div className="p-3 mb-4 text-xs font-semibold text-rose-700 bg-rose-50 dark:bg-rose-950/40 dark:text-rose-300 rounded-xl border border-rose-200 dark:border-rose-900/50">
+                  {formError}
+                </div>
+              )}
+
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('fullName')}</label>
@@ -240,13 +317,23 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ users, setUsers, current
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('whatsapp')}</label>
-                    <input
-                      type="text"
-                      placeholder="+62..."
-                      value={formData.whatsapp}
-                      onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
-                      className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 outline-none"
-                    />
+                    <div className="flex items-center rounded-xl border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 overflow-hidden transition-all">
+                      <span className="flex items-center gap-1.5 px-3 py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs border-r border-slate-200 dark:border-slate-700 select-none shrink-0">
+                        <span className="text-sm">🇮🇩</span>
+                        <span>+62</span>
+                      </span>
+                      <input
+                        type="tel"
+                        inputMode="numeric"
+                        placeholder="81234567890"
+                        value={formData.whatsapp}
+                        onChange={(e) => setFormData({ ...formData, whatsapp: cleanIndonesianPhoneDigits(e.target.value) })}
+                        className="w-full px-3 py-3 bg-transparent text-sm outline-none font-medium placeholder:text-slate-400 text-slate-800 dark:text-slate-100"
+                      />
+                    </div>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 block leading-tight">
+                      {language === 'id' ? 'Otomatis +62 (cukup ketik 8xxx, awalan 0 dihapus otomatis)' : 'Auto +62 (enter 8xxx, leading 0 removed)'}
+                    </span>
                   </div>
                 </div>
                 <div className="space-y-1.5">
@@ -271,9 +358,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ users, setUsers, current
                 </div>
                 <button
                   type="submit"
-                  className="w-full py-3.5 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-all mt-2"
+                  disabled={isSubmitting}
+                  className="w-full py-3.5 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-all mt-2 disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  {t('save')}
+                  {isSubmitting ? (language === 'id' ? 'Menyimpan...' : 'Saving...') : t('save')}
                 </button>
               </form>
             </motion.div>
@@ -289,7 +377,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ users, setUsers, current
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setIsDeleteModalOpen(false)}
+              onClick={() => !isDeleting && setIsDeleteModalOpen(false)}
               className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
             />
             <motion.div
@@ -305,16 +393,18 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ users, setUsers, current
               <p className="text-slate-500 dark:text-slate-400 text-xs mb-6">{t('deleteConfirm')}</p>
               <div className="flex gap-3">
                 <button
+                  disabled={isDeleting}
                   onClick={() => setIsDeleteModalOpen(false)}
-                  className="flex-1 px-5 py-2.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 font-bold text-sm rounded-xl transition-all"
+                  className="flex-1 px-5 py-2.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 font-bold text-sm rounded-xl transition-all disabled:opacity-50"
                 >
                   {t('cancel')}
                 </button>
                 <button
+                  disabled={isDeleting}
                   onClick={confirmDelete}
-                  className="flex-1 px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm rounded-xl transition-all"
+                  className="flex-1 px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm rounded-xl transition-all disabled:opacity-50"
                 >
-                  {t('delete')}
+                  {isDeleting ? (language === 'id' ? 'Menghapus...' : 'Deleting...') : t('delete')}
                 </button>
               </div>
             </motion.div>

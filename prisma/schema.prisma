@@ -4,7 +4,8 @@ datasource db {
 }
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x", "debian-openssl-1.1.x"]
 }
 
 model Pengguna {
@@ -26,12 +27,13 @@ model Pengguna {
 }
 
 model Proyek {
-  id_proyek    String        @id
-  nama_proyek  String
-  deskripsi    String?       @db.Text
-  tipe_tugas   String
-  mode_kanban  String
-  dibuat_pada  DateTime      @default(now())
+  id_proyek       String        @id
+  nama_proyek     String
+  deskripsi       String?       @db.Text
+  tipe_tugas      String
+  mode_kanban     String
+  dibuat_pada     DateTime      @default(now())
+  apakah_selesai  Boolean       @default(false)
   
   kolom_papan  KolomPapan[]
   tugas        Tugas[]
@@ -175,8 +177,10 @@ model TemplateProyek {
 }
 
 model Api_key {
-  id         Int      @id @default(autoincrement())
-  key_value  String   @db.Text
-  provider   String   @default("Gemini")
-  updated_at DateTime @updatedAt
+  id           Int      @id @default(autoincrement())
+  key_value    String   @db.Text
+  provider     String   @default("Gemini")
+  model_name   String?  @db.VarChar(100)
+  endpoint_url String?  @db.Text
+  updated_at   DateTime @updatedAt
 }

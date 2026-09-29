@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, Mail, Phone, Save, Camera, CheckCircle2, AlertCircle } from 'lucide-react';
 import { User as UserType } from '../types';
-import { cn } from '../lib/utils';
+import { cn, cleanIndonesianPhoneDigits, formatToE164Indonesian } from '../lib/utils';
 import { useLanguage } from '../context/LanguageContext';
 
 interface ProfileSettingsProps {
@@ -19,7 +19,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
   const [formData, setFormData] = useState({
     name: currentUser.name,
     email: currentUser.email,
-    whatsapp: currentUser.whatsapp || '',
+    whatsapp: cleanIndonesianPhoneDigits(currentUser.whatsapp),
     avatar: currentUser.avatar,
   });
 
@@ -33,7 +33,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
       ...prev,
       name: currentUser.name,
       email: currentUser.email,
-      whatsapp: currentUser.whatsapp || '',
+      whatsapp: cleanIndonesianPhoneDigits(currentUser.whatsapp),
       avatar: currentUser.avatar,
     }));
   }, [currentUser]);
@@ -54,7 +54,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
     setErrorMsg('');
     setSuccessMsg('');
 
-    const cleanedWhatsapp = formData.whatsapp.trim();
+    const cleanedWhatsapp = formatToE164Indonesian(formData.whatsapp);
 
     setIsSaving(true);
     try {
@@ -165,17 +165,24 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                 </div>
                 <div className="space-y-2 md:col-span-2">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('whatsapp')}</label>
-                  <div className="relative">
-                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
+                  <div className="flex items-center rounded-2xl border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus-within:ring-2 focus-within:ring-[#3FA9F5]/20 focus-within:border-[#3FA9F5] overflow-hidden transition-all">
+                    <span className="flex items-center gap-1.5 px-4 py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs border-r border-slate-200 dark:border-slate-700 select-none shrink-0">
+                      <span className="text-base">🇮🇩</span>
+                      <span>+62</span>
+                    </span>
                     <input 
-                      type="text" 
+                      type="tel" 
+                      inputMode="numeric"
                       id="input_profile_whatsapp"
                       value={formData.whatsapp}
-                      onChange={(e) => setFormData({...formData, whatsapp: e.target.value})}
-                      placeholder="+62..."
-                      className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-[#3FA9F5]/20" 
+                      onChange={(e) => setFormData({...formData, whatsapp: cleanIndonesianPhoneDigits(e.target.value)})}
+                      placeholder="81234567890"
+                      className="w-full px-4 py-3 bg-transparent text-sm outline-none font-medium placeholder:text-slate-400 text-slate-800 dark:text-slate-100" 
                     />
                   </div>
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500">
+                    Otomatis +62 (cukup ketik 8xxx, awalan 0 atau +62 otomatis disesuaikan)
+                  </p>
                 </div>
               </div>
             </section>

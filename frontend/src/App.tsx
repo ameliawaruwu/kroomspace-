@@ -10,6 +10,7 @@ import { AdminPanel } from './components/AdminPanel';
 import { LandingPage } from './components/LandingPage';
 import { ProfileSettings } from './components/ProfileSettings';
 import { ApiKeySettings } from './components/ApiKeySettings';
+import { CalendarView } from './components/CalendarView';
 import { mockUsers as initialUsers, mockTasks, mockProjects, mockNotifications } from './services/apiService';
 import { Task, Project, User, Notification } from './types';
 import { motion, AnimatePresence } from 'motion/react';
@@ -148,7 +149,8 @@ export default function App() {
                 mode: p.mode_kanban,
                 columns: p.kolom_papan?.map((c:any) => ({ id: c.id_kolom, title: c.judul_kolom, status: c.status_tugas, order: c.urutan })),
                 anggota: p.anggota,
-                id_pengguna: p.id_pengguna
+                id_pengguna: p.id_pengguna,
+                apakah_selesai: p.apakah_selesai
              }));
              setProjects(mappedProjects);
              if (mappedProjects.length > 0) {
@@ -299,7 +301,11 @@ export default function App() {
     try {
       const res = await fetch(`/api/users/${updatedUser.id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-User-Id': currentUser.id,
+          'X-User-Role': currentUser.role
+        },
         body: JSON.stringify({
           name: updatedUser.name,
           email: updatedUser.email,
@@ -428,8 +434,8 @@ export default function App() {
       case 'board': return (
         <KanbanBoard 
           tasks={tasks.filter(t => t.projectId === currentProjectId)}
-          setTasks={(newTasks) => {
-            // newTasks contains only the current project's tasks (from KanbanBoard's internal state)
+          allTasks={tasks}
+          setTasks={(newTasks) => {            // newTasks contains only the current project's tasks (from KanbanBoard's internal state)
             // We need to merge them back into global tasks without losing other projects' tasks
             const prevProjectTasks = tasks.filter(t => t.projectId === currentProjectId);
             
@@ -559,7 +565,8 @@ export default function App() {
                 type: newP.tipe_tugas,
                 members: newP.anggota?.map((a:any) => a.id_pengguna) || [],
                 createdAt: newP.dibuat_pada || project.createdAt,
-                columns: typeof newP.columns === 'string' ? JSON.parse(newP.columns) : newP.columns
+                columns: typeof newP.columns === 'string' ? JSON.parse(newP.columns) : newP.columns,
+                apakah_selesai: newP.apakah_selesai
               };
 
               setProjects(prev => {
@@ -654,6 +661,39 @@ export default function App() {
               });
               setTasks(prev => prev.map(t => t.id === updatedTask.id ? updatedTask : t));
             } catch (e) { console.error(e); }
+          }}
+        />
+      );
+      case 'calendar': return (
+        <CalendarView
+          tasks={tasks}
+          projects={projects}
+          users={users}
+          user={currentUser}
+          darkMode={darkMode}
+          onUpdateTask={async (updatedTask) => {
+            try {
+              await fetch(`/api/tugas/${updatedTask.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  status: updatedTask.status,
+                  judul_tugas: updatedTask.title,
+                  prioritas: updatedTask.priority,
+                  id_penanggung_jawab: updatedTask.assignee || null,
+                  tanggal_mulai: updatedTask.startDate,
+                  tanggal_selesai: updatedTask.deadline,
+                  apakah_diblokir: updatedTask.isBlocked,
+                  alasan_diblokir: updatedTask.blockReason
+                })
+              });
+              setTasks(prev => prev.map(t => t.id === updatedTask.id ? updatedTask : t));
+            } catch (e) { console.error(e); }
+          }}
+          onAddNotification={(msg, type, sendWa) => addNotification(msg, type, sendWa)}
+          onSelectProject={(projId) => {
+            setCurrentProjectId(projId);
+            setActiveTab('board');
           }}
         />
       );
@@ -761,10 +801,10 @@ export default function App() {
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
               className="pb-20"
             >
               {renderContent()}

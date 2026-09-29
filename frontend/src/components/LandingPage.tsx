@@ -51,10 +51,10 @@ const d = {
       cta: 'Mulai Sekarang'
     },
     hero: {
-      badge: 'Aplikasi Internal Kroombox',
-      title: 'Visualisasikan Proyek & Kelola Maintenance Internal Kroombox.',
-      subtitle: 'Platform manajemen proyek berbasis Kanban internal Kroombox yang memadukan pelacakan tugas dengan pemeliharaan fasilitas dalam satu ekosistem terpadu.',
-      cta: 'Buka Dashboard',
+      badge: 'Aplikasi Internal KroomSpace',
+      title: 'Visualisasikan Proyek & Kelola Maintenance Internal KroomSpace.',
+      subtitle: 'Platform manajemen proyek berbasis Kanban KroomSpace yang memadukan pelacakan tugas dengan pemeliharaan fasilitas dalam satu ekosistem terpadu.',
+      cta: 'Mulai Kelola Proyek',
       task1Tag: 'PERENCANAAN',
       task1Title: 'Analisis Kelayakan Aset',
       task2Tag: 'MAINTENANCE',
@@ -70,7 +70,7 @@ const d = {
       emergencyMaint: 'Maintenance Darurat'
     },
     tentang: {
-      title: 'Alur Kerja Operasional Kroombox',
+      title: 'Alur Kerja Operasional KroomSpace',
       subtitle: 'Dari masalah hingga selesai. Alur kerja sistematis yang memastikan setiap proyek dan tiket maintenance internal ditangani dengan sempurna.',
       steps: [
         { title: "Identifikasi", desc: "Laporan masuk atau jadwal tercatat." },
@@ -82,7 +82,7 @@ const d = {
     },
     fitur: {
       title: 'Pilar Utama KroomSpace',
-      subtitle: 'Dua modul utama KroomSpace yang dirancang untuk mengendalikan kompleksitas operasional internal Kroombox.',
+      subtitle: 'Dua modul utama KroomSpace yang dirancang untuk mengendalikan kompleksitas operasional internal.',
       kanban: {
         title: 'Manajemen Proyek Berbasis Kanban',
         items: [
@@ -105,7 +105,7 @@ const d = {
       }
     },
     keunggulan: {
-      title: 'Mengapa Kroombox Menggunakan KroomSpace?',
+      title: 'Mengapa Menggunakan KroomSpace?',
       items: [
         "Kolaborasi Tanpa Batas",
         "Respons Lebih Cepat",
@@ -116,23 +116,23 @@ const d = {
     },
     faq: {
       title: 'Frequently Asked Questions',
-      subtitle: 'Pertanyaan umum mengenai KroomSpace sebagai sistem manajemen internal Kroombox.',
+      subtitle: 'Pertanyaan umum mengenai KroomSpace sebagai sistem manajemen terpadu.',
       items: [
         {
           q: "Apa itu KroomSpace?",
-          a: "KroomSpace adalah platform internal Kroombox yang memadukan manajemen tugas berbasis Kanban dengan sistem pelacakan maintenance fasilitas secara terpadu."
+          a: "KroomSpace adalah platform internal yang memadukan manajemen tugas berbasis Kanban dengan sistem pelacakan maintenance fasilitas secara terpadu."
         },
         {
           q: "Bagaimana sistem maintenance bekerja?",
-          a: "Setiap kebutuhan perbaikan fasilitas Kroombox otomatis dibuatkan tiket di Kanban board, dipantau secara real-time, dan didokumentasikan riwayatnya."
+          a: "Setiap kebutuhan perbaikan fasilitas otomatis dibuatkan tiket di Kanban board, dipantau secara real-time, dan didokumentasikan riwayatnya."
         },
         {
           q: "Apakah mendukung Kanban board?",
-          a: "Ya! Seluruh tugas internal Kroombox dilacak menggunakan Kanban board visual yang intuitif dengan fitur drag-and-drop."
+          a: "Ya! Seluruh tugas internal dilacak menggunakan Kanban board visual yang intuitif dengan fitur drag-and-drop."
         },
         {
           q: "Apakah bisa digunakan banyak tim?",
-          a: "Tentu. KroomSpace dirancang untuk kolaborasi antar tim Kroombox, mulai dari teknisi lapangan, manajemen operasional, hingga tim admin."
+          a: "Tentu. KroomSpace dirancang untuk kolaborasi antar tim, mulai dari teknisi lapangan, manajemen operasional, hingga tim admin."
         },
         {
           q: "Bagaimana monitoring tugas dilakukan?",
@@ -141,7 +141,7 @@ const d = {
       ]
     },
     footer: {
-      desc: 'Aplikasi internal Kroombox untuk manajemen proyek berbasis Kanban dan sistem pemeliharaan fasilitas.',
+      desc: 'Aplikasi KroomSpace untuk manajemen proyek berbasis Kanban dan sistem pemeliharaan fasilitas.',
       tautan: 'Tautan',
       kebijakan: 'Kebijakan Privasi',
       syarat: 'Syarat & Ketentuan',
@@ -161,10 +161,10 @@ const d = {
       cta: 'Get Started'
     },
     hero: {
-      badge: 'Kroombox Internal Application',
-      title: 'Visualize Projects & Manage Kroombox Internal Maintenance.',
-      subtitle: 'Kroombox\'s internal Kanban-based project management platform integrating task tracking with facility maintenance in a unified ecosystem.',
-      cta: 'Open Dashboard',
+      badge: 'KroomSpace Internal Application',
+      title: 'Visualize Projects & Manage KroomSpace Internal Maintenance.',
+      subtitle: 'KroomSpace\'s internal Kanban-based project management platform integrating task tracking with facility maintenance in a unified ecosystem.',
+      cta: 'Start Managing Projects',
       task1Tag: 'PLANNING',
       task1Title: 'Asset Feasibility Analysis',
       task2Tag: 'MAINTENANCE',
@@ -180,7 +180,7 @@ const d = {
       emergencyMaint: 'Emergency Maint'
     },
     tentang: {
-      title: 'Kroombox Operational Workflow',
+      title: 'KroomSpace Operational Workflow',
       subtitle: 'From issue to done. Systematic workflow ensuring every internal project and maintenance ticket is handled perfectly.',
       steps: [
         { title: "Identify", desc: "Incoming reports or scheduled logs." },
@@ -192,7 +192,7 @@ const d = {
     },
     fitur: {
       title: 'Core Pillars of KroomSpace',
-      subtitle: 'Two core modules of KroomSpace designed to control Kroombox\'s internal operational complexities.',
+      subtitle: 'Two core modules of KroomSpace designed to control operational complexities.',
       kanban: {
         title: 'Kanban-Based Project Management',
         items: [
@@ -215,7 +215,7 @@ const d = {
       }
     },
     keunggulan: {
-      title: 'Why Kroombox Uses KroomSpace?',
+      title: 'Why Use KroomSpace?',
       items: [
         "Seamless Collaboration",
         "Faster Response Times",
@@ -226,23 +226,23 @@ const d = {
     },
     faq: {
       title: 'Frequently Asked Questions',
-      subtitle: 'Common questions about KroomSpace as Kroombox\'s internal management system.',
+      subtitle: 'Common questions about KroomSpace as an internal management system.',
       items: [
         {
           q: "What is KroomSpace?",
-          a: "KroomSpace is Kroombox\'s internal platform integrating Kanban-based task management with a facility maintenance tracking system."
+          a: "KroomSpace is an internal platform integrating Kanban-based task management with a facility maintenance tracking system."
         },
         {
           q: "How does the maintenance system work?",
-          a: "Every Kroombox facility repair request automatically creates a ticket on the Kanban board, monitored in real-time, and logged in histories."
+          a: "Every facility repair request automatically creates a ticket on the Kanban board, monitored in real-time, and logged in histories."
         },
         {
           q: "Does it support a Kanban board?",
-          a: "Yes! All Kroombox internal tasks are tracked using an intuitive visual Kanban board with drag-and-drop features."
+          a: "Yes! All internal tasks are tracked using an intuitive visual Kanban board with drag-and-drop features."
         },
         {
           q: "Can multiple teams use it?",
-          a: "Absolutely. KroomSpace is designed for collaboration among Kroombox teams, including field crews, operations management, and admin teams."
+          a: "Absolutely. KroomSpace is designed for collaboration among teams, including field crews, operations management, and admin teams."
         },
         {
           q: "How is task monitoring done?",
@@ -251,7 +251,7 @@ const d = {
       ]
     },
     footer: {
-      desc: 'Kroombox\'s internal application for Kanban-based project management and facility maintenance.',
+      desc: 'KroomSpace application for Kanban-based project management and facility maintenance.',
       tautan: 'Links',
       kebijakan: 'Privacy Policy',
       syarat: 'Terms & Conditions',
@@ -369,10 +369,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart, language, set
                 href={`#${item.id}`}
                 onClick={(e) => handleNavClick(e, item.id, item.originalKey)}
                 className={cn(
-                  "relative text-[13px] font-semibold transition-colors group py-1.5",
+                  "relative text-[14px] font-extrabold tracking-wide transition-colors group py-1.5",
                   activeMenu === item.originalKey
                     ? (darkMode ? "text-white" : "text-[#1E3A8A]")
-                    : (darkMode ? "text-blue-100/70 hover:text-white" : "text-[#4B5563] hover:text-[#1E3A8A]")
+                    : (darkMode ? "text-blue-100/80 hover:text-white" : "text-[#1F2937] hover:text-[#1E3A8A]")
                 )}
               >
                 {item.name}
@@ -543,9 +543,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart, language, set
               )}
             >
               {language === 'en' ? (
-                <>Visualize Projects & Manage <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#1E3A8A] via-[#3498DB] to-[#00D2FF] drop-shadow-sm">Kroombox Internal Maintenance</span></>
+                <>Visualize Projects & Manage <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#1E3A8A] via-[#3498DB] to-[#00D2FF] drop-shadow-sm">KroomSpace Internal Maintenance</span></>
               ) : (
-                <>Visualisasikan Proyek & Kelola <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#1E3A8A] via-[#3498DB] to-[#00D2FF] drop-shadow-sm">Maintenance Internal Kroombox</span></>
+                <>Visualisasikan Proyek & Kelola <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#1E3A8A] via-[#3498DB] to-[#00D2FF] drop-shadow-sm">Maintenance Internal KroomSpace</span></>
               )}
             </motion.h1>
 
@@ -1028,7 +1028,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart, language, set
                   </a>
                 </li>
                 <li className={cn("font-medium text-xs", darkMode ? "text-blue-100/40" : "text-[#4B5563]/60")}>
-                  Aplikasi Internal Kroombox
+                  Aplikasi Internal KroomSpace
                 </li>
               </ul>
             </div>

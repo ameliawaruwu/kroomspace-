@@ -102,8 +102,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onViewAll
 }) => {
   const { language, t } = useLanguage();
-  const [dashboardData, setDashboardData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [executingTask, setExecutingTask] = useState<Task | null>(null);
   const [completeNote, setCompleteNote] = useState('');
@@ -112,36 +111,246 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   const isAdmin = user.role === 'Admin';
 
-  const fetchDashboardData = useCallback(async (showIndicator = false) => {
-    if (showIndicator) setIsRefreshing(true);
-    try {
-      const res = await fetch(`/api/dashboard?userId=${user.id}`);
-      if (res.ok) {
-        const data = await res.json();
-        setDashboardData(data);
-      }
-    } catch (err) {
-      console.error("Error fetching dashboard overview:", err);
-    } finally {
-      setLoading(false);
-      setIsRefreshing(false);
-    }
-  }, [user.id]);
+  // Calculate local dashboard data dynamically from database-synced props
+  const myTasksList = tasks.filter(t => {
+    if (isAdmin) return true;
+    const isAssignee = String(t.assignee) === String(user.id) || t.assignee === user.name || t.assignee === user.email;
+    const isContributor = t.contributors?.some((c: any) => String(c) === String(user.id));
+    const project = projects?.find(p => p.id === t.projectId);
+    const isProjectMember = project?.anggota?.some((a: any) => {
+      const targetId = typeof a === 'object' && a !== null ? (a.id_pengguna || a.id) : a;
+      return String(targetId) === String(user.id);
+    }) || String(project?.id_pengguna) === String(user.id);
+    return isAssignee || isContributor || isProjectMember;
+  });
 
-  useEffect(() => {
-    fetchDashboardData();
-    // Live update polling every 8 seconds
-    const interval = setInterval(() => fetchDashboardData(false), 8000);
-    return () => clearInterval(interval);
-  }, [fetchDashboardData]);
+  const completedTasks = myTasksList.filter(t => t.status === 'Done');
+  const totalCompleted = completedTasks.length;
+
+  const completedWithDeadline = completedTasks.filter(t => t.deadline);
+  const completedOnTime = completedWithDeadline.filter(t => {
+    const dl = new Date(t.deadline!);
+    const up = new Date(t.updatedAt || t.createdAt);
+    return up <= dl;
+  });
+  const onTimeRate = completedWithDeadline.length > 0 
+    ? Math.round((completedOnTime.length / completedWithDeadline.length) * 100) 
+    : 100;
+
+  const activeTasks = myTasksList.filter(t => t.status !== 'Done');
+  const now = new Date();
+  const overdueTasks = activeTasks.filter(t => t.deadline && new Date(t.deadline) < now);
+  const blockedTasks = activeTasks.filter(t => t.isBlocked);
+  const healthyTasksCount = myTasksList.length - overdueTasks.length - blockedTasks.length;
+  const aiProjectHealth = myTasksList.length > 0
+    ? Math.max(0, Math.round((healthyTasksCount / myTasksList.length) * 100))
+    : 100;
+
+  // Helper: Cek apakah sebuah kartu tugas kanban berkategori Maintenance / Perbaikan
+  const isMaintenanceTask = (t: Task) => {
+    const proj = projects?.find(p => p.id === t.projectId);
+    const tType = ((t.type || (t as any).category || '') as string).toLowerCase().trim();
+    const pType = ((proj?.type || '') as string).toLowerCase().trim();
+    return (
+      tType === 'maintenance' ||
+      tType === 'perbaikan' ||
+      pType === 'maintenance' ||
+      pType === 'perbaikan' ||
+      proj?.mode === 'Operational'
+    );
+  };
+
+  // Helper bobot prioritas: High (3) -> Medium (2) -> Low (1)
+  const getPriorityWeight = (priority?: string): number => {
+    const p = (priority || '').toLowerCase().trim();
+    if (p === 'high' || p === 'tinggi' || p === 'urgent' || p === 'darurat') return 3;
+    if (p === 'medium' || p === 'sedang') return 2;
+    if (p === 'low' || p === 'rendah') return 1;
+    return 0;
+  };
+
+  // Ambil kartu kanban proyek yang berkategori maintenance
+  const maintenanceTaskPool = (tasks && tasks.length > 0) ? tasks : myTasksList;
+  const maintenanceCards = maintenanceTaskPool.filter(isMaintenanceTask);
+
+  // Tiket Perbaikan Aktif (yang belum selesai / status bukan Done)
+  const activeMaintenanceCards = maintenanceCards.filter(t => t.status !== 'Done');
+  const openMaintenanceTickets = activeMaintenanceCards.length;
+
+  const sparklineCompleted: number[] = [];
+  const sparklineOnTimeRate: number[] = [];
+  const sparklineHealth: number[] = [];
+  const sparklineMaintenance: number[] = [];
+  const trendChart: { date: string; completed: number; active: number }[] = [];
+
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const dateStr = d.toLocaleDateString(language === 'en' ? 'en-US' : 'id-ID', { month: 'short', day: 'numeric' });
+    d.setHours(23, 59, 59, 999);
+    const cutoff = d;
+    const startOfDay = new Date(d);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const complUpToCutoff = completedTasks.filter(t => new Date(t.updatedAt || t.createdAt) <= cutoff);
+    sparklineCompleted.push(complUpToCutoff.length);
+
+    const complDeadlineUpToCutoff = complUpToCutoff.filter(t => t.deadline);
+    const onTimeUpToCutoff = complDeadlineUpToCutoff.filter(t => new Date(t.updatedAt || t.createdAt) <= new Date(t.deadline!));
+    sparklineOnTimeRate.push(complDeadlineUpToCutoff.length > 0 ? Math.round((onTimeUpToCutoff.length / complDeadlineUpToCutoff.length) * 100) : 100);
+
+    const tasksUpToCutoff = myTasksList.filter(t => new Date(t.createdAt) <= cutoff);
+    const activeUpToCutoff = tasksUpToCutoff.filter(t => t.status !== 'Done' || new Date(t.updatedAt || t.createdAt) > cutoff);
+    const overdueUpToCutoff = activeUpToCutoff.filter(t => t.deadline && new Date(t.deadline) < cutoff);
+    const blockedUpToCutoff = activeUpToCutoff.filter(t => t.isBlocked);
+    const healthVal = tasksUpToCutoff.length > 0
+      ? Math.max(0, Math.round(((tasksUpToCutoff.length - overdueUpToCutoff.length - blockedUpToCutoff.length) / tasksUpToCutoff.length) * 100))
+      : 100;
+    sparklineHealth.push(healthVal);
+
+    const maintActive = activeUpToCutoff.filter(isMaintenanceTask).length;
+    sparklineMaintenance.push(maintActive);
+
+    const completedOnThisDay = completedTasks.filter(t => {
+      const dateVal = new Date(t.updatedAt || t.createdAt);
+      return dateVal >= startOfDay && dateVal <= cutoff;
+    }).length;
+
+    trendChart.push({
+      date: dateStr,
+      completed: completedOnThisDay,
+      active: activeUpToCutoff.length
+    });
+  }
+
+  const lastWeekDate = new Date();
+  lastWeekDate.setDate(lastWeekDate.getDate() - 7);
+  const twoWeeksAgoDate = new Date();
+  twoWeeksAgoDate.setDate(twoWeeksAgoDate.getDate() - 14);
+
+  const completedLastWeek = completedTasks.filter(t => new Date(t.updatedAt || t.createdAt) >= lastWeekDate).length;
+  const completedPrevWeek = completedTasks.filter(t => {
+    const dateVal = new Date(t.updatedAt || t.createdAt);
+    return dateVal >= twoWeeksAgoDate && dateVal < lastWeekDate;
+  }).length;
+
+  let completedTrend = 0;
+  if (completedPrevWeek > 0) {
+    completedTrend = Math.round(((completedLastWeek - completedPrevWeek) / completedPrevWeek) * 100);
+  } else if (completedLastWeek > 0) {
+    completedTrend = 100;
+  }
+  const onTimeRateTrend = onTimeRate >= 90 ? 3 : -2;
+  const healthTrend = aiProjectHealth >= 80 ? 2 : -5;
+  const maintTrend = openMaintenanceTickets > 8 ? 12 : -5;
+
+  const statuses: string[] = ['Backlog', 'To Do', 'In Progress', 'Review', 'Done'];
+  const statusDistribution = statuses.map(status => ({
+    name: status,
+    value: myTasksList.filter(t => t.status === status).length
+  }));
+
+  const teamActivity = (notifications || []).slice(0, 6).map(n => {
+    const foundUser = users?.find(u => u.id === n.userId);
+    return {
+      id: n.id,
+      user: {
+        name: foundUser?.name || n.userName || 'User',
+        avatar: foundUser?.avatar || n.userAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${foundUser?.name || 'User'}`
+      },
+      action: n.message || n.text,
+      time: n.time || n.timestamp || new Date().toISOString(),
+      type: n.type || 'Task'
+    };
+  });
+
+  // Urutkan kartu kanban proyek kategori maintenance:
+  // DIUTAMAKAN PRIORITAS TINGGI (High) BARU KE TERENDAH (Low)
+  const sortedMaintenanceTasks = [...maintenanceCards].sort((a, b) => {
+    // 1. Prioritas: Tinggi (High) -> Sedang (Medium) -> Rendah (Low)
+    const pA = getPriorityWeight(a.priority);
+    const pB = getPriorityWeight(b.priority);
+    if (pB !== pA) return pB - pA;
+
+    // 2. Tiket yang masih aktif (belum Done) didahulukan daripada yang selesai
+    const isADone = a.status === 'Done';
+    const isBDone = b.status === 'Done';
+    if (!isADone && isBDone) return -1;
+    if (isADone && !isBDone) return 1;
+
+    // 3. Waktu pembuatan terbaru
+    return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+  });
+
+  const maintenanceOverview = sortedMaintenanceTasks
+    .slice(0, 6)
+    .map(t => {
+      const assigneeUser = users?.find(u => u.id === t.assignee);
+      const project = projects?.find(p => p.id === t.projectId);
+      return {
+        id: t.id,
+        title: t.title,
+        status: t.status,
+        priority: t.priority,
+        projectName: project?.name,
+        assignee: assigneeUser ? {
+          name: assigneeUser.name,
+          avatar: assigneeUser.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${assigneeUser.name}`
+        } : null,
+        deadline: t.deadline
+      };
+    });
+
+  const dashboardData = {
+    kpis: {
+      taskCompleted: {
+        value: totalCompleted,
+        trend: completedTrend,
+        sparkline: sparklineCompleted
+      },
+      onTimeRate: {
+        value: onTimeRate,
+        trend: onTimeRateTrend,
+        sparkline: sparklineOnTimeRate
+      },
+      aiProjectHealth: {
+        value: aiProjectHealth,
+        trend: healthTrend,
+        sparkline: sparklineHealth
+      },
+      openMaintenance: {
+        value: openMaintenanceTickets,
+        trend: maintTrend,
+        sparkline: sparklineMaintenance
+      }
+    },
+    charts: {
+      statusDistribution,
+      trendChart
+    },
+    teamActivity,
+    maintenanceOverview
+  };
+
+  const fetchDashboardData = async (showIndicator = false) => {
+    if (showIndicator) {
+      setIsRefreshing(true);
+      setTimeout(() => setIsRefreshing(false), 500);
+    }
+  };
 
   // Handle manual execute or task done
   const handleExecute = (task: Task) => {
     if (task.status === 'To Do' || task.status === 'Backlog') {
-      const updated = { ...task, status: 'In Progress' as const, updatedAt: new Date().toISOString() };
+      const updated: Task = { 
+        ...task, 
+        status: 'In Progress' as const, 
+        assignee: task.assignee || user.id,
+        updatedAt: new Date().toISOString() 
+      };
       onUpdateTask(updated);
       setTimeout(() => fetchDashboardData(false), 500);
-    } else if (task.status === 'In Progress') {
+    } else if (task.status === 'In Progress' || task.status === 'Review') {
       setExecutingTask(task);
     }
   };
@@ -161,10 +370,52 @@ export const Dashboard: React.FC<DashboardProps> = ({
     setTimeout(() => fetchDashboardData(false), 500);
   };
 
-  // Filter current user's active tasks locally to maintain live action updates
-  const myActiveTasks = tasks
-    .filter(t => t.assignee === user.id && t.status !== 'Done')
-    .slice(0, 5);
+  // Helper cek apakah tugas ditugaskan langsung ke pengguna
+  const isDirectlyAssignedToMe = (t: Task) => {
+    return (
+      String(t.assignee) === String(user.id) ||
+      t.assignee === user.name ||
+      t.assignee === user.email ||
+      t.contributors?.some((c: any) => String(c) === String(user.id))
+    );
+  };
+
+  const getStatusWeight = (status: string) => {
+    switch (status) {
+      case 'In Progress': return 4;
+      case 'Review': return 3;
+      case 'To Do': return 2;
+      case 'Backlog': return 1;
+      default: return 0;
+    }
+  };
+
+  // Tugas aktif yang ada di papan kanban proyek pengguna
+  const myActiveTasks = tasks.length > 0 ? (() => {
+    // Ambil tugas kanban yang relevan (dari proyek/kanban board pengguna)
+    const taskPool = (myTasksList && myTasksList.length > 0) ? myTasksList : tasks;
+    const activeTasks = taskPool.filter(t => t.status !== 'Done');
+
+    return [...activeTasks].sort((a, b) => {
+      // 1. Tugas yang ditugaskan langsung ke pengguna didahulukan
+      const aDirect = isDirectlyAssignedToMe(a) ? 1 : 0;
+      const bDirect = isDirectlyAssignedToMe(b) ? 1 : 0;
+      if (bDirect !== aDirect) return bDirect - aDirect;
+
+      // 2. Status pekerjaan: In Progress -> Review -> To Do -> Backlog
+      const sA = getStatusWeight(a.status);
+      const sB = getStatusWeight(b.status);
+      if (sB !== sA) return sB - sA;
+
+      // 3. Bobot prioritas: High -> Medium -> Low
+      const pA = getPriorityWeight(a.priority);
+      const pB = getPriorityWeight(b.priority);
+      if (pB !== pA) return pB - pA;
+
+      // 4. Waktu pembuatan terbaru
+      return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+    }).slice(0, 6);
+  })() : [];
 
   // Colors
   const COLORS = {
@@ -176,7 +427,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     purple: '#8B5CF6' // purple-500
   };
 
-  const pieColors = ['#94A3B8', '#3FA9F5', '#2563EB', '#F59E0B', '#10B981'];
+  const pieColors = ['#6366F1', '#0EA5E9', '#F43F5E', '#F59E0B', '#10B981'];
 
   // Format activity timestamp relative
   const formatTimeAgo = (timestamp: string) => {
@@ -196,7 +447,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
   return (
     <div className="space-y-8 pb-12 transition-colors duration-300">
       
-      {/* Header Overview */}
       <header className={cn(
         "flex flex-col sm:flex-row justify-between items-start sm:items-center px-4 md:px-8 py-5 border-b sticky top-0 z-30 backdrop-blur-md transition-all",
         darkMode ? "bg-[#0D1B35]/90 border-slate-800" : "bg-white/90 border-slate-100"
@@ -237,7 +487,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
       <div className="px-4 md:px-8 space-y-8">
 
         {/* 4 Smart KPI Cards */}
-        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <section className={cn(
+          "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 lg:sticky lg:top-14 lg:md:top-16 lg:z-20 py-4 -my-4 backdrop-blur-md transition-all duration-300",
+          darkMode ? "bg-slate-900/95" : "bg-slate-50/95"
+        )}>
           {loading || !dashboardData ? (
             Array(4).fill(0).map((_, i) => <SkeletonCard key={i} />)
           ) : (
@@ -263,18 +516,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     <CheckCircle2 size={20} />
                   </div>
                 </div>
-                <div className="flex justify-between items-end mt-6">
-                  <div className="flex items-center gap-1">
-                    <span className={cn(
-                      "flex items-center gap-0.5 text-xs font-bold",
-                      dashboardData.kpis.taskCompleted.trend >= 0 ? "text-emerald-500" : "text-rose-500"
-                    )}>
-                      {dashboardData.kpis.taskCompleted.trend >= 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
-                      {Math.abs(dashboardData.kpis.taskCompleted.trend)}%
-                    </span>
-                    <span className="text-[10px] text-slate-400 font-medium">
-                      {language === 'en' ? 'vs prev week' : 'vs minggu lalu'}
-                    </span>
+                <div className="flex justify-between items-end mt-6 gap-2">
+                  <div className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
+                    {language === 'en' ? 'vs prev week' : 'vs minggu lalu'}
                   </div>
                   <Sparkline data={dashboardData.kpis.taskCompleted.sparkline} color={COLORS.success} />
                 </div>
@@ -301,24 +545,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     <Clock size={20} />
                   </div>
                 </div>
-                <div className="flex justify-between items-end mt-6">
-                  <div className="flex items-center gap-1">
-                    <span className={cn(
-                      "flex items-center gap-0.5 text-xs font-bold",
-                      dashboardData.kpis.onTimeRate.trend >= 0 ? "text-emerald-500" : "text-rose-500"
-                    )}>
-                      {dashboardData.kpis.onTimeRate.trend >= 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
-                      {Math.abs(dashboardData.kpis.onTimeRate.trend)}%
-                    </span>
-                    <span className="text-[10px] text-slate-400 font-medium">
-                      {language === 'en' ? 'vs prev rate' : 'vs rasio lalu'}
-                    </span>
+                <div className="flex justify-between items-end mt-6 gap-2">
+                  <div className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
+                    {language === 'en' ? 'vs prev rate' : 'vs rasio lalu'}
                   </div>
                   <Sparkline data={dashboardData.kpis.onTimeRate.sparkline} color={COLORS.info} />
                 </div>
               </motion.div>
 
-              {/* Card 3: AI Project Health */}
+              {/* Card 3: Project Health */}
               <motion.div 
                 whileHover={{ y: -4 }}
                 className={cn(
@@ -329,28 +564,19 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 <div className="flex justify-between items-start">
                   <div>
                     <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                      {language === 'en' ? 'AI Project Health' : 'Kesehatan Proyek AI'}
+                      {language === 'en' ? 'Project Health' : 'Kesehatan Proyek'}
                     </span>
                     <h3 className={cn("text-3xl font-extrabold mt-1", darkMode ? "text-white" : "text-slate-900")}>
                       {dashboardData.kpis.aiProjectHealth.value}%
                     </h3>
                   </div>
                   <div className="p-3 rounded-xl bg-purple-500/10 text-purple-500">
-                    <Sparkles size={20} />
+                    <Activity size={20} />
                   </div>
                 </div>
-                <div className="flex justify-between items-end mt-6">
-                  <div className="flex items-center gap-1">
-                    <span className={cn(
-                      "flex items-center gap-0.5 text-xs font-bold",
-                      dashboardData.kpis.aiProjectHealth.trend >= 0 ? "text-emerald-500" : "text-rose-500"
-                    )}>
-                      {dashboardData.kpis.aiProjectHealth.trend >= 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
-                      {Math.abs(dashboardData.kpis.aiProjectHealth.trend)}%
-                    </span>
-                    <span className="text-[10px] text-slate-400 font-medium">
-                      {language === 'en' ? 'vs yesterday' : 'vs kemarin'}
-                    </span>
+                <div className="flex justify-between items-end mt-6 gap-2">
+                  <div className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
+                    {language === 'en' ? 'vs yesterday' : 'vs kemarin'}
                   </div>
                   <Sparkline data={dashboardData.kpis.aiProjectHealth.sparkline} color={COLORS.purple} />
                 </div>
@@ -377,18 +603,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     <Wrench size={20} />
                   </div>
                 </div>
-                <div className="flex justify-between items-end mt-6">
-                  <div className="flex items-center gap-1">
-                    <span className={cn(
-                      "flex items-center gap-0.5 text-xs font-bold",
-                      dashboardData.kpis.openMaintenance.trend < 0 ? "text-emerald-500" : "text-rose-500"
-                    )}>
-                      {dashboardData.kpis.openMaintenance.trend < 0 ? <TrendingDown size={12} /> : <TrendingUp size={12} />}
-                      {Math.abs(dashboardData.kpis.openMaintenance.trend)}%
-                    </span>
-                    <span className="text-[10px] text-slate-400 font-medium">
-                      {language === 'en' ? 'vs prev week' : 'vs minggu lalu'}
-                    </span>
+                <div className="flex justify-between items-end mt-6 gap-2">
+                  <div className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
+                    {language === 'en' ? 'vs prev week' : 'vs minggu lalu'}
                   </div>
                   <Sparkline data={dashboardData.kpis.openMaintenance.sparkline} color={COLORS.warning} />
                 </div>
@@ -424,8 +641,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   <AreaChart data={dashboardData.charts.trendChart} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <defs>
                       <linearGradient id="colorCompleted" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor={COLORS.primary} stopOpacity={0.2}/>
-                        <stop offset="95%" stopColor={COLORS.primary} stopOpacity={0}/>
+                        <stop offset="5%" stopColor={COLORS.success} stopOpacity={0.35}/>
+                        <stop offset="95%" stopColor={COLORS.success} stopOpacity={0}/>
+                      </linearGradient>
+                      <linearGradient id="colorActive" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor={COLORS.purple} stopOpacity={0.25}/>
+                        <stop offset="95%" stopColor={COLORS.purple} stopOpacity={0}/>
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={darkMode ? "#1e293b" : "#f1f5f9"} />
@@ -454,7 +675,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     <Area 
                       type="monotone" 
                       dataKey="completed" 
-                      stroke={COLORS.primary} 
+                      stroke={COLORS.success} 
                       strokeWidth={3}
                       fillOpacity={1} 
                       fill="url(#colorCompleted)" 
@@ -463,10 +684,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     <Area 
                       type="monotone" 
                       dataKey="active" 
-                      stroke="#94A3B8" 
-                      strokeWidth={2}
-                      strokeDasharray="4 4"
-                      fill="none" 
+                      stroke={COLORS.purple} 
+                      strokeWidth={3}
+                      fillOpacity={1} 
+                      fill="url(#colorActive)" 
                       name={language === 'en' ? 'Active' : 'Aktif'}
                     />
                   </AreaChart>
@@ -537,7 +758,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </section>
 
         {/* Bottom Panel Section (3 Columns) */}
-        <section className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
           {/* Column 1: My Tasks Panel */}
           <div className={cn(
@@ -582,9 +803,23 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             {task.title}
                           </h4>
                           <div className="flex items-center gap-1.5 text-[9px] text-slate-400 font-semibold uppercase mt-0.5">
-                            <span>{task.status}</span>
+                            <span className={cn(
+                              "px-1.5 py-0.5 rounded text-[8px] font-extrabold uppercase",
+                              task.status === 'In Progress' ? "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300" :
+                              task.status === 'To Do' ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300" :
+                              task.status === 'Review' ? "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300" :
+                              "bg-slate-200/80 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+                            )}>
+                              {task.status}
+                            </span>
                             <span>•</span>
                             <span className="truncate">{task.projectId ? projects?.find(p=>p.id === task.projectId)?.name || 'KroomSpace' : 'KroomSpace'}</span>
+                            {task.deadline && (
+                              <>
+                                <span>•</span>
+                                <span className="text-rose-500 font-bold">{task.deadline.split('T')[0]}</span>
+                              </>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -700,11 +935,18 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         )}
                       >
                         <div className="flex justify-between items-start gap-4">
-                          <h4 className={cn("text-xs font-bold line-clamp-2", darkMode ? "text-white" : "text-slate-800")}>
-                            {item.title}
-                          </h4>
+                          <div className="flex-1 min-w-0">
+                            <h4 className={cn("text-xs font-bold line-clamp-2", darkMode ? "text-white" : "text-slate-800")}>
+                              {item.title}
+                            </h4>
+                            {item.projectName && (
+                              <p className="text-[10px] text-slate-400 font-medium truncate mt-0.5">
+                                {item.projectName}
+                              </p>
+                            )}
+                          </div>
                           <span className={cn(
-                            "px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-wider",
+                            "px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-wider shrink-0",
                             item.priority === 'High' ? "bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400" :
                             item.priority === 'Medium' ? "bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400" :
                             "bg-blue-100 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400"

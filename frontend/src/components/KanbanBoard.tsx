@@ -35,7 +35,10 @@ import {
   FilePlus,
   FolderKanban,
   Menu,
-  Pencil
+  Pencil,
+  Wrench,
+  Briefcase,
+  RotateCcw
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Task, TaskStatus, Priority, Project, TaskTemplate, ChecklistItem, KanbanMode, Documentation } from '../types';
@@ -50,6 +53,7 @@ const DraggableAny = Draggable as any;
 
 interface KanbanBoardProps {
   tasks: Task[];
+  allTasks?: Task[];
   setTasks: (tasks: Task[]) => void;
   projects: Project[];
   setProjects?: React.Dispatch<React.SetStateAction<Project[]>>;
@@ -66,6 +70,7 @@ interface KanbanBoardProps {
 
 export const KanbanBoard: React.FC<KanbanBoardProps> = ({ 
   tasks, 
+  allTasks,
   setTasks, 
   projects, 
   setProjects,
@@ -123,9 +128,41 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   const isOperational = currentProject?.mode === 'Operational';
 
   const [dbUsers, setDbUsers] = useState<any[]>([]);
-  const projectOwner = dbUsers.find(u => u.id === (currentProject as any)?.id_pengguna) || user;
-  const projectMembers = currentProject?.anggota?.map(a => dbUsers.find(u => u.id === a.id_pengguna)).filter(Boolean) || [];
-  const allProjectUsers = [projectOwner, ...projectMembers].filter((v, i, a) => v && a.findIndex(t => (t?.id === v?.id)) === i);
+  const projectOwner = dbUsers.find(u => String(u.id) === String((currentProject as any)?.id_pengguna)) || 
+    (user ? { id: user.id, name: user.name || user.nama, email: user.email, avatar: user.avatar || user.foto_profil, role: user.role || user.peran } : null);
+  
+  const projectMembers = currentProject?.anggota?.map((a: any) => {
+    const targetId = typeof a === 'object' && a !== null ? (a.id_pengguna || a.id) : a;
+    const foundInDb = dbUsers.find(u => String(u.id) === String(targetId));
+    if (foundInDb) return foundInDb;
+    if (typeof a === 'object' && a !== null) {
+      if (a.pengguna) {
+        return {
+          id: a.pengguna.id_pengguna || targetId,
+          name: a.pengguna.nama || a.pengguna.name,
+          email: a.pengguna.email,
+          avatar: a.pengguna.foto_profil || a.pengguna.avatar,
+          role: a.pengguna.peran || a.pengguna.role
+        };
+      }
+      if (a.name || a.nama) {
+        return {
+          id: targetId,
+          name: a.name || a.nama,
+          email: a.email,
+          avatar: a.avatar || a.foto_profil,
+          role: a.role || a.peran
+        };
+      }
+    }
+    const mockU = mockUsers.find(u => String(u.id) === String(targetId));
+    if (mockU) return mockU;
+    return targetId ? { id: targetId, name: `User (${targetId})` } : null;
+  }).filter(Boolean) || [];
+
+  const allProjectUsers = [projectOwner, ...projectMembers].filter((v, i, arr) => 
+    v && arr.findIndex(t => String(t?.id || t?.id_pengguna) === String(v?.id || v?.id_pengguna)) === i
+  );
 
   React.useEffect(() => {
     fetch('/api/users')
@@ -185,6 +222,10 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
     })[0];
 
   const handleAddTask = (status?: string) => {
+    if (currentProject?.apakah_selesai) {
+      onAddNotification("Proyek ini sudah selesai dan tidak dapat diubah.", "error");
+      return;
+    }
     const defaultStatus = typeof status === 'string' ? status : (boardColumns[0]?.status || 'To Do');
     if (isOperational) {
       setShowTemplateModal(true);
@@ -208,6 +249,10 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   };
 
   const createTaskFromTemplate = (template: TaskTemplate) => {
+    if (currentProject?.apakah_selesai) {
+      onAddNotification("Proyek ini sudah selesai dan tidak dapat diubah.", "error");
+      return;
+    }
     const newTask: Task = {
       id: `t${Date.now()}`,
       title: template.name,
@@ -432,6 +477,10 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   };
 
   const onDragEnd = (result: DropResult) => {
+    if (currentProject?.apakah_selesai) {
+      onAddNotification("Proyek ini sudah selesai dan tidak dapat diubah.", "error");
+      return;
+    }
     draggedRecentlyRef.current = true;
     setTimeout(() => {
       draggedRecentlyRef.current = false;
@@ -557,9 +606,10 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
             </button>
           </header>
 
-          <div className="px-4 md:px-6 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-5 md:gap-6">
+          <div className="px-4 md:px-6 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-5 md:gap-6 items-stretch">
             {projects.map((project) => {
-              const projectTasks = tasks.filter(t => t.projectId === project.id);
+              const displayTasks = allTasks || tasks;
+              const projectTasks = displayTasks.filter(t => t.projectId === project.id);
               const completedCount = projectTasks.filter(t => t.status === 'Done').length;
               const progress = projectTasks.length > 0 ? Math.round((completedCount / projectTasks.length) * 100) : 0;
 
@@ -572,7 +622,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                     setCurrentProjectId(project.id);
                     setIsBoardOpen(true);
                   }}
-                  className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-2xl hover:shadow-blue-500/10 hover:border-blue-100 dark:hover:border-blue-500/30 transition-all cursor-pointer group relative self-start"
+                  className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-2xl hover:shadow-blue-500/10 hover:border-blue-100 dark:hover:border-blue-500/30 transition-all cursor-pointer group relative flex flex-col justify-between h-full"
                 >
                   {/* Options Menu */}
                   <div className="absolute top-4 right-4" onClick={e => e.stopPropagation()}>
@@ -624,45 +674,120 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                     </div>
                   </div>
 
-                  {/* Title */}
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 group-hover:text-blue-600 transition-colors pr-8">
-                    {t(project.name)}
-                  </h3>
-
-                  {/* Description */}
-                  <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 mb-6 font-medium leading-relaxed">
-                    {t(project.description)}
-                  </p>
-
-                  {/* Progress */}
-                  <div className="space-y-3 mb-6">
-                    <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-wider">
-                      <span className="text-slate-400 dark:text-slate-500">
-                        {progress}% {t('taskPercentComplete')}
+                  <div className="flex flex-col flex-1">
+                    {/* Badge Model Proyek vs Operasional */}
+                    <div className="mb-3 flex items-center justify-between pr-8">
+                      <span className={cn(
+                        "px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 border shadow-2xs",
+                        (project.mode === 'Operational' || project.type === 'Maintenance')
+                          ? "bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800/50"
+                          : "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800/50"
+                      )}>
+                        {(project.mode === 'Operational' || project.type === 'Maintenance') ? (
+                          <>
+                            <Wrench size={12} className="text-amber-500" />
+                            {language === 'en' ? 'Operational' : 'Operasional'}
+                          </>
+                        ) : (
+                          <>
+                            <Briefcase size={12} className="text-blue-500" />
+                            {language === 'en' ? 'Project' : 'Proyek'}
+                          </>
+                        )}
                       </span>
-                      <span className="text-slate-400 dark:text-slate-500">{completedCount} / {projectTasks.length} {t('tasksLabel')}</span>
+                      {(project.apakah_selesai || (progress === 100 && projectTasks.length > 0)) && (
+                        <span className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 border bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/50 shadow-2xs">
+                          <CheckCircle2 size={12} className="text-emerald-500" />
+                          {language === 'en' ? 'Done' : 'Selesai'}
+                        </span>
+                      )}
                     </div>
-                    <div className="h-2 bg-slate-50 dark:bg-slate-900 rounded-full overflow-hidden border border-slate-100 dark:border-slate-800">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${progress}%` }}
-                        className="h-full bg-blue-500 rounded-full shadow-sm"
-                      />
-                    </div>
+
+                    {/* Title */}
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 group-hover:text-blue-600 transition-colors pr-8 line-clamp-2 min-h-[56px] flex items-center">
+                      {t(project.name)}
+                    </h3>
+
+                    {/* Description */}
+                    <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 mb-6 font-medium leading-relaxed min-h-[42px]">
+                      {t(project.description)}
+                    </p>
                   </div>
 
-                  {/* Open Board */}
-                  <div className="flex justify-end">
+                  <div className="mt-auto">
+                    {/* Progress */}
+                    <div className="space-y-3 mb-6">
+                      <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-wider">
+                        <span className="text-slate-400 dark:text-slate-500">
+                          {progress}% {t('taskPercentComplete')}
+                        </span>
+                        <span className="text-slate-400 dark:text-slate-500">{completedCount} / {projectTasks.length} {t('tasksLabel')}</span>
+                      </div>
+                      <div className="h-2 bg-slate-50 dark:bg-slate-900 rounded-full overflow-hidden border border-slate-100 dark:border-slate-800">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${progress}%` }}
+                          className="h-full bg-blue-500 rounded-full shadow-sm"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Open Board & Members */}
+                    <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800">
+                    <div className="flex -space-x-2 items-center">
+                      {(() => {
+                        const cardOwner = dbUsers.find(u => String(u.id) === String((project as any).id_pengguna)) || 
+                          (user && String(user.id) === String((project as any).id_pengguna) ? user : null);
+                        const cardMembers = (project.anggota || []).map((a: any) => {
+                          const targetId = typeof a === 'object' && a !== null ? (a.id_pengguna || a.id) : a;
+                          const found = dbUsers.find(u => String(u.id) === String(targetId));
+                          if (found) return found;
+                          if (a.pengguna) return { id: a.pengguna.id_pengguna, name: a.pengguna.nama, avatar: a.pengguna.foto_profil };
+                          return null;
+                        }).filter(Boolean);
+                        const cardAll = [cardOwner, ...cardMembers].filter((v, i, arr) => 
+                          v && arr.findIndex((t: any) => String(t?.id || t?.id_pengguna) === String(v?.id || v?.id_pengguna)) === i
+                        );
+
+                        return (
+                          <>
+                            {cardAll.slice(0, 4).map((member: any, i: number) => {
+                              const name = member.name || member.nama || 'User';
+                              const avatar = member.avatar || member.foto_profil;
+                              return (
+                                <div 
+                                  key={member.id || i}
+                                  className="w-7 h-7 rounded-full border-2 border-white dark:border-slate-800 bg-gradient-to-tr from-blue-600 to-indigo-500 text-white text-[10px] font-bold flex items-center justify-center overflow-hidden shrink-0 shadow-xs"
+                                  title={name}
+                                >
+                                  {avatar ? (
+                                    <img src={avatar} alt={name} className="w-full h-full object-cover" />
+                                  ) : (
+                                    name.charAt(0).toUpperCase()
+                                  )}
+                                </div>
+                              );
+                            })}
+                            {cardAll.length > 4 && (
+                              <div className="w-7 h-7 rounded-full border-2 border-white dark:border-slate-800 bg-slate-100 dark:bg-slate-700 text-slate-500 text-[10px] font-bold flex items-center justify-center shrink-0">
+                                +{cardAll.length - 4}
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()}
+                    </div>
                     <div className="flex items-center gap-1.5 text-blue-500 dark:text-blue-400 font-bold text-xs uppercase tracking-tight">
                       {t('openBoard')} <ChevronRight size={14} />
                     </div>
                   </div>
-                </motion.div>
+                </div>
+              </motion.div>
               );
             })}
 
           </div>
-        </>
+</>
       ) : (
         <div className="flex flex-col" style={{ height: 'calc(100vh - 4rem)' }}>
           <header className="px-4 md:px-6 py-3 md:py-4 border-b border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl sticky top-0 z-30 transition-all">
@@ -675,17 +800,84 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                  >
                    <ChevronLeft size={22} />
                  </button>
-                 <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-                   {currentProject?.name || 'Project Board'}
-                 </h2>
+                  <div className="flex items-center gap-3">
+                    <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                      {currentProject?.name || 'Project Board'}
+                    </h2>
+                    {(() => {
+                      const curTasks = tasks.filter(t => t.projectId === currentProjectId);
+                      const curCompleted = curTasks.filter(t => t.status === 'Done').length;
+                      const curProgress = curTasks.length > 0 ? Math.round((curCompleted / curTasks.length) * 100) : 0;
+                      if (currentProject?.apakah_selesai || (curProgress === 100 && curTasks.length > 0)) {
+                        return (
+                          <span className="px-3 py-1 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-2xs">
+                            <CheckCircle2 size={13} className="text-emerald-500" />
+                            {language === 'en' ? 'Done' : 'Selesai'}
+                          </span>
+                        );
+                      }
+                      return null;
+                    })()}
+                    {currentProject && (
+                      <span className={cn(
+                        "px-3 py-1 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-1.5 border shadow-2xs",
+                        (currentProject.mode === 'Operational' || currentProject.type === 'Maintenance')
+                          ? "bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800/50"
+                          : "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800/50"
+                      )}>
+                        {(currentProject.mode === 'Operational' || currentProject.type === 'Maintenance') ? (
+                          <>
+                            <Wrench size={13} className="text-amber-500" />
+                            {language === 'en' ? 'Operational' : 'Operasional'}
+                          </>
+                        ) : (
+                          <>
+                            <Briefcase size={13} className="text-blue-500" />
+                            {language === 'en' ? 'Project' : 'Proyek'}
+                          </>
+                        )}
+                      </span>
+                    )}
+                  </div>
               </div>
               <div className="flex items-center gap-3 xl:gap-4 shrink-0">
-                <div className="flex -space-x-2 mr-2">
+                <div className="flex -space-x-2 mr-2 items-center py-1">
+                  {allProjectUsers.map((member: any) => {
+                    if (!member) return null;
+                    const memberId = member.id || member.id_pengguna;
+                    const memberName = member.name || member.nama || 'User';
+                    const avatarUrl = member.avatar || member.foto_profil;
+                    const initial = memberName.charAt(0).toUpperCase();
+                    const isOwner = String(memberId) === String((currentProject as any)?.id_pengguna);
+
+                    return (
+                      <div 
+                        key={memberId} 
+                        className="relative group ring-2 ring-white dark:ring-slate-900 rounded-full shrink-0"
+                      >
+                        <div 
+                          className="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white text-xs font-bold shadow-sm overflow-hidden"
+                          title={`${memberName} ${isOwner ? '(Pemilik)' : ''} ${member.email ? `(${member.email})` : ''}`}
+                        >
+                          {avatarUrl ? (
+                            <img src={avatarUrl} alt={memberName} className="w-full h-full object-cover font-sans" />
+                          ) : (
+                            <span>{initial}</span>
+                          )}
+                        </div>
+                        {/* Tooltip on hover */}
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-slate-900 text-white text-[11px] font-medium py-1 px-2.5 rounded-lg whitespace-nowrap z-30 shadow-xl border border-slate-700 pointer-events-none">
+                          {memberName} {isOwner ? '(Pemilik)' : ''}
+                        </div>
+                      </div>
+                    );
+                  })}
 
                   <button 
                     onClick={() => setShowAddMemberModal(true)}
-                    className="w-9 h-9 rounded-full border-2 border-dashed border-slate-300 dark:border-slate-600 flex items-center justify-center bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-blue-500 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all cursor-pointer z-10"
-                    title={t('addMember') || "Add Member"}
+                    className="w-9 h-9 rounded-full border-2 border-dashed border-slate-300 dark:border-slate-600 flex items-center justify-center bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-blue-500 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all cursor-pointer z-10 shrink-0 ml-1"
+                    title={t('addMember') || "Tambah Anggota"}
+                    id="btn_add_project_member"
                   >
                     <Plus size={16} />
                   </button>
@@ -758,7 +950,44 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                             {currentProject && (
                               <>
                                 <button 
+                                  onClick={async () => {
+                                    const nextStatus = !currentProject.apakah_selesai;
+                                    try {
+                                      const res = await fetch(`/api/proyek/${currentProject.id}`, {
+                                        method: 'PUT',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ apakah_selesai: nextStatus })
+                                      });
+                                      if (res.ok) {
+                                        const updatedP = await res.json();
+                                        if (setProjects) {
+                                          setProjects(prev => prev.map(p => p.id === currentProject.id ? { ...p, apakah_selesai: updatedP.apakah_selesai } : p));
+                                        }
+                                        onSuccess(nextStatus ? "Proyek berhasil diselesaikan!" : "Proyek dibuka kembali!");
+                                      }
+                                    } catch (err) {
+                                      console.error("Gagal mengubah status proyek", err);
+                                    }
+                                    setActiveMenu(null);
+                                  }}
+                                  className="w-full px-5 py-3 text-left text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-blue-600 flex items-center gap-3 transition-all border-b border-slate-100 dark:border-slate-800"
+                                  id="btn_toggle_project_done"
+                                >
+                                  {currentProject.apakah_selesai ? (
+                                    <>
+                                      <RotateCcw size={18} className="text-emerald-500" />
+                                      {language === 'en' ? 'Reopen Project' : 'Buka Kembali Proyek'}
+                                    </>
+                                  ) : (
+                                    <>
+                                      <CheckCircle2 size={18} className="text-emerald-500" />
+                                      {language === 'en' ? 'Mark Project as Done' : 'Tandai Proyek Selesai'}
+                                    </>
+                                  )}
+                                </button>
+                                <button 
                                   onClick={() => {
+                                    if (currentProject.apakah_selesai) return;
                                     setNewProjectName(currentProject.name);
                                     setNewProjectDesc(currentProject.description);
                                     setNewProjectMode(currentProject.mode);
@@ -766,7 +995,13 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                                     setShowCreateModal(true);
                                     setActiveMenu(null);
                                   }}
-                                  className="w-full px-5 py-3 text-left text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-blue-600 flex items-center gap-3 transition-all"
+                                  disabled={currentProject.apakah_selesai}
+                                  className={cn(
+                                    "w-full px-5 py-3 text-left text-sm font-bold flex items-center gap-3 transition-all",
+                                    currentProject.apakah_selesai
+                                      ? "text-slate-400 cursor-not-allowed opacity-50"
+                                      : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-blue-600"
+                                  )}
                                   id="btn_edit_proyek_board"
                                 >
                                   <Settings size={18} className="text-blue-500" />
@@ -1241,7 +1476,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-white dark:bg-slate-800 w-full max-w-lg rounded-2xl shadow-2xl shadow-blue-900/10 overflow-hidden p-10 border border-slate-100 dark:border-slate-700 transition-colors"
+              className="bg-white dark:bg-slate-800 w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl shadow-blue-900/10 p-6 sm:p-10 border border-slate-100 dark:border-slate-700 transition-colors custom-scrollbar"
             >
               <div className="flex justify-between items-center mb-8">
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white transition-colors">{t('createProject')}</h2>
@@ -1278,31 +1513,33 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
 
 
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 dark:border-slate-500 uppercase tracking-widest ml-1">{t('boardMode')}</label>
+                  <label className="text-[10px] font-black text-slate-400 dark:border-slate-500 uppercase tracking-widest ml-1">
+                    {language === 'en' ? "Project Mode" : "Mode Proyek / Operasional"}
+                  </label>
                   <div className="grid grid-cols-2 gap-4">
                     <button 
                       onClick={() => setNewProjectMode('Project')}
                       className={cn(
-                        "py-4 rounded-2xl font-bold transition-all border flex flex-col items-center gap-1",
+                        "py-4 rounded-2xl font-bold transition-all border flex flex-col items-center gap-1.5",
                         newProjectMode === 'Project' 
                           ? "bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-500/20" 
                           : "bg-slate-50 dark:bg-slate-900 text-slate-500 border-slate-100 dark:border-slate-700"
                       )}
                     >
-                      <Trello size={18} />
-                      <span className="text-xs">{t('projectMode')}</span>
+                      <Briefcase size={18} />
+                      <span className="text-xs font-black">{language === 'en' ? "Project" : "Proyek"}</span>
                     </button>
                     <button 
                       onClick={() => setNewProjectMode('Operational')}
                       className={cn(
-                        "py-4 rounded-2xl font-bold transition-all border flex flex-col items-center gap-1",
+                        "py-4 rounded-2xl font-bold transition-all border flex flex-col items-center gap-1.5",
                         newProjectMode === 'Operational' 
-                          ? "bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-500/20" 
+                          ? "bg-amber-600 text-white border-amber-600 shadow-lg shadow-amber-500/20" 
                           : "bg-slate-50 dark:bg-slate-900 text-slate-500 border-slate-100 dark:border-slate-700"
                       )}
                     >
-                      <Zap size={18} />
-                      <span className="text-xs">{t('operationalMode')}</span>
+                      <Wrench size={18} />
+                      <span className="text-xs font-black">{language === 'en' ? "Operational" : "Operasional"}</span>
                     </button>
                   </div>
                 </div>
@@ -1378,6 +1615,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                       type="text"
                       id="input_task_title"
                       value={t(selectedTask.title)}
+                      disabled={currentProject?.apakah_selesai}
                       onChange={(e) => {
                         const updatedTask = { ...selectedTask, title: e.target.value };
                         setSelectedTask(updatedTask);
@@ -1388,7 +1626,10 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                       }}
                       onFocus={(e) => e.target.select()}
                       placeholder="Judul Tugas..."
-                      className="text-lg font-bold text-slate-900 dark:text-white bg-transparent border-none outline-none focus:ring-2 focus:ring-blue-500/20 rounded-xl px-2 py-1 w-full"
+                      className={cn(
+                        "text-lg font-bold text-slate-900 dark:text-white bg-transparent border-none outline-none focus:ring-2 focus:ring-blue-500/20 rounded-xl px-2 py-1 w-full",
+                        currentProject?.apakah_selesai && "opacity-70 cursor-not-allowed"
+                      )}
                     />
                   </div>
                 </div>
@@ -1435,7 +1676,6 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                 {/* Left Column: Core task details (Title, desc, checklist, comments, attachments) */}
                 <div className="lg:col-span-2 space-y-8">
                   
-                  {/* Deskripsi */}
                   <div className="space-y-3">
                     <h4 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] flex items-center gap-2">
                       <FileText size={14} className="text-blue-500" /> {t('desc')}
@@ -1443,6 +1683,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                     <textarea
                       id="textarea_task_desc"
                       value={t(selectedTask.description || '')}
+                      disabled={currentProject?.apakah_selesai}
                       onChange={(e) => {
                         const updatedTask = { ...selectedTask, description: e.target.value };
                         setSelectedTask(updatedTask);
@@ -1453,9 +1694,13 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                       }}
                       onFocus={(e) => e.target.select()}
                       placeholder="Tambahkan deskripsi lengkap tugas ini di sini..."
-                      className="w-full text-xs text-slate-700 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-slate-900/50 p-5 rounded-2xl border border-slate-100 dark:border-slate-700 outline-none focus:border-blue-500/50 focus:bg-white dark:focus:bg-slate-900 transition-all min-h-[120px] resize-none font-medium"
+                      className={cn(
+                        "w-full text-xs text-slate-700 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-slate-900/50 p-5 rounded-2xl border border-slate-100 dark:border-slate-700 outline-none focus:border-blue-500/50 focus:bg-white dark:focus:bg-slate-900 transition-all min-h-[120px] resize-none font-medium",
+                        currentProject?.apakah_selesai && "opacity-70 cursor-not-allowed"
+                      )}
                     />
                   </div>
+
 
                   {/* Checklist Section */}
                   <div className="space-y-4">
@@ -1486,6 +1731,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                       {selectedTask.checklist?.map((item, idx) => (
                         <div key={item.id} className="relative group flex items-center gap-3 p-3 bg-slate-50/50 dark:bg-slate-900/30 hover:bg-slate-50 dark:hover:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-700 transition-all">
                           <button
+                            disabled={currentProject?.apakah_selesai}
                             onClick={() => {
                               const next = [...(selectedTask.checklist || [])];
                               next[idx].completed = !next[idx].completed;
@@ -1495,7 +1741,8 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                             }}
                             className={cn(
                               "w-5 h-5 rounded-md border flex items-center justify-center transition-all",
-                              item.completed ? "bg-blue-500 border-blue-500 text-white" : "border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800"
+                              item.completed ? "bg-blue-500 border-blue-500 text-white" : "border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800",
+                              currentProject?.apakah_selesai && "cursor-not-allowed opacity-50"
                             )}
                           >
                             {item.completed && <CheckCircle2 size={12} />}
@@ -1503,6 +1750,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                           
                           <input 
                             value={t(item.text)}
+                            disabled={currentProject?.apakah_selesai}
                             onChange={(e) => {
                               const next = [...(selectedTask.checklist || [])];
                               next[idx].text = e.target.value;
@@ -1512,7 +1760,8 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                             }}
                             className={cn(
                               "bg-transparent border-none outline-none text-xs font-semibold w-full text-slate-800 dark:text-slate-200",
-                              item.completed && "line-through opacity-50"
+                              item.completed && "line-through opacity-50",
+                              currentProject?.apakah_selesai && "cursor-not-allowed"
                             )}
                           />
 
@@ -1520,6 +1769,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                             <input 
                               type="date"
                               value={item.startDate || ''}
+                              disabled={currentProject?.apakah_selesai}
                               onChange={(e) => {
                                 const next = [...(selectedTask.checklist || [])];
                                 next[idx].startDate = e.target.value;
@@ -1527,7 +1777,10 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                                 setSelectedTask(updatedTask);
                                 setTasks(tasks.map(t => t.id === selectedTask.id ? updatedTask : t));
                               }}
-                              className="w-full px-2 py-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-lg text-[10px] font-bold text-slate-500 outline-none"
+                              className={cn(
+                                "w-full px-2 py-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-lg text-[10px] font-bold text-slate-500 outline-none",
+                                currentProject?.apakah_selesai && "opacity-70 cursor-not-allowed bg-slate-100 dark:bg-slate-900"
+                              )}
                               title="Tanggal Mulai (Start Date)"
                             />
                           </div>
@@ -1536,6 +1789,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                             <input 
                               type="date"
                               value={item.endDate || ''}
+                              disabled={currentProject?.apakah_selesai}
                               onChange={(e) => {
                                 const next = [...(selectedTask.checklist || [])];
                                 next[idx].endDate = e.target.value;
@@ -1543,44 +1797,51 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                                 setSelectedTask(updatedTask);
                                 setTasks(tasks.map(t => t.id === selectedTask.id ? updatedTask : t));
                               }}
-                              className="w-full px-2 py-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-lg text-[10px] font-bold text-slate-500 outline-none"
+                              className={cn(
+                                "w-full px-2 py-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-lg text-[10px] font-bold text-slate-500 outline-none",
+                                currentProject?.apakah_selesai && "opacity-70 cursor-not-allowed bg-slate-100 dark:bg-slate-900"
+                              )}
                               title="Tanggal Selesai (End Date)"
                             />
                           </div>
 
-                          <button 
-                            onClick={() => {
-                              const next = (selectedTask.checklist || []).filter((_, i) => i !== idx);
-                              const updatedTask = { ...selectedTask, checklist: next };
-                              setSelectedTask(updatedTask);
-                              setTasks(tasks.map(t => t.id === selectedTask.id ? updatedTask : t));
-                            }}
-                            className="text-slate-400 hover:text-rose-500 p-1 opacity-0 group-hover:opacity-100 transition-all rounded-md hover:bg-rose-50 dark:hover:bg-rose-500/10"
-                          >
-                            <X size={12} />
-                          </button>
+                          {!currentProject?.apakah_selesai && (
+                            <button 
+                              onClick={() => {
+                                const next = (selectedTask.checklist || []).filter((_, i) => i !== idx);
+                                const updatedTask = { ...selectedTask, checklist: next };
+                                setSelectedTask(updatedTask);
+                                setTasks(tasks.map(t => t.id === selectedTask.id ? updatedTask : t));
+                              }}
+                              className="text-slate-400 hover:text-rose-500 p-1 opacity-0 group-hover:opacity-100 transition-all rounded-md hover:bg-rose-50 dark:hover:bg-rose-500/10"
+                            >
+                              <X size={12} />
+                            </button>
+                          )}
                         </div>
                       ))}
 
                       {/* Add Checklist Item input */}
-                      <div className="flex gap-2 mt-3">
-                        <input
-                          type="text"
-                          value={newChecklistItem}
-                          onChange={(e) => setNewChecklistItem(e.target.value)}
-                          placeholder="Tambah langkah atau sub-tugas baru..."
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') handleAddChecklistItem();
-                          }}
-                          className="flex-1 px-4 py-2.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-white outline-none focus:border-blue-500/50"
-                        />
-                        <button
-                          onClick={handleAddChecklistItem}
-                          className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-blue-500/10"
-                        >
-                          {t('addChecklistItem')}
-                        </button>
-                      </div>
+                      {!currentProject?.apakah_selesai && (
+                        <div className="flex gap-2 mt-3">
+                          <input
+                            type="text"
+                            value={newChecklistItem}
+                            onChange={(e) => setNewChecklistItem(e.target.value)}
+                            placeholder="Tambah langkah atau sub-tugas baru..."
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleAddChecklistItem();
+                            }}
+                            className="flex-1 px-4 py-2.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-white outline-none focus:border-blue-500/50"
+                          />
+                          <button
+                            onClick={handleAddChecklistItem}
+                            className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-blue-500/10"
+                          >
+                            {t('addChecklistItem')}
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -1601,7 +1862,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                       >Link</button>
                     </div>
 
-                    {attachmentType === 'link' && (
+                    {attachmentType === 'link' && !currentProject?.apakah_selesai && (
                       <div className="flex flex-col md:flex-row gap-3">
                         <input 
                           type="text" 
@@ -1662,22 +1923,24 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                             <p className="text-sm font-bold text-slate-700 dark:text-slate-200 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{attachment.name}</p>
                             <p className="text-[11px] font-medium text-slate-400 truncate">{attachment.type === 'link' ? attachment.url : t('taskFileLampiran')}</p>
                           </a>
-                          <div className="opacity-0 group-hover:opacity-100 transition-all px-2">
-                            <button
-                              onClick={() => {
-                                const next = (selectedTask.attachments || []).filter(a => a.id !== attachment.id);
-                                const updatedTask = { ...selectedTask, attachments: next };
-                                setSelectedTask(updatedTask);
-                                setTasks(tasks.map(t => t.id === selectedTask.id ? updatedTask : t));
-                              }}
-                              className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-xl transition-all shrink-0"
-                            >
-                              <X size={16} />
-                            </button>
-                          </div>
+                          {!currentProject?.apakah_selesai && (
+                            <div className="opacity-0 group-hover:opacity-100 transition-all px-2">
+                              <button
+                                onClick={() => {
+                                  const next = (selectedTask.attachments || []).filter(a => a.id !== attachment.id);
+                                  const updatedTask = { ...selectedTask, attachments: next };
+                                  setSelectedTask(updatedTask);
+                                  setTasks(tasks.map(t => t.id === selectedTask.id ? updatedTask : t));
+                                }}
+                                className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-xl transition-all shrink-0"
+                              >
+                                <X size={16} />
+                              </button>
+                            </div>
+                          )}
                         </div>
                       ))}
-                      {attachmentType === 'file' && (
+                      {attachmentType === 'file' && !currentProject?.apakah_selesai && (
                         <button 
                           type="button"
                           onClick={() => attachmentFileInputRef.current?.click()}
@@ -1714,45 +1977,48 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                               <h5 className="text-[11px] font-bold text-slate-900 dark:text-white capitalize">{comment.userName}</h5>
                               <span className="text-[8px] font-bold text-slate-400">{comment.createdAt}</span>
                             </div>
-                            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed font-medium">{comment.text}</p>
+                            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed font-medium whitespace-pre-wrap">{comment.text}</p>
                           </div>
                         </div>
                       ))}
-                      <div className="flex gap-3 items-start pt-4 border-t border-slate-100 dark:border-slate-700">
-                        <img src={user.avatar} className="w-8 h-8 rounded-full border-2 border-white dark:border-slate-800 shadow-sm" alt="Me" />
-                        <div className="flex-1 space-y-2">
-                          <textarea 
-                            value={commentText}
-                            onChange={(e) => setCommentText(e.target.value)}
-                            placeholder={t('addComment')}
-                            className="w-full p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500/20 transition-all min-h-[80px] resize-none font-medium text-slate-800 dark:text-slate-200"
-                          />
-                          <button 
-                            onClick={() => {
-                              if (!commentText.trim()) return;
-                              const newComment = {
-                                id: `c${Date.now()}`,
-                                userId: user.id || 'me',
-                                userName: user.name || 'User',
-                                userAvatar: user.avatar,
-                                text: commentText,
-                                createdAt: new Date().toISOString().split('T')[0]
-                              };
-                              const updatedTask = {
-                                ...selectedTask,
-                                comments: [...(selectedTask.comments || []), newComment]
-                              };
-                              setSelectedTask(updatedTask);
-                              setTasks(tasks.map(t => t.id === selectedTask.id ? updatedTask : t));
-                              setCommentText('');
-                              logActivity(selectedTask.id, `${t('addedComment')} "${commentText.substring(0, 20)}..."`);
-                            }}
-                            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[10px] font-bold transition-all shadow-md shadow-blue-500/10"
-                          >
-                            {t('sendComment')}
-                          </button>
+                      {!currentProject?.apakah_selesai && (
+                        <div className="flex gap-3 items-start pt-4 border-t border-slate-100 dark:border-slate-700">
+                          <img src={user.avatar} className="w-8 h-8 rounded-full border-2 border-white dark:border-slate-800 shadow-sm" alt="Me" />
+                          <div className="flex-1 space-y-2">
+                            <textarea 
+                              value={commentText}
+                              onChange={(e) => setCommentText(e.target.value)}
+                              placeholder={t('addComment')}
+                              className="w-full p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500/20 transition-all min-h-[80px] resize-none font-medium text-slate-800 dark:text-slate-200"
+                            />
+                            <button 
+                              onClick={() => {
+                                if (!commentText.trim()) return;
+                                const newComment = {
+                                  id: `c${Date.now()}`,
+                                  userId: user.id || 'me',
+                                  userName: user.name || 'User',
+                                  userAvatar: user.avatar,
+                                  text: commentText,
+                                  createdAt: new Date().toISOString().split('T')[0]
+                                };
+                                const updatedTask = {
+                                  ...selectedTask,
+                                  comments: [...(selectedTask.comments || []), newComment]
+                                };
+                                setSelectedTask(updatedTask);
+                                setTasks(tasks.map(t => t.id === selectedTask.id ? updatedTask : t));
+                                setCommentText('');
+                                logActivity(selectedTask.id, `${t('addedComment')} "${commentText.substring(0, 20)}..."`);
+                              }}
+                              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[10px] font-bold transition-all shadow-md shadow-blue-500/10"
+                            >
+                              {t('sendComment')}
+                            </button>
+                          </div>
                         </div>
-                      </div>
+                      )}
+
                     </div>
                   </div>
 
@@ -1769,12 +2035,16 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                       <label className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">{t('boardStatus')}</label>
                       <select
                         value={selectedTask.status}
+                        disabled={currentProject?.apakah_selesai}
                         onChange={(e) => {
                           const updatedTask = { ...selectedTask, status: e.target.value as TaskStatus };
                           setSelectedTask(updatedTask);
                           setTasks(tasks.map(t => t.id === selectedTask.id ? updatedTask : t));
                         }}
-                        className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white text-xs font-bold focus:border-blue-500 outline-none transition-all shadow-sm"
+                        className={cn(
+                          "w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white text-xs font-bold focus:border-blue-500 outline-none transition-all shadow-sm",
+                          currentProject?.apakah_selesai && "opacity-70 cursor-not-allowed bg-slate-50 dark:bg-slate-900 text-slate-500"
+                        )}
                       >
                         {boardColumns.map(col => <option key={col.id} value={col.status}>{(t('status') as any)[col.status] || col.title}</option>)}
                       </select>
@@ -1800,8 +2070,8 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                           type="button"
                           id="btn_ai_priority"
                           onClick={handleAISuggest}
-                          disabled={isAnalyzing}
-                          className="px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:from-blue-400 disabled:to-indigo-400 text-white rounded-xl text-xs font-black flex items-center gap-1.5 transition-all shadow-md shadow-blue-500/10 hover:shadow-lg hover:shadow-blue-500/20 active:scale-95 whitespace-nowrap"
+                          disabled={isAnalyzing || currentProject?.apakah_selesai}
+                          className="px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:from-blue-400 disabled:to-indigo-400 text-white rounded-xl text-xs font-black flex items-center gap-1.5 transition-all shadow-md shadow-blue-500/10 hover:shadow-lg hover:shadow-blue-500/20 active:scale-95 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {isAnalyzing ? (
                             <>
@@ -1826,12 +2096,16 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                       <label className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">{t('taskType')}</label>
                       <select
                         value={selectedTask.type}
+                        disabled={currentProject?.apakah_selesai}
                         onChange={(e) => {
                           const updatedTask = { ...selectedTask, type: e.target.value as any };
                           setSelectedTask(updatedTask);
                           setTasks(tasks.map(t => t.id === selectedTask.id ? updatedTask : t));
                         }}
-                        className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white text-xs font-bold focus:border-blue-500 outline-none transition-all shadow-sm"
+                        className={cn(
+                          "w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white text-xs font-bold focus:border-blue-500 outline-none transition-all shadow-sm",
+                          currentProject?.apakah_selesai && "opacity-70 cursor-not-allowed bg-slate-50 dark:bg-slate-900 text-slate-500"
+                        )}
                       >
                         <option value="Development">Development</option>
                         <option value="Maintenance">Maintenance</option>
@@ -1848,12 +2122,16 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                         type="date"
                         id="input_task_start_date"
                         value={selectedTask.startDate || ''}
+                        disabled={currentProject?.apakah_selesai}
                         onChange={(e) => {
                           const updatedTask = { ...selectedTask, startDate: e.target.value };
                           setSelectedTask(updatedTask);
                           setTasks(tasks.map(t => t.id === selectedTask.id ? updatedTask : t));
                         }}
-                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-600 dark:text-slate-300 outline-none"
+                        className={cn(
+                          "w-full px-4 py-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-600 dark:text-slate-300 outline-none",
+                          currentProject?.apakah_selesai && "opacity-70 cursor-not-allowed bg-slate-100 dark:bg-slate-900 text-slate-500"
+                        )}
                       />
                     </div>
                   
@@ -1865,12 +2143,16 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                           type="date"
                           id="input_task_due_date"
                           value={selectedTask.deadline || ''}
+                          disabled={currentProject?.apakah_selesai}
                           onChange={(e) => {
                             const updatedTask = { ...selectedTask, deadline: e.target.value || undefined };
                             setSelectedTask(updatedTask);
                             setTasks(tasks.map(t => t.id === selectedTask.id ? updatedTask : t));
                           }}
-                          className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white text-xs font-bold focus:border-blue-500 outline-none transition-all shadow-sm cursor-pointer"
+                          className={cn(
+                            "w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white text-xs font-bold focus:border-blue-500 outline-none transition-all shadow-sm",
+                            currentProject?.apakah_selesai && "opacity-70 cursor-not-allowed bg-slate-50 dark:bg-slate-900 text-slate-500 cursor-not-allowed"
+                          )}
                         />
                       </div>
                     </div>
@@ -1881,12 +2163,16 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                       <select
                         id="select_task_assignee"
                         value={selectedTask.assignee || ''}
+                        disabled={currentProject?.apakah_selesai}
                         onChange={(e) => {
                           const updatedTask = { ...selectedTask, assignee: e.target.value || undefined };
                           setSelectedTask(updatedTask);
                           setTasks(tasks.map(t => t.id === selectedTask.id ? updatedTask : t));
                         }}
-                        className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white text-xs font-bold focus:border-blue-500 outline-none transition-all shadow-sm"
+                        className={cn(
+                          "w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white text-xs font-bold focus:border-blue-500 outline-none transition-all shadow-sm",
+                          currentProject?.apakah_selesai && "opacity-70 cursor-not-allowed bg-slate-50 dark:bg-slate-900 text-slate-500"
+                        )}
                       >
                         <option value="">{t('unassigned')}</option>
                         {allProjectUsers.map(u => (
@@ -1914,6 +2200,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                             <input 
                               type="checkbox" 
                               checked={isSelected}
+                              disabled={currentProject?.apakah_selesai}
                               onChange={(e) => {
                                 const curr = selectedTask?.contributors || [];
                                 const newCont = e.target.checked 
@@ -1935,7 +2222,10 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                                   );
                                 }
                               }}
-                              className="w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-600"
+                              className={cn(
+                                "w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-600",
+                                currentProject?.apakah_selesai && "opacity-50 cursor-not-allowed"
+                              )}
                             />
                             <div className="flex items-center gap-2">
                               <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-blue-600 font-bold text-[10px] overflow-hidden">
@@ -1952,7 +2242,6 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                       })}
                     </div>
                   </div>
-
                   {/* Blocked toggler */}
                   <div className="space-y-4">
                     <div className="flex items-center justify-between p-5 bg-rose-50/30 dark:bg-rose-500/5 rounded-2xl border border-rose-100 dark:border-rose-500/20">
@@ -1965,13 +2254,16 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                       </div>
                       <button 
                         onClick={() => {
+                          if (currentProject?.apakah_selesai) return;
                           const updatedTask = { ...selectedTask, isBlocked: !selectedTask.isBlocked };
                           setSelectedTask(updatedTask);
                           setTasks(tasks.map(t => t.id === selectedTask.id ? updatedTask : t));
                         }}
+                        disabled={currentProject?.apakah_selesai}
                         className={cn(
                           "w-10 h-5 rounded-full transition-all relative",
-                          selectedTask.isBlocked ? "bg-rose-500" : "bg-slate-200 dark:bg-slate-700"
+                          selectedTask.isBlocked ? "bg-rose-500" : "bg-slate-200 dark:bg-slate-700",
+                          currentProject?.apakah_selesai && "opacity-50 cursor-not-allowed"
                         )}
                       >
                         <div className={cn(
@@ -1983,13 +2275,17 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                     {selectedTask.isBlocked && (
                       <textarea 
                         value={selectedTask.blockReason || ''}
+                        disabled={currentProject?.apakah_selesai}
                         onChange={(e) => {
                           const updatedTask = { ...selectedTask, blockReason: e.target.value };
                           setSelectedTask(updatedTask);
                           setTasks(tasks.map(t => t.id === selectedTask.id ? updatedTask : t));
                         }}
                         placeholder={t('blockedReason')}
-                        className="w-full p-4 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-xl text-xs outline-none focus:ring-2 focus:ring-rose-500/20 transition-all font-medium text-slate-800 dark:text-slate-200"
+                        className={cn(
+                          "w-full p-4 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-xl text-xs outline-none focus:ring-2 focus:ring-rose-500/20 transition-all font-medium text-slate-800 dark:text-slate-200",
+                          currentProject?.apakah_selesai && "opacity-70 cursor-not-allowed bg-slate-100 dark:bg-slate-950"
+                        )}
                       />
                     )}
                   </div>
@@ -2002,8 +2298,12 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
               <div className="p-6 bg-slate-50/20 dark:bg-slate-900/10 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3 transition-colors">
                 <button 
                   onClick={handleSaveTask}
+                  disabled={currentProject?.apakah_selesai}
                   id="btn_submit_task"
-                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-blue-500/20"
+                  className={cn(
+                    "px-6 py-3 bg-blue-600 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-blue-500/20",
+                    currentProject?.apakah_selesai ? "opacity-50 cursor-not-allowed" : "hover:bg-blue-700"
+                  )}
                 >
                   {t('done')}
                 </button>
@@ -2169,7 +2469,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                     <div
                       key={i}
                       className={cn(
-                        "max-w-[85%] p-4 rounded-2xl text-sm font-medium leading-relaxed",
+                        "max-w-[85%] p-4 rounded-2xl text-sm font-medium leading-relaxed whitespace-pre-wrap",
                         msg.role === 'user' 
                           ? "ml-auto bg-blue-50 dark:bg-blue-500/10 text-blue-900 dark:text-blue-300 rounded-tr-none" 
                           : "mr-auto bg-slate-50 dark:bg-slate-900/50 text-slate-700 dark:text-slate-300 rounded-tl-none border border-slate-100 dark:border-slate-700"
@@ -2237,7 +2537,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
       {/* Add Member Modal */}
       <AnimatePresence>
         {showAddMemberModal && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -2249,7 +2549,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-md bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-10"
+              className="relative w-full max-w-md max-h-[90vh] overflow-y-auto bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-6 sm:p-10 custom-scrollbar"
             >
               <h2 className="text-2xl font-bold tracking-tight mb-2 text-slate-900 dark:text-white">
                 {t('addMemberTitle')}

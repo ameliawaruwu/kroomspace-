@@ -18,8 +18,19 @@ export default defineConfig(({ mode }) => {
     },
 
     build: {
+      target: 'esnext',
       outDir: '../dist',
       emptyOutDir: true,
+    },
+
+    esbuild: {
+      target: 'esnext',
+    },
+
+    optimizeDeps: {
+      esbuildOptions: {
+        target: 'esnext',
+      },
     },
 
     server: {

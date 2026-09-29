@@ -32,6 +32,31 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
   const [error, setError] = useState('');
   const [cooldown, setCooldown] = useState(0);
 
+  const getAlertStyle = (msg: string) => {
+    if (!msg) return '';
+    const lower = msg.toLowerCase();
+    
+    // Sukses / Terverifikasi -> Hijau (Emerald)
+    if (
+      msg.includes('✓') ||
+      lower.includes('terverifikasi') ||
+      lower.includes('berhasil') ||
+      lower.includes('sukses') ||
+      msg === t('regSuccess') ||
+      msg === t('resetSuccess')
+    ) {
+      return "text-emerald-700 bg-emerald-50 border border-emerald-200/80";
+    }
+
+    // Informasi / Dikirim -> Biru
+    if (lower.includes('dikirim') || lower.includes('sent')) {
+      return "text-blue-700 bg-blue-50 border border-blue-200/80";
+    }
+
+    // Error / Gagal -> Merah
+    return "text-red-600 bg-red-50 border border-red-200/80";
+  };
+
   // Timer Effect untuk cooldown
   React.useEffect(() => {
     if (cooldown > 0) {
@@ -93,8 +118,8 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
         setError("Gagal terhubung ke server. Pastikan server sudah berjalan.");
       }
     } else if (forgotMode === 'otp') {
-      if (otpInput.length !== 4) {
-        setError('OTP harus 4 digit');
+      if (otpInput.length !== 6) {
+        setError('OTP harus 6 digit');
         return;
       }
       try {
@@ -205,8 +230,8 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
           setError("Gagal terhubung ke server");
         }
       } else if (registerMode === 'otp') {
-        if (registerOtpInput.length !== 4) {
-          setError('OTP harus 4 digit');
+        if (registerOtpInput.length !== 6) {
+          setError('OTP harus 6 digit');
           return;
         }
         try {
@@ -302,10 +327,10 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
                     <input
                       type="text"
                       value={otpInput}
-                      onChange={(e) => setOtpInput(e.target.value)}
-                      className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-100 focus:border-blue-500/20 focus:bg-white rounded-2xl outline-none transition-all font-medium text-slate-900 tracking-[0.5em] text-center"
-                      placeholder="1234"
-                      maxLength={4}
+                      onChange={(e) => setOtpInput(e.target.value.replace(/\D/g, ''))}
+                      className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-100 focus:border-blue-500/20 focus:bg-white rounded-2xl outline-none transition-all font-medium text-slate-900 tracking-[0.4em] text-center"
+                      placeholder="123456"
+                      maxLength={6}
                       required
                     />
                   </div>
@@ -337,8 +362,17 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         className="w-full pl-12 pr-12 py-3.5 bg-slate-50 border border-slate-100 focus:border-blue-500/20 focus:bg-white rounded-2xl outline-none transition-all font-medium text-slate-900"
+                        placeholder="••••••••"
                         required
                       />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-600 transition-colors"
+                        title={showPassword ? "Sembunyikan password" : "Tampilkan password"}
+                      >
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
                     </div>
                   </div>
                   <div className="space-y-1.5">
@@ -350,8 +384,17 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         className="w-full pl-12 pr-12 py-3.5 bg-slate-50 border border-slate-100 focus:border-blue-500/20 focus:bg-white rounded-2xl outline-none transition-all font-medium text-slate-900"
+                        placeholder="••••••••"
                         required
                       />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-600 transition-colors"
+                        title={showPassword ? "Sembunyikan password" : "Tampilkan password"}
+                      >
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
                     </div>
                   </div>
                 </>
@@ -359,11 +402,11 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
 
               {error && (
                 <motion.p
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
                   className={cn(
-                    "text-xs font-bold text-center py-2 rounded-lg",
-                    error.includes('berhasil') || error.includes('sent') || error.includes('dikirim') ? "text-blue-600 bg-blue-50" : "text-red-500 bg-red-50"
+                    "text-xs font-bold text-center py-2.5 px-3 rounded-xl transition-all",
+                    getAlertStyle(error)
                   )}
                 >
                   {error}
@@ -421,10 +464,10 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
                     <input
                       type="text"
                       value={registerOtpInput}
-                      onChange={(e) => setRegisterOtpInput(e.target.value)}
-                      className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-100 focus:border-blue-500/20 focus:bg-white rounded-2xl outline-none transition-all font-medium text-slate-900 tracking-[0.5em] text-center"
-                      placeholder="1234"
-                      maxLength={4}
+                      onChange={(e) => setRegisterOtpInput(e.target.value.replace(/\D/g, ''))}
+                      className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-100 focus:border-blue-500/20 focus:bg-white rounded-2xl outline-none transition-all font-medium text-slate-900 tracking-[0.4em] text-center"
+                      placeholder="123456"
+                      maxLength={6}
                       required
                     />
                   </div>
@@ -501,6 +544,14 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
                             className="w-full pl-12 pr-12 py-3.5 bg-slate-50 border border-slate-100 focus:border-blue-500/20 focus:bg-white rounded-2xl outline-none transition-all font-medium text-slate-900 placeholder:text-slate-300"
                             placeholder="••••••••"
                           />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-600 transition-colors"
+                            title={showPassword ? "Sembunyikan password" : "Tampilkan password"}
+                          >
+                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                          </button>
                         </div>
                       </motion.div>
                     )}
@@ -523,11 +574,11 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
               {error && (
                 <motion.p
                   id="login-error"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
                   className={cn(
-                    "text-xs font-bold text-center py-2 rounded-lg",
-                    error === t('regSuccess') || error === t('resetSuccess') ? "text-blue-600 bg-blue-50" : "text-red-500 bg-red-50"
+                    "text-xs font-bold text-center py-2.5 px-3 rounded-xl transition-all",
+                    getAlertStyle(error)
                   )}
                 >
                   {error}

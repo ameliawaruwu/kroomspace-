@@ -3,6 +3,7 @@ import {
   LayoutDashboard,
   Trello,
   FileText,
+  Calendar as CalendarIcon,
   LogOut,
   Menu,
   X,
@@ -34,6 +35,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, user,
   const menuItems = [
     { id: 'dashboard', label: t('dashboard'), icon: LayoutDashboard },
     { id: 'board', label: t('kanban'), icon: Trello },
+    { id: 'calendar', label: t('calendar'), icon: CalendarIcon },
     { id: 'templates', label: t('templates'), icon: FileText },
   ];
 

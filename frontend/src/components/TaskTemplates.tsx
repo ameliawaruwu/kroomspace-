@@ -38,6 +38,33 @@ interface ProjectTemplatesProps {
   user: any;
 }
 
+const ShowMoreText = ({ text, maxLength = 100, darkMode }: { text: string; maxLength?: number; darkMode: boolean }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const { language } = useLanguage();
+
+  if (!text) return null;
+  if (text.length <= maxLength) return <span>{text}</span>;
+
+  const displayText = isExpanded ? text : `${text.slice(0, maxLength)}...`;
+
+  return (
+    <span>
+      {displayText}{' '}
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          setIsExpanded(!isExpanded);
+        }}
+        className="text-[#2D7FEA] dark:text-[#3FA9F5] font-bold text-xs hover:underline inline ml-1 shrink-0"
+      >
+        {isExpanded 
+          ? (language === 'en' ? 'Show Less' : 'Sembunyikan') 
+          : (language === 'en' ? 'Show More' : 'Selengkapnya')}
+      </button>
+    </span>
+  );
+};
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const getCategoryIcon = (kategori: string, size = 24) => {
@@ -449,7 +476,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
                 className={cn(
-                  "relative px-4 py-2.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 select-none shrink-0",
+                  "relative px-4 py-2.5 rounded-xl text-xs font-semibold transition-all select-none shrink-0",
                   isActive
                     ? "bg-[#2D7FEA] text-white shadow-lg shadow-[#2D7FEA]/20"
                     : darkMode
@@ -458,16 +485,6 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                 )}
               >
                 <span>{cat === 'Semua' ? t('all') : t(cat)}</span>
-                <span className={cn(
-                  "px-2 py-0.5 rounded-md text-[10px] font-medium tracking-normal transition-all",
-                  isActive
-                    ? "bg-white/20 text-white"
-                    : darkMode
-                      ? "bg-slate-800 text-slate-400"
-                      : "bg-slate-200/70 text-slate-500"
-                )}>
-                  {count}
-                </span>
               </button>
             );
           })}
@@ -528,7 +545,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
             >
 
               <div>
-                <div className="p-5">
+                <div className="p-5 pb-0">
                   {/* Title + Admin Controls */}
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex flex-col min-w-0 pr-2">
@@ -556,7 +573,11 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                     "text-sm font-medium leading-relaxed mb-4",
                     darkMode ? "text-slate-400" : "text-slate-500"
                   )}>
-                    {t(template.description) || t('noDescription')}
+                    {template.description ? (
+                      <ShowMoreText text={t(template.description)} darkMode={darkMode} />
+                    ) : (
+                      t('noDescription')
+                    )}
                   </p>
 
                   {/* Metadata Grid */}
@@ -625,7 +646,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
 
                   {/* Collapsible Task List (Dropdown) */}
                   <details 
-                    className="group/details mb-5 text-sm"
+                    className="group/details mb-3 text-sm"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <summary className={cn(
@@ -659,7 +680,7 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
               </div>
 
               {/* Action Buttons */}
-              <div className="p-6 pt-0 mt-auto grid grid-cols-2 gap-3">
+              <div className="p-6 pt-0 mt-3 grid grid-cols-2 gap-3">
                 <button
                   onClick={e => {
                     e.stopPropagation();
@@ -682,11 +703,10 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                     setApplyTemplate(template);
                   }}
                   className={cn(
-                    "py-3 rounded-xl text-sm font-black text-white flex items-center justify-center gap-1.5 transition-all",
+                    "py-3 rounded-xl text-sm font-black text-white flex items-center justify-center transition-all",
                     "bg-gradient-to-r from-[#3FA9F5] to-[#2D7FEA] shadow-md shadow-[#2D7FEA]/10 hover:shadow-lg hover:shadow-[#2D7FEA]/20 hover:scale-[1.02] active:scale-100"
                   )}
                 >
-                  <Sparkles size={14} />
                   {t('applyTemplate')}
                 </button>
               </div>

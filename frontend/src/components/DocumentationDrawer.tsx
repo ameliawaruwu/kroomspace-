@@ -70,22 +70,40 @@ export const DocumentationDrawer: React.FC<DocumentationDrawerProps> = ({
             <p><strong>Dikerjakan Oleh:</strong> ${doc.authorName}</p>
             <p><strong>Waktu Selesai:</strong> ${new Date(doc.createdAt).toLocaleString('id-ID', { dateStyle: 'full', timeStyle: 'short' })}</p>
             
-            <h4 style="color: #2D7FEA; margin-top: 20px;">Catatan Penyelesaian:</h4>
-            <div style="background: #f9f9f9; padding: 15px; border-left: 4px solid #3FA9F5; border-radius: 4px;">
-              ${doc.completionNotes.replace(/\n/g, '<br>')}
+            <div style="margin-top: 24px;">
+              <div style="background: #f8fafc; padding: 16px 20px; border-left: 5px solid #3FA9F5; border-radius: 8px; margin-bottom: 20px;">
+                <div style="color: #1E3A5F; font-weight: 700; font-size: 14px; margin-bottom: 8px; text-transform: uppercase;">
+                  Catatan Penyelesaian:
+                </div>
+                <div style="color: #334155; font-size: 13px; line-height: 1.6;">
+                  ${doc.completionNotes.replace(/\n/g, '<br>')}
+                </div>
+              </div>
             </div>
 
             ${doc.obstacles ? `
-              <h4 style="color: #eab308; margin-top: 20px;">Kendala Ditemukan:</h4>
-              <div style="background: #fefce8; padding: 15px; border-left: 4px solid #eab308; border-radius: 4px;">
-                ${doc.obstacles.replace(/\n/g, '<br>')}
+              <div style="margin-top: 20px;">
+                <div style="background: #fefce8; padding: 16px 20px; border-left: 5px solid #eab308; border-radius: 8px; margin-bottom: 20px;">
+                  <div style="color: #854d0e; font-weight: 700; font-size: 14px; margin-bottom: 8px; text-transform: uppercase;">
+                    Kendala Ditemukan:
+                  </div>
+                  <div style="color: #713f12; font-size: 13px; line-height: 1.6;">
+                    ${doc.obstacles.replace(/\n/g, '<br>')}
+                  </div>
+                </div>
               </div>
             ` : ''}
 
             ${doc.solutions ? `
-              <h4 style="color: #10b981; margin-top: 20px;">Solusi Diterapkan:</h4>
-              <div style="background: #f0fdf4; padding: 15px; border-left: 4px solid #10b981; border-radius: 4px;">
-                ${doc.solutions.replace(/\n/g, '<br>')}
+              <div style="margin-top: 20px;">
+                <div style="background: #f0fdf4; padding: 16px 20px; border-left: 5px solid #10b981; border-radius: 8px; margin-bottom: 20px;">
+                  <div style="color: #166534; font-weight: 700; font-size: 14px; margin-bottom: 8px; text-transform: uppercase;">
+                    Solusi Diterapkan:
+                  </div>
+                  <div style="color: #14532d; font-size: 13px; line-height: 1.6;">
+                    ${doc.solutions.replace(/\n/g, '<br>')}
+                  </div>
+                </div>
               </div>
             ` : ''}
           </div>
