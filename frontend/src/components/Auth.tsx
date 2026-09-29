@@ -66,6 +66,16 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
     }
   }, [cooldown]);
 
+  // Bersihkan form saat berpindah antara Login dan Buat Akun agar tidak otomatis terisi
+  React.useEffect(() => {
+    setEmail('');
+    setPassword('');
+    setConfirmPassword('');
+    setName('');
+    setRegisterOtpInput('');
+    setError('');
+  }, [isLogin]);
+
   const handleResendOtp = async () => {
     if (cooldown > 0 || loading) return;
     setError('');
@@ -463,7 +473,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
               </div>
             </form>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
               <AnimatePresence mode="wait">
                 {!isLogin && registerMode === 'form' && (
                   <motion.div
@@ -477,6 +487,9 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
                       <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                       <input
                         type="text"
+                        id="reg_name"
+                        name="reg_name"
+                        autoComplete="off"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-100 focus:border-blue-500/20 focus:bg-white rounded-2xl outline-none transition-all font-medium text-slate-900 placeholder:text-slate-300"
@@ -526,7 +539,9 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
                       <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                       <input
                         type="email"
-                        id="username"
+                        id={isLogin ? "username" : "reg_email"}
+                        name={isLogin ? "username" : "reg_email"}
+                        autoComplete={isLogin ? "username" : "off"}
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-100 focus:border-blue-500/20 focus:bg-white rounded-2xl outline-none transition-all font-medium text-slate-900 placeholder:text-slate-300"
@@ -541,7 +556,9 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
                       <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                       <input
                         type={showPassword ? "text" : "password"}
-                        id="password"
+                        id={isLogin ? "password" : "reg_password"}
+                        name={isLogin ? "password" : "reg_password"}
+                        autoComplete={isLogin ? "current-password" : "new-password"}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         className="w-full pl-12 pr-12 py-3.5 bg-slate-50 border border-slate-100 focus:border-blue-500/20 focus:bg-white rounded-2xl outline-none transition-all font-medium text-slate-900 placeholder:text-slate-300"
@@ -570,6 +587,9 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
                           <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                           <input
                             type={showPassword ? "text" : "password"}
+                            id="reg_confirm_password"
+                            name="reg_confirm_password"
+                            autoComplete="new-password"
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
                             className="w-full pl-12 pr-12 py-3.5 bg-slate-50 border border-slate-100 focus:border-blue-500/20 focus:bg-white rounded-2xl outline-none transition-all font-medium text-slate-900 placeholder:text-slate-300"
