@@ -111,6 +111,18 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   const isAdmin = user.role === 'Admin';
 
+  // Filter proyek yang diikuti atau dimiliki pengguna
+  const myProjects = (projects || []).filter(p => {
+    if (isAdmin) return true;
+    const isOwner = String(p.id_pengguna) === String(user.id);
+    const isMember = p.anggota?.some((a: any) => {
+      const targetId = typeof a === 'object' && a !== null ? (a.id_pengguna || a.id) : a;
+      return String(targetId) === String(user.id);
+    });
+    return isOwner || isMember;
+  });
+  const hasProjects = myProjects.length > 0;
+
   // Calculate local dashboard data dynamically from database-synced props
   const myTasksList = tasks.filter(t => {
     if (isAdmin) return true;
@@ -133,18 +145,22 @@ export const Dashboard: React.FC<DashboardProps> = ({
     const up = new Date(t.updatedAt || t.createdAt);
     return up <= dl;
   });
-  const onTimeRate = completedWithDeadline.length > 0 
-    ? Math.round((completedOnTime.length / completedWithDeadline.length) * 100) 
-    : 100;
+
+  // Jika belum ada proyek atau belum ada tugas yang diselesaikan, rasio harus 0%
+  const onTimeRate = (hasProjects && completedWithDeadline.length > 0)
+    ? Math.round((completedOnTime.length / completedWithDeadline.length) * 100)
+    : (hasProjects && completedTasks.length > 0 ? 100 : 0);
 
   const activeTasks = myTasksList.filter(t => t.status !== 'Done');
   const now = new Date();
   const overdueTasks = activeTasks.filter(t => t.deadline && new Date(t.deadline) < now);
   const blockedTasks = activeTasks.filter(t => t.isBlocked);
   const healthyTasksCount = myTasksList.length - overdueTasks.length - blockedTasks.length;
-  const aiProjectHealth = myTasksList.length > 0
+
+  // Jika belum ada proyek atau belum ada tugas sama sekali, kesehatan proyek adalah 0%
+  const aiProjectHealth = (hasProjects && myTasksList.length > 0)
     ? Math.max(0, Math.round((healthyTasksCount / myTasksList.length) * 100))
-    : 100;
+    : 0;
 
   // Helper: Cek apakah sebuah kartu tugas kanban berkategori Maintenance / Perbaikan
   const isMaintenanceTask = (t: Task) => {
@@ -197,15 +213,18 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
     const complDeadlineUpToCutoff = complUpToCutoff.filter(t => t.deadline);
     const onTimeUpToCutoff = complDeadlineUpToCutoff.filter(t => new Date(t.updatedAt || t.createdAt) <= new Date(t.deadline!));
-    sparklineOnTimeRate.push(complDeadlineUpToCutoff.length > 0 ? Math.round((onTimeUpToCutoff.length / complDeadlineUpToCutoff.length) * 100) : 100);
+    const onTimeRateCutoffVal = (hasProjects && complDeadlineUpToCutoff.length > 0)
+      ? Math.round((onTimeUpToCutoff.length / complDeadlineUpToCutoff.length) * 100)
+      : (hasProjects && complUpToCutoff.length > 0 ? 100 : 0);
+    sparklineOnTimeRate.push(onTimeRateCutoffVal);
 
     const tasksUpToCutoff = myTasksList.filter(t => new Date(t.createdAt) <= cutoff);
     const activeUpToCutoff = tasksUpToCutoff.filter(t => t.status !== 'Done' || new Date(t.updatedAt || t.createdAt) > cutoff);
     const overdueUpToCutoff = activeUpToCutoff.filter(t => t.deadline && new Date(t.deadline) < cutoff);
     const blockedUpToCutoff = activeUpToCutoff.filter(t => t.isBlocked);
-    const healthVal = tasksUpToCutoff.length > 0
+    const healthVal = (hasProjects && tasksUpToCutoff.length > 0)
       ? Math.max(0, Math.round(((tasksUpToCutoff.length - overdueUpToCutoff.length - blockedUpToCutoff.length) / tasksUpToCutoff.length) * 100))
-      : 100;
+      : 0;
     sparklineHealth.push(healthVal);
 
     const maintActive = activeUpToCutoff.filter(isMaintenanceTask).length;
@@ -240,8 +259,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
   } else if (completedLastWeek > 0) {
     completedTrend = 100;
   }
-  const onTimeRateTrend = onTimeRate >= 90 ? 3 : -2;
-  const healthTrend = aiProjectHealth >= 80 ? 2 : -5;
+  const onTimeRateTrend = onTimeRate === 0 ? 0 : (onTimeRate >= 90 ? 3 : -2);
+  const healthTrend = aiProjectHealth === 0 ? 0 : (aiProjectHealth >= 80 ? 2 : -5);
   const maintTrend = openMaintenanceTickets > 8 ? 12 : -5;
 
   const statuses: string[] = ['Backlog', 'To Do', 'In Progress', 'Review', 'Done'];
