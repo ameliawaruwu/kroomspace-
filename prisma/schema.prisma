@@ -15,7 +15,7 @@ model Pengguna {
   whatsapp           String?
   kata_sandi         String
   peran              String              @default("Member")
-  foto_profil        String?
+  foto_profil        String?             @db.LongText
   
   tugas_ditangani    Tugas[]             @relation("PenanggungJawab")
   kontributor_tugas  KontributorTugas[]
