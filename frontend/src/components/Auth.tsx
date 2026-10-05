@@ -261,6 +261,12 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
           setError('Format email tidak valid');
           return;
         }
+        const emailDomain = trimmedEmail.split('@')[1];
+        const dummyDomains = ['tes.com', 'test.com', 'example.com', 'demo.com', 'sample.com', 'fake.com', 'testing.com'];
+        if (emailDomain && dummyDomains.includes(emailDomain)) {
+          setError(`Email dummy (@${emailDomain}) tidak dapat digunakan. Gunakan email aktif Anda (misalnya @gmail.com).`);
+          return;
+        }
         if (password !== confirmPassword) {
           setError(t('passwordMismatch'));
           return;
@@ -285,7 +291,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
 
           const data = await response.json();
           if (response.ok) {
-            setError('✓ Kode OTP verifikasi telah dikirim ke email Anda');
+            setError('✓ Kode OTP telah dikirim! Cek Kotak Masuk atau folder Spam/Promosi email Anda');
             setRegisterMode('otp');
             setCooldown(30);
           } else {

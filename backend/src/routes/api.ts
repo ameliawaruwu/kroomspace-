@@ -696,6 +696,10 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
     'trashmail.com', 'sharklasers.com', 'throwawaymail.com', 'yopmail.com', 'dispostable.com'
   ];
 
+  const DUMMY_EMAIL_DOMAINS = [
+    'tes.com', 'test.com', 'example.com', 'demo.com', 'sample.com', 'fake.com', 'testing.com'
+  ];
+
   function validateName(name: any): { valid: boolean; error?: string; sanitized?: string } {
     if (typeof name !== 'string') {
       return { valid: false, error: "Nama harus berupa teks" };
@@ -721,6 +725,9 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
       return { valid: false, error: "Format alamat email tidak valid" };
     }
     const domain = trimmed.split('@')[1];
+    if (domain && DUMMY_EMAIL_DOMAINS.includes(domain)) {
+      return { valid: false, error: `Email uji coba dummy (@${domain}) tidak diperbolehkan. Harap gunakan alamat email aktif Anda (misalnya @gmail.com) agar kode OTP dapat diterima.` };
+    }
     if (domain && DISALLOWED_EMAIL_DOMAINS.includes(domain)) {
       return { valid: false, error: "Domain email sementara/disposable tidak diperbolehkan. Harap gunakan email asli/resmi." };
     }
