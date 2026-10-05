@@ -52,28 +52,30 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
       const img = new Image();
       img.onload = () => {
         const canvas = document.createElement('canvas');
-        const MAX_SIZE = 400;
-        let width = img.width;
-        let height = img.height;
+        const TARGET_SIZE = 400;
+        canvas.width = TARGET_SIZE;
+        canvas.height = TARGET_SIZE;
 
-        if (width > height) {
-          if (width > MAX_SIZE) {
-            height = Math.round((height * MAX_SIZE) / width);
-            width = MAX_SIZE;
-          }
-        } else {
-          if (height > MAX_SIZE) {
-            width = Math.round((width * MAX_SIZE) / height);
-            height = MAX_SIZE;
-          }
-        }
+        // Potong bagian tengah foto secara simetris (1:1 center-crop)
+        // sehingga foto potret panjang tidak menjadi lonjong atau gepeng
+        const minDim = Math.min(img.width, img.height);
+        const startX = (img.width - minDim) / 2;
+        const startY = (img.height - minDim) / 2;
 
-        canvas.width = width;
-        canvas.height = height;
         const ctx = canvas.getContext('2d');
         if (ctx) {
-          ctx.drawImage(img, 0, 0, width, height);
-          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+          ctx.drawImage(
+            img,
+            startX,
+            startY,
+            minDim,
+            minDim,
+            0,
+            0,
+            TARGET_SIZE,
+            TARGET_SIZE
+          );
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.88);
           setFormData(prev => ({ ...prev, avatar: compressedDataUrl }));
         } else {
           setFormData(prev => ({ ...prev, avatar: event.target?.result as string }));
@@ -126,7 +128,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
       <div className="mx-4 md:mx-6 grid grid-cols-1 xl:grid-cols-3 gap-6 md:gap-8 max-w-7xl pb-10">
         <div className="lg:col-span-1 space-y-6">
           <div className="bg-white dark:bg-slate-800 p-6 md:p-8 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm text-center">
-            <div className="relative inline-block group cursor-pointer">
+            <div className="relative inline-flex items-center justify-center group cursor-pointer">
               <input 
                 type="file" 
                 id="avatar-upload" 
@@ -134,13 +136,15 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                 accept="image/*"
                 onChange={handleAvatarChange}
               />
-              <label htmlFor="avatar-upload" className="cursor-pointer">
-                <img 
-                  src={formData.avatar} 
-                  className="w-32 h-32 rounded-full border-4 border-white dark:border-slate-700 shadow-xl object-cover hover:brightness-90 transition-all" 
-                  alt="Avatar" 
-                />
-                <div className="absolute bottom-0 right-0 p-2 bg-[#2D7FEA] text-white rounded-full shadow-lg hover:bg-[#1C6ED9] transition-all">
+              <label htmlFor="avatar-upload" className="cursor-pointer block relative">
+                <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white dark:border-slate-700 shadow-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center shrink-0">
+                  <img 
+                    src={formData.avatar} 
+                    className="w-full h-full object-cover object-center hover:brightness-90 transition-all shrink-0" 
+                    alt="Avatar" 
+                  />
+                </div>
+                <div className="absolute bottom-0 right-0 p-2.5 bg-[#2D7FEA] text-white rounded-full shadow-lg hover:bg-[#1C6ED9] transition-all">
                   <Camera size={16} />
                 </div>
               </label>

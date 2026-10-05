@@ -121,7 +121,7 @@ export const Header: React.FC<HeaderProps> = ({
           )}
         >
           <div className="relative">
-            <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-full border-2 border-white shadow-sm shrink-0" />
+            <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-full border-2 border-white shadow-sm shrink-0 object-cover" />
             <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#3FA9F5] border-2 border-white rounded-full" />
           </div>
         </button>

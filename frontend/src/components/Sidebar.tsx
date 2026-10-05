@@ -154,7 +154,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, user,
               : "bg-[#F0F9FF] border-[#BFDFFF]/50"
           )}>
             <div className="relative shrink-0">
-              <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-full border-2 border-white shadow-sm" />
+              <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-full border-2 border-white shadow-sm object-cover" />
               <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#3FA9F5] border-2 border-white rounded-full shadow" />
             </div>
             <div className="flex-1 min-w-0">
@@ -165,7 +165,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, user,
         ) : (
           <div className="flex justify-center mb-3">
             <div className="relative">
-              <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-full border-2 border-white shadow-sm" />
+              <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-full border-2 border-white shadow-sm object-cover" />
               <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#3FA9F5] border-2 border-white rounded-full shadow" />
             </div>
           </div>
