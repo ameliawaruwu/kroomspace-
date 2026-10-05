@@ -412,6 +412,31 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
       onSuccess(t('taskCreated'));
     } else {
       setTasks(tasks.map(t => t.id === selectedTask.id ? selectedTask : t));
+
+      // Explicitly persist updated task to server
+      if (selectedTask.id && !selectedTask.id.startsWith('t') && !selectedTask.id.startsWith('temp-')) {
+        fetch(`/api/tugas/${selectedTask.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            status: selectedTask.status,
+            judul_tugas: selectedTask.title,
+            deskripsi: selectedTask.description,
+            prioritas: selectedTask.priority,
+            tipe: selectedTask.type,
+            id_penanggung_jawab: selectedTask.assignee || null,
+            checklist: selectedTask.checklist,
+            comments: selectedTask.comments,
+            attachments: selectedTask.attachments,
+            contributors: selectedTask.contributors,
+            tanggal_mulai: selectedTask.startDate,
+            tanggal_selesai: selectedTask.deadline,
+            apakah_diblokir: selectedTask.isBlocked,
+            alasan_diblokir: selectedTask.blockReason
+          })
+        }).catch(console.error);
+      }
+
       onSuccess(t('taskUpdated'));
     }
 
