@@ -55,8 +55,26 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ users, setUsers, current
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
     setFormError(null);
+
+    const cleanName = formData.name.trim();
+    if (!cleanName || cleanName.length < 2 || cleanName.length > 60) {
+      setFormError('Nama harus memiliki panjang 2 hingga 60 karakter');
+      return;
+    }
+    if (/[<>{}[\]\\\/;`~]/.test(cleanName) || /javascript:/i.test(cleanName) || /<script/i.test(cleanName)) {
+      setFormError('Nama tidak boleh mengandung karakter khusus, tag HTML, atau skrip');
+      return;
+    }
+
+    const cleanEmail = formData.email.trim().toLowerCase();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(cleanEmail)) {
+      setFormError('Format alamat email tidak valid');
+      return;
+    }
+
+    setIsSubmitting(true);
     try {
       const formattedWhatsapp = formatToE164Indonesian(formData.whatsapp);
 

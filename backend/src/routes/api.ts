@@ -690,13 +690,51 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
     }
   });
 
+  // --- Input Validation Helpers ---
+  const DISALLOWED_EMAIL_DOMAINS = [
+    'caps7.com', 'mailinator.com', 'tempmail.com', 'guerrillamail.com', '10minutemail.com',
+    'trashmail.com', 'sharklasers.com', 'throwawaymail.com', 'yopmail.com', 'dispostable.com'
+  ];
+
+  function validateName(name: any): { valid: boolean; error?: string; sanitized?: string } {
+    if (typeof name !== 'string') {
+      return { valid: false, error: "Nama harus berupa teks" };
+    }
+    const trimmed = name.trim();
+    if (trimmed.length < 2 || trimmed.length > 60) {
+      return { valid: false, error: "Nama harus memiliki panjang 2 hingga 60 karakter" };
+    }
+    // Tolak karakter HTML / script injection
+    if (/[<>{}[\]\\\/;`~]/.test(trimmed) || /javascript:/i.test(trimmed) || /data:/i.test(trimmed) || /<script/i.test(trimmed)) {
+      return { valid: false, error: "Nama tidak boleh mengandung karakter tag HTML, simbol script (<, >, dll), atau format berbahaya" };
+    }
+    return { valid: true, sanitized: trimmed };
+  }
+
+  function validateEmail(email: any): { valid: boolean; error?: string; sanitized?: string } {
+    if (typeof email !== 'string') {
+      return { valid: false, error: "Email harus berupa teks" };
+    }
+    const trimmed = email.trim().toLowerCase();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!trimmed || !emailRegex.test(trimmed)) {
+      return { valid: false, error: "Format alamat email tidak valid" };
+    }
+    const domain = trimmed.split('@')[1];
+    if (domain && DISALLOWED_EMAIL_DOMAINS.includes(domain)) {
+      return { valid: false, error: "Domain email sementara/disposable tidak diperbolehkan. Harap gunakan email asli/resmi." };
+    }
+    return { valid: true, sanitized: trimmed };
+  }
+
   // --- API Authentication ---
   app.post("/api/auth/send-register-otp", otpLimiter, async (req, res) => {
     try {
-      const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
-      if (!email || !email.includes('@')) {
-        return res.status(400).json({ error: "Email tidak valid" });
+      const emailValidation = validateEmail(req.body.email);
+      if (!emailValidation.valid) {
+        return res.status(400).json({ error: emailValidation.error });
       }
+      const email = emailValidation.sanitized!;
 
       const existingUser = await prisma.pengguna.findUnique({ where: { email } });
       if (existingUser) {
@@ -755,8 +793,23 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
 
   app.post("/api/auth/register", async (req, res) => {
     try {
-      const { name, password, avatar } = req.body;
-      const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+      const { password, avatar } = req.body;
+      const nameValidation = validateName(req.body.name);
+      if (!nameValidation.valid) {
+        return res.status(400).json({ error: nameValidation.error });
+      }
+      const name = nameValidation.sanitized!;
+
+      const emailValidation = validateEmail(req.body.email);
+      if (!emailValidation.valid) {
+        return res.status(400).json({ error: emailValidation.error });
+      }
+      const email = emailValidation.sanitized!;
+
+      if (!password || typeof password !== 'string' || password.length < 6) {
+        return res.status(400).json({ error: "Kata sandi minimal 6 karakter" });
+      }
+
       const inputOtp = typeof req.body.otp === 'string' ? req.body.otp.trim().replace(/\s+/g, '') : '';
       
       if (!inputOtp) {
@@ -1070,6 +1123,24 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
         return res.status(404).json({ error: "User tidak ditemukan" });
       }
 
+      let sanitizedName = user.nama;
+      if (name !== undefined) {
+        const nameValidation = validateName(name);
+        if (!nameValidation.valid) {
+          return res.status(400).json({ error: nameValidation.error });
+        }
+        sanitizedName = nameValidation.sanitized!;
+      }
+
+      let sanitizedEmail = user.email;
+      if (email !== undefined) {
+        const emailValidation = validateEmail(email);
+        if (!emailValidation.valid) {
+          return res.status(400).json({ error: emailValidation.error });
+        }
+        sanitizedEmail = emailValidation.sanitized!;
+      }
+
       // If password change is requested
       let updatedPassword = user.kata_sandi;
       if (newPassword) {
@@ -1088,8 +1159,8 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
       const updatedUser = await prisma.pengguna.update({
         where: { id_pengguna: id },
         data: {
-          nama: name !== undefined ? name : user.nama,
-          email: email !== undefined ? email : user.email,
+          nama: sanitizedName,
+          email: sanitizedEmail,
           whatsapp: whatsapp !== undefined ? (whatsapp ? whatsapp.trim() : null) : user.whatsapp,
           peran: (isAdmin && role !== undefined) ? role : user.peran,
           foto_profil: avatar !== undefined ? avatar : user.foto_profil,
@@ -1114,11 +1185,20 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
   app.post("/api/users", requireAdmin, async (req, res) => {
     try {
       const { name, email, whatsapp, role, password } = req.body;
-      if (!name || !email) {
-        return res.status(400).json({ error: "Nama dan email wajib diisi" });
+      const nameValidation = validateName(name);
+      if (!nameValidation.valid) {
+        return res.status(400).json({ error: nameValidation.error });
       }
 
-      const existing = await prisma.pengguna.findUnique({ where: { email } });
+      const emailValidation = validateEmail(email);
+      if (!emailValidation.valid) {
+        return res.status(400).json({ error: emailValidation.error });
+      }
+
+      const sanitizedName = nameValidation.sanitized!;
+      const sanitizedEmail = emailValidation.sanitized!;
+
+      const existing = await prisma.pengguna.findUnique({ where: { email: sanitizedEmail } });
       if (existing) {
         return res.status(400).json({ error: "Email sudah terdaftar" });
       }

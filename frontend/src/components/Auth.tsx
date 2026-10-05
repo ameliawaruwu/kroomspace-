@@ -243,8 +243,22 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
       }
     } else {
       if (registerMode === 'form') {
-        if (!name.trim() || !trimmedEmail || !trimmedPassword || !confirmPassword.trim()) {
+        const cleanName = name.trim();
+        if (!cleanName || !trimmedEmail || !trimmedPassword || !confirmPassword.trim()) {
           setError(t('allFieldsRequired'));
+          return;
+        }
+        if (cleanName.length < 2 || cleanName.length > 60) {
+          setError('Nama harus memiliki panjang 2 hingga 60 karakter');
+          return;
+        }
+        if (/[<>{}[\]\\\/;`~]/.test(cleanName) || /javascript:/i.test(cleanName) || /<script/i.test(cleanName)) {
+          setError('Nama tidak boleh mengandung karakter khusus, tag HTML, atau skrip dilarang');
+          return;
+        }
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(trimmedEmail)) {
+          setError('Format email tidak valid');
           return;
         }
         if (password !== confirmPassword) {
