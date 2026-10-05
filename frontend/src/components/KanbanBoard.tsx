@@ -107,8 +107,10 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   const [newColName, setNewColName] = useState('');
   const [columnToDelete, setColumnToDelete] = useState<string | null>(null);
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
+  const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [templateTargetStatus, setTemplateTargetStatus] = useState<string | null>(null);
   const [completionNotes, setCompletionNotes] = useState('');
   const [proofFile, setProofFile] = useState<string | null>(null);
   const [showAIChat, setShowAIChat] = useState(false);
@@ -227,17 +229,13 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
       return;
     }
     const defaultStatus = typeof status === 'string' ? status : (boardColumns[0]?.status || 'To Do');
-    if (isOperational) {
-      setShowTemplateModal(true);
-      return;
-    }
     const newTask: Task = {
       id: `t${Date.now()}`,
       title: '',
       description: '',
       status: defaultStatus,
       priority: 'Medium',
-      type: 'Development',
+      type: isOperational ? 'Maintenance' : 'Development',
       createdAt: new Date().toISOString().split('T')[0],
       projectId: currentProjectId,
       contributors: [],
@@ -253,11 +251,12 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
       onAddNotification("Proyek ini sudah selesai dan tidak dapat diubah.", "error");
       return;
     }
+    const targetStatus = templateTargetStatus || (boardColumns.some(c => c.status === 'Backlog') ? 'Backlog' : (boardColumns[0]?.status || 'To Do'));
     const newTask: Task = {
       id: `t${Date.now()}`,
       title: template.name,
       description: template.description,
-      status: 'Backlog',
+      status: targetStatus as TaskStatus,
       priority: template.priority,
       type: template.category,
       projectId: currentProjectId,
@@ -271,8 +270,8 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
     
     setTasks([...tasks, newTask]);
     setShowTemplateModal(false);
+    setTemplateTargetStatus(null);
     onSuccess(`${t('taskCreated')}: ${template.name}`);
-    
   };
 
   const handleAISuggest = async () => {
@@ -427,6 +426,28 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
     if (statusChangedToDone) {
       setDocDrawerTask(taskToDoc);
       setDocDrawerMode('add');
+    }
+  };
+
+  const handleDeleteTask = async (task: Task) => {
+    try {
+      if (task.id && !task.id.startsWith('t') && !task.id.startsWith('temp-')) {
+        const res = await fetch(`/api/tugas/${task.id}`, { method: 'DELETE' });
+        if (!res.ok) {
+          throw new Error('Gagal menghapus tugas dari server');
+        }
+      }
+      setTasks(tasks.filter(t => t.id !== task.id));
+      if (selectedTask?.id === task.id) {
+        setSelectedTask(null);
+        setIsEditing(false);
+        setIsNewTask(false);
+      }
+      setTaskToDelete(null);
+      onSuccess(t('taskDeletedSuccess'));
+    } catch (err) {
+      console.error('Error deleting task:', err);
+      alert(language === 'id' ? 'Gagal menghapus tugas' : 'Failed to delete task');
     }
   };
 
@@ -939,6 +960,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                             </button>
                             <button 
                               onClick={() => {
+                                setTemplateTargetStatus(boardColumns[0]?.status || 'To Do');
                                 setShowTemplateModal(true);
                                 setActiveMenu(null);
                               }}
@@ -1147,7 +1169,10 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                                     {t('createNewTask')}
                                   </button>
                                   <button
-                                    onClick={() => setShowTemplateModal(true)}
+                                    onClick={() => {
+                                      setTemplateTargetStatus(column.status);
+                                      setShowTemplateModal(true);
+                                    }}
                                     className="w-full px-4 py-2.5 text-left text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-blue-600 dark:hover:text-blue-400 flex items-center gap-3 transition-all font-bold"
                                   >
                                     <FileText size={18} className="text-blue-500" />
@@ -1229,7 +1254,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                                         }
                                       }}
                                       className={cn(
-                                        "rounded-xl border cursor-pointer mb-2 transition-all duration-200 overflow-hidden",
+                                        "group rounded-xl border cursor-pointer mb-2 transition-all duration-200 overflow-hidden relative",
                                         darkMode
                                           ? "bg-[#1C2B45] border-[#1E3A5F]/60 hover:border-[#3FA9F5]/50 hover:shadow-lg hover:shadow-[#3FA9F5]/10"
                                           : "bg-white border-slate-200/80 hover:border-slate-300 hover:shadow-md hover:shadow-slate-200/60",
@@ -1239,10 +1264,26 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                                     >
                                       <div className="p-3 space-y-2">
 
-                                        {/* Row 2: Title */}
-                                        <h4 id={`task-title-${task.id}`} className={cn("font-bold text-[13px] leading-snug line-clamp-2", darkMode ? "text-white" : "text-slate-800")}>
-                                          {t(task.title)}
-                                        </h4>
+                                        {/* Row 2: Title & Quick Delete */}
+                                        <div className="flex items-start justify-between gap-1.5">
+                                          <h4 id={`task-title-${task.id}`} className={cn("font-bold text-[13px] leading-snug line-clamp-2 flex-1", darkMode ? "text-white" : "text-slate-800")}>
+                                            {t(task.title)}
+                                          </h4>
+                                          {!currentProject?.apakah_selesai && (
+                                            <button
+                                              id={`btn-delete-task-card-${task.id}`}
+                                              type="button"
+                                              title={t('deleteTask')}
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                setTaskToDelete(task);
+                                              }}
+                                              className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-all flex-shrink-0 -mr-1 -mt-0.5"
+                                            >
+                                              <Trash2 size={13} />
+                                            </button>
+                                          )}
+                                        </div>
 
                                         {/* Row 3: Description */}
                                         {task.description && (
@@ -1385,21 +1426,80 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   exit={{ opacity: 0, scale: 0.95, y: 20 }}
                   className="bg-white dark:bg-slate-900 w-full max-w-4xl max-h-[85vh] overflow-hidden rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-800 flex flex-col"
                 >
-                  <div className="p-8 border-b border-slate-50 dark:border-slate-800 flex justify-between items-center">
+                  <div className="p-6 md:p-8 border-b border-slate-50 dark:border-slate-800 flex justify-between items-center gap-4">
                     <div>
                       <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">{t('selectTemplate')}</h2>
-                      <p className="text-slate-400 text-xs mt-1 font-medium italic">Pilih template untuk kebutuhan maintenance infrastruktur dan layanan API.</p>
+                      <p className="text-slate-400 text-xs mt-1 font-medium italic">Pilih template untuk kebutuhan maintenance infrastruktur dan layanan API, atau buat tugas secara manual.</p>
                     </div>
-                    <button 
-                      onClick={() => setShowTemplateModal(false)}
-                      className="p-3 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-2xl transition-colors text-slate-400"
-                    >
-                      <X size={20} />
-                    </button>
+                    <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                      <button 
+                        onClick={() => {
+                          const statusToUse = templateTargetStatus || undefined;
+                          setShowTemplateModal(false);
+                          setTemplateTargetStatus(null);
+                          handleAddTask(statusToUse);
+                        }}
+                        className="px-4 py-2.5 rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-500/20 text-xs font-bold transition-all flex items-center gap-2 border border-blue-200/60 dark:border-blue-500/20 shadow-sm"
+                      >
+                        <Plus size={16} />
+                        <span>{t('createWithoutTemplate') || 'Buat Tanpa Template'}</span>
+                      </button>
+                      <button 
+                        onClick={() => {
+                          setShowTemplateModal(false);
+                          setTemplateTargetStatus(null);
+                        }}
+                        className="p-3 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-2xl transition-colors text-slate-400"
+                      >
+                        <X size={20} />
+                      </button>
+                    </div>
                   </div>
                   
                   <div className="flex-1 overflow-y-auto p-10 bg-slate-50/30 dark:bg-slate-900/30">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Blank / Manual Task Card */}
+                      <div 
+                        onClick={() => {
+                          const statusToUse = templateTargetStatus || undefined;
+                          setShowTemplateModal(false);
+                          setTemplateTargetStatus(null);
+                          handleAddTask(statusToUse);
+                        }}
+                        className="group p-8 rounded-2xl border-2 border-dashed border-blue-400/70 dark:border-blue-500/40 bg-gradient-to-br from-blue-50/60 via-white to-sky-50/30 dark:from-slate-800/80 dark:via-slate-800 dark:to-blue-950/20 shadow-sm hover:shadow-2xl hover:shadow-blue-500/15 hover:border-blue-500 cursor-pointer transition-all duration-300 flex flex-col justify-between gap-6"
+                      >
+                        <div className="flex justify-between items-start">
+                          <div className="px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300 flex items-center gap-1.5">
+                            <Plus size={12} />
+                            Manual / Custom
+                          </div>
+                          <div className="text-[10px] font-black text-blue-500 uppercase tracking-wider">
+                            Fleksibel
+                          </div>
+                        </div>
+
+                        <div className="flex gap-4">
+                          <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border border-blue-200 dark:border-blue-700/60 bg-blue-600 text-white shadow-lg shadow-blue-500/25 group-hover:scale-105 transition-transform">
+                            <Plus size={22} />
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 group-hover:text-blue-600 transition-colors leading-tight">
+                              Buat Tugas Baru (Manual)
+                            </h3>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
+                              Mulai tugas kosong dari awal tanpa template bawaan. Tentukan judul, deskripsi, checklist, dan tenggat waktu sendiri.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="mt-auto pt-6 border-t border-blue-100 dark:border-slate-700/60 flex justify-between items-center group-hover:border-blue-500/30 transition-colors">
+                          <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest flex items-center gap-1.5">
+                            Mulai Tugas Kosong
+                          </span>
+                          <ChevronRight size={16} className="text-blue-500 group-hover:translate-x-1 transition-all" />
+                        </div>
+                      </div>
+
                       {mockTemplates.map((template) => (
                         <div 
                           key={template.id}
@@ -1651,6 +1751,17 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                     >
                       <BrainCircuit size={14} />
                       {t('aiSolution')}
+                    </button>
+                  )}
+                  {!isNewTask && !currentProject?.apakah_selesai && (
+                    <button 
+                      type="button"
+                      id="btn-delete-task-modal-header"
+                      title={t('deleteTask')}
+                      onClick={() => setTaskToDelete(selectedTask)}
+                      className="p-2.5 bg-slate-50 hover:bg-rose-50 hover:text-rose-500 dark:bg-slate-900 dark:hover:bg-rose-950/20 dark:hover:text-rose-400 border border-slate-100 dark:border-slate-800 rounded-2xl text-slate-400 transition-all"
+                    >
+                      <Trash2 size={20} />
                     </button>
                   )}
                   <button 
@@ -2295,7 +2406,20 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
               </div>
 
               {/* Modal Footer */}
-              <div className="p-6 bg-slate-50/20 dark:bg-slate-900/10 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3 transition-colors">
+              <div className="p-6 bg-slate-50/20 dark:bg-slate-900/10 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center transition-colors">
+                <div>
+                  {!isNewTask && !currentProject?.apakah_selesai && (
+                    <button
+                      type="button"
+                      id="btn-delete-task-modal-footer"
+                      onClick={() => setTaskToDelete(selectedTask)}
+                      className="flex items-center gap-2 px-4 py-2.5 text-rose-500 hover:text-white bg-rose-50 hover:bg-rose-600 dark:bg-rose-500/10 dark:hover:bg-rose-600 border border-rose-200 dark:border-rose-500/30 rounded-xl text-xs font-bold transition-all shadow-sm"
+                    >
+                      <Trash2 size={15} />
+                      <span>{t('deleteTask')}</span>
+                    </button>
+                  )}
+                </div>
                 <button 
                   onClick={handleSaveTask}
                   disabled={currentProject?.apakah_selesai}
@@ -2887,6 +3011,50 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   id="btn-confirm-delete"
                 >
                   {t('delete')}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Delete Task Modal */}
+      <AnimatePresence>
+        {taskToDelete && (
+          <div className="fixed inset-0 z-[130] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-white dark:bg-slate-800 w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden p-8 border border-slate-100 dark:border-slate-700"
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 bg-rose-50 dark:bg-rose-500/10 text-rose-500 rounded-2xl flex-shrink-0">
+                  <Trash2 size={24} />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-white">{t('deleteTask')}</h3>
+                  <p className="text-xs text-slate-400">{language === 'id' ? 'Konfirmasi Hapus' : 'Confirm Delete'}</p>
+                </div>
+              </div>
+              <p className="text-slate-600 dark:text-slate-300 text-sm mb-6 leading-relaxed">
+                {t('confirmDeleteTask').replace('{title}', taskToDelete.title)}
+              </p>
+              <div className="flex gap-3 justify-end">
+                <button 
+                  id="btn-cancel-delete-task"
+                  onClick={() => setTaskToDelete(null)}
+                  className="px-4 py-2 font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-all text-xs"
+                >
+                  {t('cancel')}
+                </button>
+                <button 
+                  id="btn-confirm-delete-task"
+                  onClick={() => handleDeleteTask(taskToDelete)}
+                  className="px-4 py-2 font-bold bg-rose-500 text-white rounded-xl shadow-lg shadow-rose-500/20 hover:bg-rose-600 transition-all text-xs flex items-center gap-1.5"
+                >
+                  <Trash2 size={14} />
+                  <span>{t('delete')}</span>
                 </button>
               </div>
             </motion.div>

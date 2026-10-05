@@ -2438,6 +2438,30 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
     }
   });
 
+  // 6. Hapus Tugas
+  app.delete("/api/tugas/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Bersihkan data relasi tugas
+      await prisma.kontributorTugas.deleteMany({ where: { id_tugas: id } });
+      await prisma.daftarPeriksa.deleteMany({ where: { id_tugas: id } });
+      await prisma.komentar.deleteMany({ where: { id_tugas: id } });
+      await prisma.lampiran.deleteMany({ where: { id_tugas: id } });
+      await prisma.dokumentasiTugas.deleteMany({ where: { id_tugas: id } });
+      await prisma.notifikasi.deleteMany({ where: { id_tugas: id } });
+
+      await prisma.tugas.delete({
+        where: { id_tugas: id }
+      });
+
+      res.json({ message: "Tugas berhasil dihapus" });
+    } catch (error) {
+      console.error("[DELETE /api/tugas/:id] Error:", error);
+      res.status(500).json({ error: "Gagal menghapus tugas" });
+    }
+  });
+
   // Dokumentasi Endpoints
   app.get("/api/dokumentasi", async (req, res) => {
     try {

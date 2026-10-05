@@ -439,6 +439,14 @@ export default function App() {
             // We need to merge them back into global tasks without losing other projects' tasks
             const prevProjectTasks = tasks.filter(t => t.projectId === currentProjectId);
             
+            // Check for deleted tasks in this project and remove from DB
+            const deletedTasks = prevProjectTasks.filter(pt => !newTasks.some(nt => nt.id === pt.id));
+            deletedTasks.forEach(dt => {
+              if (dt.id && !dt.id.startsWith('t') && !dt.id.startsWith('temp-')) {
+                fetch(`/api/tugas/${dt.id}`, { method: 'DELETE' }).catch(console.error);
+              }
+            });
+
             newTasks.forEach(task => {
               const oldTask = prevProjectTasks.find(t => t.id === task.id);
               if (oldTask) {
