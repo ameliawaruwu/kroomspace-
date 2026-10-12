@@ -142,29 +142,29 @@ export const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({ darkMode, onSucc
   };
 
   return (
-    <div className="space-y-8 relative">
-      <header className="px-4 md:px-6 py-4 md:py-5 border-b border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl sticky top-0 z-30 transition-all">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#3FA9F5] to-[#2D7FEA] flex items-center justify-center shadow-lg shadow-[#2D7FEA]/20">
-            <Key size={20} className="text-white" />
+    <div className="space-y-5 relative">
+      <header className="px-4 md:px-6 py-3 md:py-3.5 border-b border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl sticky top-0 z-30 transition-all">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#3FA9F5] to-[#2D7FEA] flex items-center justify-center shadow-md shadow-[#2D7FEA]/20">
+            <Key size={16} className="text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+            <h1 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
               {t('aiSettings')}
             </h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-0.5 font-medium text-sm">
+            <p className="text-slate-500 dark:text-slate-400 mt-0.5 font-medium text-xs">
               Konfigurasi penyedia layanan AI dan API Key untuk KroomSpace.
             </p>
           </div>
         </div>
       </header>
 
-      <div className="mx-4 md:mx-6 grid grid-cols-1 xl:grid-cols-3 gap-6 md:gap-8 max-w-7xl pb-10">
+      <div className="mx-4 md:px-0 grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-5 max-w-7xl pb-8">
         {/* Kolom Kiri: Status Kunci & Info */}
-        <div className="xl:col-span-1 space-y-6">
+        <div className="xl:col-span-1 space-y-4">
           {settingsStatus && (
-            <div className="bg-white dark:bg-slate-800 p-6 md:p-8 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm space-y-4">
-              <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300">
+            <div className="bg-white dark:bg-slate-800 p-4 md:p-5 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-xs space-y-3.5">
+              <h3 className="text-xs font-bold text-slate-700 dark:text-slate-300">
                 {t('activeKey')}
               </h3>
               
@@ -238,15 +238,15 @@ export const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({ darkMode, onSucc
 
         {/* Kolom Kanan: Form Konfigurasi */}
         <div className="xl:col-span-2">
-          <div className="bg-white dark:bg-slate-800 p-6 md:p-8 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm">
+          <div className="bg-white dark:bg-slate-800 p-5 md:p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-xs">
             {isLoadingSettings ? (
-              <div className="py-8 text-center text-sm text-slate-500 dark:text-slate-400 font-medium">
+              <div className="py-8 text-center text-xs text-slate-500 dark:text-slate-400 font-medium">
                 Loading settings...
               </div>
             ) : (
-              <form onSubmit={handleSaveSettings} className="space-y-6">
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-700 dark:text-slate-300">
+              <form onSubmit={handleSaveSettings} className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
                     {t('aiProvider')}
                   </label>
                   <select
@@ -256,7 +256,7 @@ export const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({ darkMode, onSucc
                       setProviderInput(newProv);
                       fetchAvailableModels(newProv, endpointUrlInput, apiKeyInput);
                     }}
-                    className="w-full px-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500/50 transition-all font-medium shadow-sm cursor-pointer"
+                    className="w-full px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500/50 transition-all font-medium shadow-2xs cursor-pointer"
                   >
                     <option value="Gemini">Google Gemini</option>
                     <option value="OpenAI">OpenAI</option>

@@ -623,18 +623,18 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   };
 
   return (
-    <div className={cn("min-h-screen", isBoardOpen ? "h-screen overflow-hidden" : "space-y-8 animate-in fade-in duration-700 overflow-y-auto transition-colors pb-20")}>
+    <div className={cn("min-h-screen", isBoardOpen ? "h-screen overflow-hidden" : "space-y-6 animate-in fade-in duration-700 overflow-y-auto transition-colors pb-10")}>
       {!isBoardOpen ? (
         <>
           <header className={cn(
-            "flex flex-col md:flex-row justify-between items-start md:items-center sticky top-0 z-30 px-4 md:px-6 py-4 md:py-5 backdrop-blur-xl border-b transition-all gap-4",
+            "flex flex-col md:flex-row justify-between items-start md:items-center sticky top-0 z-30 px-4 md:px-6 py-3 md:py-4 backdrop-blur-xl border-b transition-all gap-3",
             darkMode 
               ? "bg-[#0D1B35]/90 border-[#1E3A5F]/40" 
               : "bg-[#F4F8FC]/90 border-[#BFDFFF]/30"
           )}>
             <div>
-              <h1 className={cn("text-3xl font-black tracking-tight", darkMode ? "text-white" : "text-slate-800")}>{t('boards')}</h1>
-              <p className={cn("mt-1 font-medium text-sm", darkMode ? "text-slate-400" : "text-slate-500")}>{t('select')}</p>
+              <h1 className={cn("text-2xl font-black tracking-tight", darkMode ? "text-white" : "text-slate-800")}>{t('boards')}</h1>
+              <p className={cn("mt-0.5 font-medium text-xs", darkMode ? "text-slate-400" : "text-slate-500")}>{t('select')}</p>
             </div>
             <button
               onClick={() => {
@@ -645,14 +645,14 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                 setShowCreateModal(true);
               }}
               id="btn_create_project"
-              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-[#1E3A8A] to-[#3498DB] text-white text-sm font-bold rounded-xl shadow-md hover:shadow-lg hover:shadow-blue-500/25 active:scale-95 transition-all"
+              className="flex items-center gap-2 px-3.5 py-2 bg-gradient-to-r from-[#1E3A8A] to-[#3498DB] text-white text-xs font-bold rounded-xl shadow-sm hover:shadow-md hover:shadow-blue-500/20 active:scale-95 transition-all"
             >
-              <Plus size={16} />
+              <Plus size={15} />
               {t('createProject')}
             </button>
           </header>
 
-          <div className="px-4 md:px-6 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-5 md:gap-6 items-stretch">
+          <div className="px-4 md:px-6 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 items-stretch">
             {projects.map((project) => {
               const displayTasks = allTasks || tasks;
               const projectTasks = displayTasks.filter(t => t.projectId === project.id);
@@ -663,12 +663,12 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                 <motion.div
                   key={project.id}
                   id={`project-card-${project.name.toLowerCase().replace(/\s+/g, '-')}`}
-                  whileHover={{ y: -6 }}
+                  whileHover={{ y: -4 }}
                   onClick={() => {
                     setCurrentProjectId(project.id);
                     setIsBoardOpen(true);
                   }}
-                  className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-2xl hover:shadow-blue-500/10 hover:border-blue-100 dark:hover:border-blue-500/30 transition-all cursor-pointer group relative flex flex-col justify-between h-full"
+                  className="bg-white dark:bg-slate-800 p-4 md:p-5 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-xs hover:shadow-xl hover:shadow-blue-500/10 hover:border-blue-100 dark:hover:border-blue-500/30 transition-all cursor-pointer group relative flex flex-col justify-between h-full"
                 >
                   {/* Options Menu */}
                   <div className="absolute top-4 right-4" onClick={e => e.stopPropagation()}>
@@ -835,19 +835,19 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
           </div>
 </>
       ) : (
-        <div className="flex flex-col" style={{ height: 'calc(100vh - 4rem)' }}>
-          <header className="px-4 md:px-6 py-3 md:py-4 border-b border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl sticky top-0 z-30 transition-all">
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        <div className="flex flex-col" style={{ height: 'calc(100vh - 3.25rem)' }}>
+          <header className="px-4 md:px-6 py-2.5 md:py-3 border-b border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl sticky top-0 z-30 transition-all">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                  <button 
                    onClick={() => setIsBoardOpen(false)}
-                   className="p-1.5 text-slate-400 hover:text-blue-600 rounded-xl transition-all shrink-0"
+                   className="p-1 text-slate-400 hover:text-blue-600 rounded-lg transition-all shrink-0"
                    id="btn_back_to_project_list"
                  >
-                   <ChevronLeft size={22} />
+                   <ChevronLeft size={20} />
                  </button>
-                  <div className="flex items-center gap-3">
-                    <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                  <div className="flex items-center gap-2.5">
+                    <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">
                       {currentProject?.name || 'Project Board'}
                     </h2>
                     {(() => {
@@ -1091,11 +1091,11 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
             </div>
           ) : (
             <DragDropContext onDragStart={onDragStart} onDragEnd={onDragEnd}>
-              <div className="flex gap-4 md:gap-5 pb-4 px-4 md:px-6 pt-4 scrollbar-hide items-stretch overflow-y-hidden" style={{ overflowX: 'auto', flex: 1 }}>
+              <div className="flex gap-3 md:gap-3.5 pb-3 px-4 md:px-6 pt-3 scrollbar-hide items-stretch overflow-y-hidden" style={{ overflowX: 'auto', flex: 1 }}>
                 {boardColumns.map((column, index) => (
                   <div key={column.id} className="flex flex-shrink-0 h-full">
                     <div className={cn(
-                      "w-[240px] sm:w-[260px] md:w-[280px] flex-shrink-0 flex flex-col pt-3 pb-2 px-2.5 rounded-2xl select-none h-full",
+                      "w-[220px] sm:w-[240px] md:w-[255px] flex-shrink-0 flex flex-col pt-2.5 pb-2 px-2 rounded-xl select-none h-full",
                       darkMode 
                         ? "bg-[#0D1E3A]" 
                         : "bg-[#EBF5FF]"

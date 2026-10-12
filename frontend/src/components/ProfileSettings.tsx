@@ -117,17 +117,17 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
   };
 
   return (
-    <div className="space-y-8 relative">
-      <header className="px-4 md:px-6 py-4 md:py-5 border-b border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl sticky top-0 z-30 transition-all">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+    <div className="space-y-5 relative">
+      <header className="px-4 md:px-6 py-3 md:py-3.5 border-b border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl sticky top-0 z-30 transition-all">
+        <h1 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
           {t('profileSettings')}
         </h1>
-        <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-sm">{t('profileSettingsSub')}</p>
+        <p className="text-slate-500 dark:text-slate-400 mt-0.5 font-medium text-xs">{t('profileSettingsSub')}</p>
       </header>
 
-      <div className="mx-4 md:mx-6 grid grid-cols-1 xl:grid-cols-3 gap-6 md:gap-8 max-w-7xl pb-10">
-        <div className="lg:col-span-1 space-y-6">
-          <div className="bg-white dark:bg-slate-800 p-6 md:p-8 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm text-center">
+      <div className="mx-4 md:px-0 grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-5 max-w-6xl pb-8">
+        <div className="lg:col-span-1 space-y-4">
+          <div className="bg-white dark:bg-slate-800 p-4 md:p-5 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-xs text-center">
             <div className="relative inline-flex items-center justify-center group cursor-pointer">
               <input 
                 type="file" 
@@ -137,25 +137,25 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                 onChange={handleAvatarChange}
               />
               <label htmlFor="avatar-upload" className="cursor-pointer block relative">
-                <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white dark:border-slate-700 shadow-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center shrink-0">
+                <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-white dark:border-slate-700 shadow-md bg-slate-100 dark:bg-slate-700 flex items-center justify-center shrink-0">
                   <img 
                     src={formData.avatar} 
                     className="w-full h-full object-cover object-center hover:brightness-90 transition-all shrink-0" 
                     alt="Avatar" 
                   />
                 </div>
-                <div className="absolute bottom-0 right-0 p-2.5 bg-[#2D7FEA] text-white rounded-full shadow-lg hover:bg-[#1C6ED9] transition-all">
-                  <Camera size={16} />
+                <div className="absolute bottom-0 right-0 p-2 bg-[#2D7FEA] text-white rounded-full shadow-md hover:bg-[#1C6ED9] transition-all">
+                  <Camera size={14} />
                 </div>
               </label>
             </div>
-            <h3 className="mt-4 text-xl font-bold">{formData.name}</h3>
-            <p className="text-sm text-slate-500 font-bold uppercase tracking-widest mt-1">{currentUser.role}</p>
+            <h3 className="mt-3 text-lg font-bold">{formData.name}</h3>
+            <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mt-0.5">{currentUser.role}</p>
           </div>
         </div>
 
         <div className="lg:col-span-2">
-          <form onSubmit={handleSubmit} className="bg-white dark:bg-slate-800 p-10 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm space-y-8">
+          <form onSubmit={handleSubmit} className="bg-white dark:bg-slate-800 p-5 md:p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-xs space-y-5">
             {errorMsg && (
               <div className="p-4 bg-rose-50 dark:bg-rose-950/30 border border-rose-100 dark:border-rose-900/50 rounded-2xl flex items-center gap-3 text-rose-600 dark:text-rose-400 text-sm font-medium animate-in fade-in slide-in-from-top-2">
                 <AlertCircle size={20} className="shrink-0" />
@@ -231,11 +231,11 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
               id="btn_save_profile"
               disabled={isSaving}
               className={cn(
-                "w-full py-4 bg-[#2D7FEA] text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-[#1C6ED9] transition-all shadow-lg shadow-[#2D7FEA]/20",
+                "w-full py-2.5 bg-[#2D7FEA] text-white rounded-xl font-bold text-xs flex items-center justify-center gap-2 hover:bg-[#1C6ED9] transition-all shadow-xs cursor-pointer",
                 isSaving && "opacity-75 cursor-not-allowed"
               )}
             >
-              <Save size={18} />
+              <Save size={15} />
               {isSaving ? 'Menyimpan...' : t('saveChanges')}
             </button>
           </form>

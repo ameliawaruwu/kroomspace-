@@ -798,7 +798,7 @@ export default function App() {
       
       <main className={cn(
         "flex-1 min-h-screen flex flex-col relative overflow-x-hidden transition-all duration-300",
-        isSidebarCollapsed ? "lg:ml-[72px]" : "lg:ml-[250px]"
+        isSidebarCollapsed ? "lg:ml-[64px]" : "lg:ml-[225px]"
       )}>
         <Header 
           darkMode={darkMode}
@@ -809,7 +809,7 @@ export default function App() {
           unreadCount={notifications.filter(n => !n.read && (!n.userId || n.userId === currentUser.id)).length}
           sidebarCollapsed={isSidebarCollapsed}
         />
-        <div className="flex-1 overflow-y-auto scroll-smooth pt-14 md:pt-16">
+        <div className="flex-1 overflow-y-auto scroll-smooth pt-12 md:pt-13">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
@@ -817,7 +817,7 @@ export default function App() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.15 }}
-              className="pb-20"
+              className="pb-8 md:pb-10"
             >
               {renderContent()}
             </motion.div>

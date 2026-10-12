@@ -172,42 +172,42 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ users, setUsers, current
   };
 
   return (
-    <div className="space-y-8 relative">
-      <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 px-4 md:px-6 py-4 md:py-5 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border-b border-slate-100 dark:border-slate-800 sticky top-0 z-20 transition-all">
+    <div className="space-y-5 relative">
+      <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 px-4 md:px-6 py-3 md:py-3.5 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border-b border-slate-100 dark:border-slate-800 sticky top-0 z-20 transition-all">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t('User Management')}</h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-sm">{t('adminSubHeader')}</p>
+          <h1 className="text-xl md:text-2xl font-bold tracking-tight">{t('User Management')}</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-0.5 font-medium text-xs">{t('adminSubHeader')}</p>
         </div>
-        <div className="flex items-center gap-3 w-full sm:w-auto justify-end shrink-0">
-          <div className="relative w-full sm:w-56 md:w-64 group">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-blue-500 transition-colors" size={16} />
+        <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end shrink-0">
+          <div className="relative w-full sm:w-52 md:w-60 group">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-blue-500 transition-colors" size={14} />
             <input
               type="text"
               placeholder={t('searchUsers')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm font-medium shadow-2xs"
+              className="w-full pl-8 pr-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-xs font-medium shadow-2xs"
             />
           </div>
           <button
             onClick={handleOpenAdd}
-            className="flex items-center gap-2 px-4 md:px-5 py-2.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-md shadow-blue-600/25 active:scale-95 text-sm shrink-0 cursor-pointer"
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-sm shadow-blue-600/25 active:scale-95 text-xs shrink-0 cursor-pointer"
           >
-            <Plus size={18} />
+            <Plus size={15} />
             {t('addUser')}
           </button>
         </div>
       </header>
 
-      <div className="mx-4 md:mx-6 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-xl overflow-hidden">
+      <div className="mx-4 md:px-0 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden">
         <div className="overflow-x-auto table-responsive">
           <table className="w-full text-left border-collapse min-w-[600px]">
             <thead>
-              <tr className="bg-slate-50/50 dark:bg-slate-900/30 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] border-b border-slate-100 dark:border-slate-700">
-                <th className="px-6 py-4">{t('fullName')}</th>
-                <th className="px-6 py-4">Role</th>
-                <th className="px-6 py-4">{t('whatsapp')}</th>
-                <th className="px-6 py-4 text-right">{t('actions')}</th>
+              <tr className="bg-slate-50/50 dark:bg-slate-900/30 text-slate-400 text-[9.5px] font-black uppercase tracking-[0.15em] border-b border-slate-100 dark:border-slate-700">
+                <th className="px-4 py-3">{t('fullName')}</th>
+                <th className="px-4 py-3">Role</th>
+                <th className="px-4 py-3">{t('whatsapp')}</th>
+                <th className="px-4 py-3 text-right">{t('actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50 dark:divide-slate-700/50">
@@ -220,26 +220,26 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ users, setUsers, current
                     exit={{ opacity: 0 }}
                     className="group hover:bg-slate-50/50 dark:hover:bg-slate-700/30 transition-all"
                   >
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-4">
-                        <img src={user.avatar} className="w-12 h-12 rounded-full border-2 border-white dark:border-slate-700 shadow-lg object-cover object-center shrink-0 aspect-square" alt="" />
+                    <td className="px-4 py-2.5">
+                      <div className="flex items-center gap-3">
+                        <img src={user.avatar} className="w-9 h-9 rounded-full border border-white dark:border-slate-700 shadow-xs object-cover object-center shrink-0 aspect-square" alt="" />
                         <div>
-                          <p className="font-bold text-sm tracking-tight">{user.name}</p>
-                          <div className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">
-                            <Mail size={11} className="text-blue-400" />
+                          <p className="font-bold text-xs tracking-tight">{user.name}</p>
+                          <div className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+                            <Mail size={10} className="text-blue-400" />
                             {user.email}
                           </div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-2.5">
                       <div className={cn(
-                        "inline-flex items-center gap-2 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-colors",
+                        "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider border transition-colors",
                         user.role === 'Admin'
                           ? "bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-500/20"
                           : "bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-200/50 dark:border-slate-800"
                       )}>
-                        {user.role === 'Admin' ? <Shield size={14} /> : <UserIcon size={14} />}
+                        {user.role === 'Admin' ? <Shield size={12} /> : <UserIcon size={12} />}
                         {user.role}
                       </div>
                     </td>

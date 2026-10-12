@@ -408,32 +408,32 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
 
       {/* ── Header ── */}
       <header className={cn(
-        "flex flex-col xl:flex-row xl:items-center justify-between gap-6 px-4 md:px-6 py-4 md:py-5 sticky top-0 z-30 backdrop-blur-xl border-b transition-all",
+        "flex flex-col xl:flex-row xl:items-center justify-between gap-4 px-4 md:px-6 py-3 md:py-3.5 sticky top-0 z-30 backdrop-blur-xl border-b transition-all",
         darkMode ? "bg-[#0D1B35]/90 border-[#1E3A5F]/40" : "bg-[#F4F8FC]/90 border-[#BFDFFF]/30"
       )}>
         <div>
-          <div className="flex items-center gap-3 mb-1">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#3FA9F5] to-[#2D7FEA] flex items-center justify-center shadow-lg shadow-[#2D7FEA]/20">
-              <LayoutTemplate size={20} className="text-white" />
+          <div className="flex items-center gap-2.5 mb-0.5">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#3FA9F5] to-[#2D7FEA] flex items-center justify-center shadow-md shadow-[#2D7FEA]/20">
+              <LayoutTemplate size={16} className="text-white" />
             </div>
-            <h1 className={cn("text-2xl font-black tracking-tight", darkMode ? "text-white" : "text-slate-800")}>
+            <h1 className={cn("text-xl md:text-2xl font-black tracking-tight", darkMode ? "text-white" : "text-slate-800")}>
               {t('templatePageTitle')}
             </h1>
           </div>
-          <p className={cn("text-sm font-medium ml-14", darkMode ? "text-slate-400" : "text-slate-500")}>
+          <p className={cn("text-xs font-medium ml-10.5", darkMode ? "text-slate-400" : "text-slate-500")}>
             {t('templatePageDesc')}
           </p>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 xl:w-auto">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 xl:w-auto">
           <div className="relative group">
-            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={18} />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={15} />
             <input
               type="text"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder={t('searchTemplate')}
-              className="w-full pl-12 pr-5 py-3.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none focus:ring-4 focus:ring-blue-500/10 text-slate-900 dark:text-white text-sm font-medium shadow-sm transition-all"
+              className="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/10 text-slate-900 dark:text-white text-xs font-medium shadow-2xs transition-all"
             />
           </div>
 
@@ -445,11 +445,11 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                 setIsCreating(true);
               }}
               className={cn(
-                "py-3.5 px-6 rounded-2xl text-sm font-black text-white flex items-center justify-center gap-2 transition-all shrink-0",
-                "bg-gradient-to-r from-[#3FA9F5] to-[#2D7FEA] shadow-lg shadow-[#2D7FEA]/20 hover:shadow-xl hover:shadow-[#2D7FEA]/30 hover:scale-[1.02] active:scale-100"
+                "py-2 px-4 rounded-xl text-xs font-bold text-white flex items-center justify-center gap-2 transition-all shrink-0",
+                "bg-gradient-to-r from-[#3FA9F5] to-[#2D7FEA] shadow-md shadow-[#2D7FEA]/20 hover:shadow-lg hover:shadow-[#2D7FEA]/30 hover:scale-[1.02] active:scale-100"
               )}
             >
-              <Plus size={18} />
+              <Plus size={15} />
               {t('createNewTemplate')}
             </button>
           )}
@@ -457,9 +457,9 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
       </header>
 
       {/* ── Category Filters ── */}
-      <div className="px-4 md:px-6 pt-5 pb-2">
+      <div className="px-4 md:px-6 pt-3.5 pb-1.5">
         <div className={cn(
-          "inline-flex p-1.5 rounded-2xl gap-1.5 border transition-all max-w-full overflow-x-auto scrollbar-none",
+          "inline-flex p-1 rounded-xl gap-1 border transition-all max-w-full overflow-x-auto scrollbar-none",
           darkMode
             ? "bg-slate-900/50 border-slate-800/80"
             : "bg-slate-100/80 border-slate-200/60"
@@ -476,9 +476,9 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
                 className={cn(
-                  "relative px-4 py-2.5 rounded-xl text-xs font-semibold transition-all select-none shrink-0",
+                  "relative px-3 py-1.5 rounded-lg text-xs font-semibold transition-all select-none shrink-0",
                   isActive
-                    ? "bg-[#2D7FEA] text-white shadow-lg shadow-[#2D7FEA]/20"
+                    ? "bg-[#2D7FEA] text-white shadow-xs shadow-[#2D7FEA]/20"
                     : darkMode
                       ? "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
                       : "text-slate-500 hover:text-slate-800 hover:bg-white/60"
@@ -545,12 +545,12 @@ export const TaskTemplates: React.FC<ProjectTemplatesProps> = ({ onAddProject, d
             >
 
               <div>
-                <div className="p-5 pb-0">
+                <div className="p-4 pb-0">
                   {/* Title + Admin Controls */}
-                  <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-start justify-between mb-3">
                     <div className="flex flex-col min-w-0 pr-2">
                       <h3 className={cn(
-                        "text-lg font-black tracking-tight leading-tight line-clamp-2",
+                        "text-base font-extrabold tracking-tight leading-tight line-clamp-2",
                         darkMode ? "text-white" : "text-slate-900"
                       )}>
                         {t(template.name)}

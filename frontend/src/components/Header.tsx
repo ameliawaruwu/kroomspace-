@@ -26,36 +26,36 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className={cn(
-      "h-14 md:h-16 flex items-center justify-between px-3 md:px-6 fixed top-0 right-0 z-[35] transition-all duration-300",
-      sidebarCollapsed ? "left-0 lg:left-[72px]" : "left-0 lg:left-[250px]",
+      "h-12 md:h-13 flex items-center justify-between px-3 md:px-5 fixed top-0 right-0 z-[35] transition-all duration-300",
+      sidebarCollapsed ? "left-0 lg:left-[64px]" : "left-0 lg:left-[225px]",
       darkMode 
         ? "bg-[#0D1B35]/90 backdrop-blur-xl border-b border-[#1E3A5F]/50" 
-        : "bg-white/90 backdrop-blur-xl border-b border-[#BFDFFF]/40 shadow-sm shadow-[#3FA9F5]/5"
+        : "bg-white/90 backdrop-blur-xl border-b border-[#BFDFFF]/40 shadow-xs shadow-[#3FA9F5]/5"
     )}>
 
       {/* Mobile title placeholder */}
       <div className="md:hidden flex-1 pl-10">
-        <span className="font-black text-sm tracking-wider bg-gradient-to-r from-[#3FA9F5] to-[#2D7FEA] bg-clip-text text-transparent">KroomSpace</span>
+        <span className="font-black text-xs tracking-wider bg-gradient-to-r from-[#3FA9F5] to-[#2D7FEA] bg-clip-text text-transparent">KroomSpace</span>
       </div>
 
-      <div className="flex items-center gap-2 md:gap-4 ml-auto">
+      <div className="flex items-center gap-1.5 md:gap-3 ml-auto">
         {/* Dark Mode Toggle */}
         <button 
           id="btn_dark_mode"
           onClick={() => setDarkMode(!darkMode)}
           className={cn(
-            "p-2 md:p-2.5 rounded-2xl border transition-all flex items-center justify-center hover:scale-105",
+            "p-1.5 md:p-2 rounded-xl border transition-all flex items-center justify-center hover:scale-105",
             darkMode 
               ? "bg-[#1E3A5F]/50 border-[#1E3A5F]/60 text-amber-400 hover:bg-[#1E3A5F] shadow-inner" 
-              : "bg-[#F0F9FF] border-[#BFDFFF]/60 text-[#2D7FEA] hover:bg-[#DBEEFF] hover:shadow-md hover:shadow-[#3FA9F5]/10"
+              : "bg-[#F0F9FF] border-[#BFDFFF]/60 text-[#2D7FEA] hover:bg-[#DBEEFF] hover:shadow-xs hover:shadow-[#3FA9F5]/10"
           )}
         >
-          {darkMode ? <Sun size={16} className="pointer-events-none" /> : <Moon size={16} className="pointer-events-none" />}
+          {darkMode ? <Sun size={15} className="pointer-events-none" /> : <Moon size={15} className="pointer-events-none" />}
         </button>
 
         {/* Language Switcher */}
         <div className={cn(
-          "hidden md:flex items-center p-1 rounded-2xl border transition-all",
+          "hidden md:flex items-center p-0.5 rounded-xl border transition-all",
           darkMode 
             ? "bg-[#1E3A5F]/40 border-[#1E3A5F]/60" 
             : "bg-[#F0F9FF] border-[#BFDFFF]/60"
@@ -63,11 +63,11 @@ export const Header: React.FC<HeaderProps> = ({
           <button 
             onClick={() => setLanguage('en')}
             className={cn(
-              "px-4 py-2 rounded-xl text-[10px] font-black tracking-widest transition-all",
+              "px-2.5 py-1 rounded-lg text-[9px] font-black tracking-widest transition-all",
               language === 'en' 
                 ? (darkMode 
-                    ? "bg-gradient-to-r from-[#3FA9F5] to-[#2D7FEA] text-white shadow-lg" 
-                    : "bg-white text-[#2D7FEA] shadow-sm border border-[#BFDFFF]/50") 
+                    ? "bg-gradient-to-r from-[#3FA9F5] to-[#2D7FEA] text-white shadow-xs" 
+                    : "bg-white text-[#2D7FEA] shadow-xs border border-[#BFDFFF]/50") 
                 : "text-slate-400 hover:text-[#3FA9F5]"
             )}
           >
@@ -76,11 +76,11 @@ export const Header: React.FC<HeaderProps> = ({
           <button 
             onClick={() => setLanguage('id')}
             className={cn(
-              "px-4 py-2 rounded-xl text-[10px] font-black tracking-widest transition-all",
+              "px-2.5 py-1 rounded-lg text-[9px] font-black tracking-widest transition-all",
               language === 'id' 
                 ? (darkMode 
-                    ? "bg-gradient-to-r from-[#3FA9F5] to-[#2D7FEA] text-white shadow-lg" 
-                    : "bg-white text-[#2D7FEA] shadow-sm border border-[#BFDFFF]/50") 
+                    ? "bg-gradient-to-r from-[#3FA9F5] to-[#2D7FEA] text-white shadow-xs" 
+                    : "bg-white text-[#2D7FEA] shadow-xs border border-[#BFDFFF]/50") 
                 : "text-slate-400 hover:text-[#3FA9F5]"
             )}
           >
@@ -94,16 +94,15 @@ export const Header: React.FC<HeaderProps> = ({
           id="btn_notification"
           onClick={onNotificationClick}
           className={cn(
-            "p-2 md:p-2.5 rounded-2xl border shadow-sm transition-all relative group hover:scale-105",
+            "p-1.5 md:p-2 rounded-xl border shadow-xs transition-all relative group hover:scale-105",
             darkMode 
               ? "bg-[#1E3A5F]/50 border-[#1E3A5F]/60 text-slate-400 hover:text-[#3FA9F5] hover:bg-[#1E3A5F]" 
-              : "bg-[#F0F9FF] border-[#BFDFFF]/60 text-slate-400 hover:text-[#2D7FEA] hover:bg-[#DBEEFF] hover:shadow-md hover:shadow-[#3FA9F5]/10"
+              : "bg-[#F0F9FF] border-[#BFDFFF]/60 text-slate-400 hover:text-[#2D7FEA] hover:bg-[#DBEEFF] hover:shadow-xs hover:shadow-[#3FA9F5]/10"
           )}
         >
-          <Bell size={16} className="md:hidden group-hover:rotate-12 transition-transform pointer-events-none" />
-          <Bell size={18} className="hidden md:block group-hover:rotate-12 transition-transform pointer-events-none" />
+          <Bell size={15} className="group-hover:rotate-12 transition-transform pointer-events-none" />
           {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 w-4 h-4 md:w-5 md:h-5 text-white text-[9px] font-black flex items-center justify-center rounded-full border-2 border-white shadow-lg animate-in zoom-in"
+            <span className="absolute -top-1 -right-1 w-4 h-4 text-white text-[8px] font-black flex items-center justify-center rounded-full border-2 border-white shadow-xs animate-in zoom-in"
               style={{ background: 'linear-gradient(135deg, #EF4444, #DC2626)' }}>
               {unreadCount}
             </span>
@@ -115,21 +114,21 @@ export const Header: React.FC<HeaderProps> = ({
           onClick={onProfileClick}
           title={user.name}
           className={cn(
-            "p-1 rounded-full border transition-all flex items-center justify-center hover:scale-105 shrink-0 relative aspect-square",
+            "p-0.5 rounded-full border transition-all flex items-center justify-center hover:scale-105 shrink-0 relative aspect-square",
             darkMode 
               ? "bg-[#1E3A5F]/50 border-[#1E3A5F]/60 hover:bg-[#1E3A5F] hover:border-[#3FA9F5]/40" 
-              : "bg-[#F0F9FF] border-[#BFDFFF]/60 shadow-sm hover:border-[#3FA9F5]/40 hover:shadow-md hover:shadow-[#3FA9F5]/10 hover:bg-[#DBEEFF]/50"
+              : "bg-[#F0F9FF] border-[#BFDFFF]/60 shadow-xs hover:border-[#3FA9F5]/40 hover:shadow-xs hover:shadow-[#3FA9F5]/10 hover:bg-[#DBEEFF]/50"
           )}
         >
-          <div className="relative w-8 h-8 shrink-0 aspect-square">
-            <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-white dark:border-[#1C2B45] shadow-sm shrink-0 aspect-square bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
+          <div className="relative w-7 h-7 shrink-0 aspect-square">
+            <div className="w-7 h-7 rounded-full overflow-hidden border border-white dark:border-[#1C2B45] shadow-xs shrink-0 aspect-square bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
               <img 
                 src={user.avatar} 
                 alt={user.name} 
                 className="w-full h-full object-cover object-center aspect-square" 
               />
             </div>
-            <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#3FA9F5] border-2 border-white dark:border-[#1C2B45] rounded-full z-10" />
+            <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-[#3FA9F5] border-2 border-white dark:border-[#1C2B45] rounded-full z-10" />
           </div>
         </button>
       </div>

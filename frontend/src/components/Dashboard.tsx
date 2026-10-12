@@ -464,25 +464,25 @@ export const Dashboard: React.FC<DashboardProps> = ({
   };
 
   return (
-    <div className="space-y-8 pb-12 transition-colors duration-300">
+    <div className="space-y-5 pb-8 transition-colors duration-300">
       
       <header className={cn(
-        "flex flex-col sm:flex-row justify-between items-start sm:items-center px-4 md:px-8 py-5 border-b sticky top-0 z-30 backdrop-blur-md transition-all",
+        "flex flex-col sm:flex-row justify-between items-start sm:items-center px-4 md:px-6 py-3 md:py-3.5 border-b sticky top-0 z-30 backdrop-blur-md transition-all",
         darkMode ? "bg-[#0D1B35]/90 border-slate-800" : "bg-white/90 border-slate-100"
       )}>
         <div>
-          <h1 className={cn("text-2xl font-extrabold tracking-tight", darkMode ? "text-white" : "text-slate-900")}>
+          <h1 className={cn("text-xl md:text-2xl font-black tracking-tight", darkMode ? "text-white" : "text-slate-900")}>
             {language === 'en' ? 'Welcome, ' : 'Selamat Datang, '}
             <span className="text-[#3498DB]">{user.name}</span>
           </h1>
         </div>
-        <div className="flex items-center gap-3 mt-4 sm:mt-0">
+        <div className="flex items-center gap-2.5 mt-3 sm:mt-0">
           {isAdmin && (
             <div className={cn(
-              "flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[10px] font-bold uppercase tracking-widest",
+              "flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[9.5px] font-bold uppercase tracking-wider",
               darkMode ? "bg-blue-500/10 border-blue-500/30 text-blue-400" : "bg-blue-50 border-blue-100 text-blue-600"
             )}>
-              <ShieldCheck size={13} />
+              <ShieldCheck size={12} />
               Admin Mode
             </div>
           )}
@@ -490,24 +490,24 @@ export const Dashboard: React.FC<DashboardProps> = ({
             onClick={() => fetchDashboardData(true)}
             disabled={isRefreshing}
             className={cn(
-              "p-2.5 rounded-xl border transition-all active:scale-95",
+              "p-2 rounded-xl border transition-all active:scale-95",
               darkMode 
                 ? "bg-slate-800 border-slate-700 text-slate-300 hover:text-white hover:bg-slate-700" 
                 : "bg-white border-slate-200 text-slate-600 hover:text-slate-800 hover:bg-slate-50"
             )}
             title="Refresh Data"
           >
-            <RefreshCw size={15} className={cn("transition-transform duration-700", isRefreshing && "animate-spin")} />
+            <RefreshCw size={14} className={cn("transition-transform duration-700", isRefreshing && "animate-spin")} />
           </button>
         </div>
       </header>
 
       {/* Main Container */}
-      <div className="px-4 md:px-8 space-y-8">
+      <div className="px-4 md:px-6 space-y-5">
 
         {/* 4 Smart KPI Cards */}
         <section className={cn(
-          "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 lg:sticky lg:top-14 lg:md:top-16 lg:z-20 py-4 -my-4 backdrop-blur-md transition-all duration-300",
+          "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 lg:sticky lg:top-12 lg:md:top-13 lg:z-20 py-2.5 -my-2.5 backdrop-blur-md transition-all duration-300",
           darkMode ? "bg-slate-900/95" : "bg-slate-50/95"
         )}>
           {loading || !dashboardData ? (
@@ -516,27 +516,27 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <>
               {/* Card 1: Task Completed */}
               <motion.div 
-                whileHover={{ y: -4 }}
+                whileHover={{ y: -3 }}
                 className={cn(
-                  "p-6 rounded-2xl border shadow-sm flex flex-col justify-between group transition-all duration-300",
+                  "p-4 rounded-xl border shadow-xs flex flex-col justify-between group transition-all duration-300",
                   darkMode ? "bg-[#152844] border-slate-800" : "bg-white border-slate-100"
                 )}
               >
                 <div className="flex justify-between items-start">
                   <div>
-                    <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                    <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                       {language === 'en' ? 'Task Completed' : 'Tugas Selesai'}
                     </span>
-                    <h3 className={cn("text-3xl font-extrabold mt-1", darkMode ? "text-white" : "text-slate-900")}>
+                    <h3 className={cn("text-2xl font-black mt-0.5", darkMode ? "text-white" : "text-slate-900")}>
                       {dashboardData.kpis.taskCompleted.value}
                     </h3>
                   </div>
-                  <div className="p-3 rounded-xl bg-emerald-500/10 text-emerald-500">
-                    <CheckCircle2 size={20} />
+                  <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-500">
+                    <CheckCircle2 size={17} />
                   </div>
                 </div>
-                <div className="flex justify-between items-end mt-6 gap-2">
-                  <div className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
+                <div className="flex justify-between items-end mt-3 gap-2">
+                  <div className="text-[9.5px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
                     {language === 'en' ? 'vs prev week' : 'vs minggu lalu'}
                   </div>
                   <Sparkline data={dashboardData.kpis.taskCompleted.sparkline} color={COLORS.success} />
@@ -545,27 +545,27 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
               {/* Card 2: On-Time Rate */}
               <motion.div 
-                whileHover={{ y: -4 }}
+                whileHover={{ y: -3 }}
                 className={cn(
-                  "p-6 rounded-2xl border shadow-sm flex flex-col justify-between group transition-all duration-300",
+                  "p-4 rounded-xl border shadow-xs flex flex-col justify-between group transition-all duration-300",
                   darkMode ? "bg-[#152844] border-slate-800" : "bg-white border-slate-100"
                 )}
               >
                 <div className="flex justify-between items-start">
                   <div>
-                    <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                    <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                       {language === 'en' ? 'On-Time Rate' : 'Rasio Tepat Waktu'}
                     </span>
-                    <h3 className={cn("text-3xl font-extrabold mt-1", darkMode ? "text-white" : "text-slate-900")}>
+                    <h3 className={cn("text-2xl font-black mt-0.5", darkMode ? "text-white" : "text-slate-900")}>
                       {dashboardData.kpis.onTimeRate.value}%
                     </h3>
                   </div>
-                  <div className="p-3 rounded-xl bg-blue-500/10 text-blue-500">
-                    <Clock size={20} />
+                  <div className="p-2 rounded-lg bg-blue-500/10 text-blue-500">
+                    <Clock size={17} />
                   </div>
                 </div>
-                <div className="flex justify-between items-end mt-6 gap-2">
-                  <div className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
+                <div className="flex justify-between items-end mt-3 gap-2">
+                  <div className="text-[9.5px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
                     {language === 'en' ? 'vs prev rate' : 'vs rasio lalu'}
                   </div>
                   <Sparkline data={dashboardData.kpis.onTimeRate.sparkline} color={COLORS.info} />
@@ -574,27 +574,27 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
               {/* Card 3: Project Health */}
               <motion.div 
-                whileHover={{ y: -4 }}
+                whileHover={{ y: -3 }}
                 className={cn(
-                  "p-6 rounded-2xl border shadow-sm flex flex-col justify-between group transition-all duration-300",
+                  "p-4 rounded-xl border shadow-xs flex flex-col justify-between group transition-all duration-300",
                   darkMode ? "bg-[#152844] border-slate-800" : "bg-white border-slate-100"
                 )}
               >
                 <div className="flex justify-between items-start">
                   <div>
-                    <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                    <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                       {language === 'en' ? 'Project Health' : 'Kesehatan Proyek'}
                     </span>
-                    <h3 className={cn("text-3xl font-extrabold mt-1", darkMode ? "text-white" : "text-slate-900")}>
+                    <h3 className={cn("text-2xl font-black mt-0.5", darkMode ? "text-white" : "text-slate-900")}>
                       {dashboardData.kpis.aiProjectHealth.value}%
                     </h3>
                   </div>
-                  <div className="p-3 rounded-xl bg-purple-500/10 text-purple-500">
-                    <Activity size={20} />
+                  <div className="p-2 rounded-lg bg-purple-500/10 text-purple-500">
+                    <Activity size={17} />
                   </div>
                 </div>
-                <div className="flex justify-between items-end mt-6 gap-2">
-                  <div className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
+                <div className="flex justify-between items-end mt-3 gap-2">
+                  <div className="text-[9.5px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
                     {language === 'en' ? 'vs yesterday' : 'vs kemarin'}
                   </div>
                   <Sparkline data={dashboardData.kpis.aiProjectHealth.sparkline} color={COLORS.purple} />
@@ -603,27 +603,27 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
               {/* Card 4: Open Maintenance Tickets */}
               <motion.div 
-                whileHover={{ y: -4 }}
+                whileHover={{ y: -3 }}
                 className={cn(
-                  "p-6 rounded-2xl border shadow-sm flex flex-col justify-between group transition-all duration-300",
+                  "p-4 rounded-xl border shadow-xs flex flex-col justify-between group transition-all duration-300",
                   darkMode ? "bg-[#152844] border-slate-800" : "bg-white border-slate-100"
                 )}
               >
                 <div className="flex justify-between items-start">
                   <div>
-                    <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                    <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                       {language === 'en' ? 'Open Maintenance' : 'Tiket Perbaikan Aktif'}
                     </span>
-                    <h3 className={cn("text-3xl font-extrabold mt-1", darkMode ? "text-white" : "text-slate-900")}>
+                    <h3 className={cn("text-2xl font-black mt-0.5", darkMode ? "text-white" : "text-slate-900")}>
                       {dashboardData.kpis.openMaintenance.value}
                     </h3>
                   </div>
-                  <div className="p-3 rounded-xl bg-amber-500/10 text-amber-500">
-                    <Wrench size={20} />
+                  <div className="p-2 rounded-lg bg-amber-500/10 text-amber-500">
+                    <Wrench size={17} />
                   </div>
                 </div>
-                <div className="flex justify-between items-end mt-6 gap-2">
-                  <div className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
+                <div className="flex justify-between items-end mt-3 gap-2">
+                  <div className="text-[9.5px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
                     {language === 'en' ? 'vs prev week' : 'vs minggu lalu'}
                   </div>
                   <Sparkline data={dashboardData.kpis.openMaintenance.sparkline} color={COLORS.warning} />
@@ -634,25 +634,25 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </section>
 
         {/* Charts Section */}
-        <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <section className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           
           {/* Chart 1: Task Completion Trend */}
           <div className={cn(
-            "lg:col-span-2 p-6 rounded-2xl border shadow-sm",
+            "lg:col-span-2 p-4 md:p-5 rounded-2xl border shadow-xs",
             darkMode ? "bg-[#152844] border-slate-800" : "bg-white border-slate-100"
           )}>
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex justify-between items-center mb-3">
               <div>
-                <h3 className={cn("text-base font-extrabold", darkMode ? "text-white" : "text-slate-900")}>
+                <h3 className={cn("text-sm md:text-base font-extrabold", darkMode ? "text-white" : "text-slate-900")}>
                   {language === 'en' ? 'Task Completion Trend' : 'Tren Penyelesaian Tugas'}
                 </h3>
-                <p className="text-xs text-slate-400 dark:text-slate-500">
+                <p className="text-[11px] text-slate-400 dark:text-slate-500">
                   {language === 'en' ? 'Daily metrics for active and completed tasks' : 'Metrik harian tugas aktif dan diselesaikan'}
                 </p>
               </div>
             </div>
             
-            <div className="h-[280px] w-full">
+            <div className="h-[210px] w-full">
               {loading || !dashboardData ? (
                 <div className="w-full h-full bg-slate-100 dark:bg-slate-700/40 rounded-xl animate-pulse" />
               ) : (
@@ -673,21 +673,21 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       dataKey="date" 
                       tickLine={false} 
                       axisLine={false} 
-                      tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 600 }}
+                      tick={{ fill: '#94a3b8', fontSize: 9.5, fontWeight: 600 }}
                     />
                     <YAxis 
                       tickLine={false} 
                       axisLine={false} 
-                      tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 600 }}
+                      tick={{ fill: '#94a3b8', fontSize: 9.5, fontWeight: 600 }}
                     />
                     <ChartTooltip 
                       contentStyle={{
                         backgroundColor: darkMode ? '#1e293b' : '#ffffff',
                         borderColor: darkMode ? '#334155' : '#e2e8f0',
-                        borderRadius: '12px',
+                        borderRadius: '10px',
                         color: darkMode ? '#f8fafc' : '#0f172a',
                         fontFamily: 'Poppins',
-                        fontSize: '11px',
+                        fontSize: '10.5px',
                         boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
                       }}
                     />
@@ -695,7 +695,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       type="monotone" 
                       dataKey="completed" 
                       stroke={COLORS.success} 
-                      strokeWidth={3}
+                      strokeWidth={2.5}
                       fillOpacity={1} 
                       fill="url(#colorCompleted)" 
                       name={language === 'en' ? 'Completed' : 'Selesai'}
@@ -704,7 +704,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       type="monotone" 
                       dataKey="active" 
                       stroke={COLORS.purple} 
-                      strokeWidth={3}
+                      strokeWidth={2.5}
                       fillOpacity={1} 
                       fill="url(#colorActive)" 
                       name={language === 'en' ? 'Active' : 'Aktif'}
@@ -717,21 +717,21 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
           {/* Chart 2: Task Status Distribution */}
           <div className={cn(
-            "p-6 rounded-2xl border shadow-sm flex flex-col justify-between",
+            "p-4 md:p-5 rounded-2xl border shadow-xs flex flex-col justify-between",
             darkMode ? "bg-[#152844] border-slate-800" : "bg-white border-slate-100"
           )}>
             <div>
-              <h3 className={cn("text-base font-extrabold", darkMode ? "text-white" : "text-slate-900")}>
+              <h3 className={cn("text-sm md:text-base font-extrabold", darkMode ? "text-white" : "text-slate-900")}>
                 {language === 'en' ? 'Status Distribution' : 'Distribusi Status'}
               </h3>
-              <p className="text-xs text-slate-400 dark:text-slate-500 mb-6">
+              <p className="text-[11px] text-slate-400 dark:text-slate-500 mb-2">
                 {language === 'en' ? 'Task breakdown across workflow columns' : 'Pembagian tugas berdasarkan kolom alur kerja'}
               </p>
             </div>
 
-            <div className="h-[180px] w-full flex items-center justify-center relative">
+            <div className="h-[145px] w-full flex items-center justify-center relative">
               {loading || !dashboardData ? (
-                <div className="w-32 h-32 rounded-full border-8 border-slate-100 dark:border-slate-700 border-t-blue-500 animate-spin" />
+                <div className="w-24 h-24 rounded-full border-4 border-slate-100 dark:border-slate-700 border-t-blue-500 animate-spin" />
               ) : (
                 <>
                   <ResponsiveContainer width="100%" height="100%">
@@ -740,9 +740,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         data={dashboardData.charts.statusDistribution}
                         cx="50%"
                         cy="50%"
-                        innerRadius={60}
-                        outerRadius={80}
-                        paddingAngle={4}
+                        innerRadius={48}
+                        outerRadius={65}
+                        paddingAngle={3}
                         dataKey="value"
                       >
                         {dashboardData.charts.statusDistribution.map((entry: any, index: number) => (
@@ -753,8 +753,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   </ResponsiveContainer>
                   {/* Center percentage/total */}
                   <div className="absolute text-center">
-                    <p className="text-xs font-semibold text-slate-400 dark:text-slate-500">{language === 'en' ? 'Total' : 'Total'}</p>
-                    <p className={cn("text-2xl font-black", darkMode ? "text-white" : "text-slate-900")}>
+                    <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500">{language === 'en' ? 'Total' : 'Total'}</p>
+                    <p className={cn("text-xl font-black", darkMode ? "text-white" : "text-slate-900")}>
                       {dashboardData.charts.statusDistribution.reduce((acc: number, cur: any) => acc + cur.value, 0)}
                     </p>
                   </div>
@@ -777,7 +777,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </section>
 
         {/* Bottom Panel Section (3 Columns) */}
-        <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <section className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           
           {/* Column 1: My Tasks Panel */}
           <div className={cn(

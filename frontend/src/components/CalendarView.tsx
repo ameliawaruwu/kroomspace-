@@ -588,54 +588,54 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   }, [selectedTaskDetail, projects, users, language]);
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className="space-y-4 pb-8">
       {/* ── Top Header & Tab Switcher ── */}
-      <header className="px-4 md:px-8 pt-2 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <header className="px-4 md:px-6 pt-1 flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div>
-          <div className="flex items-center gap-2.5">
-            <h1 className={cn("text-2xl font-black tracking-tight", darkMode ? "text-white" : "text-slate-900")}>
+          <div className="flex items-center gap-2">
+            <h1 className={cn("text-xl md:text-2xl font-black tracking-tight", darkMode ? "text-white" : "text-slate-900")}>
               {t('calendar')} & {t('monthlyReport')}
             </h1>
-            <span className="px-2.5 py-1 rounded-xl bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 text-[10px] font-black uppercase tracking-wider border border-blue-100 dark:border-blue-800/50">
+            <span className="px-2 py-0.5 rounded-lg bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 text-[9px] font-black uppercase tracking-wider border border-blue-100 dark:border-blue-800/50">
               WIB (UTC+7)
             </span>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
             {t('calendarSubHeader')}
           </p>
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-700">
+        <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
           <button
             onClick={() => setActiveTab('calendar')}
             className={cn(
-              "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-extrabold transition-all",
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all",
               activeTab === 'calendar'
-                ? "bg-blue-600 text-white shadow-md shadow-blue-600/30"
+                ? "bg-blue-600 text-white shadow-xs shadow-blue-600/30"
                 : "text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-white"
             )}
           >
-            <CalendarIcon size={14} />
+            <CalendarIcon size={13} />
             {language === 'en' ? "Calendar" : "Kalender Papan"}
           </button>
           <button
             onClick={() => setActiveTab('monthlyReport')}
             className={cn(
-              "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-extrabold transition-all",
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all",
               activeTab === 'monthlyReport'
-                ? "bg-blue-600 text-white shadow-md shadow-blue-600/30"
+                ? "bg-blue-600 text-white shadow-xs shadow-blue-600/30"
                 : "text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-white"
             )}
           >
-            <FileText size={14} />
+            <FileText size={13} />
             {language === 'en' ? "Monthly Report & PDF" : "Laporan Bulanan & PDF"}
           </button>
         </div>
       </header>
 
       {/* Main Content Area */}
-      <div className="px-4 md:px-8 space-y-6">
+      <div className="px-4 md:px-6 space-y-4">
 
         {/* ── H-1 Deadline Warning Banner ── */}
         <AnimatePresence>
@@ -700,7 +700,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           <div className="space-y-4">
             
             {/* ── Stellarsync Header Controls Bar ── */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-800/90 p-4 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 shadow-xs print:hidden">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white dark:bg-slate-800/90 p-3 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-xs print:hidden">
               
               {/* Left Controls: < > Month Year Today */}
               <div className="flex items-center gap-2.5">

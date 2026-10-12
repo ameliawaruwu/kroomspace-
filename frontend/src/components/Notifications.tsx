@@ -70,17 +70,17 @@ export const Notifications: React.FC<NotificationsProps> = ({
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-700">
+    <div className="space-y-4 animate-in fade-in duration-700">
         <header className={cn(
-          "sticky top-0 z-30 py-6 backdrop-blur-xl border-b transition-all",
+          "sticky top-0 z-30 py-3 md:py-3.5 backdrop-blur-xl border-b transition-all",
           darkMode
             ? "bg-[#0D1B35]/90 border-[#1E3A5F]/40"
             : "bg-[#F4F8FC]/90 border-[#BFDFFF]/30"
         )}>
-          <div className="max-w-4xl mx-auto px-6 w-full flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="max-w-4xl mx-auto px-4 md:px-6 w-full flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
             <div>
-              <h1 className={cn("text-2xl font-black tracking-tight", darkMode ? "text-white" : "text-slate-800")}>{t('notifHeader')}</h1>
-              <p className={cn("mt-1 font-medium text-sm", darkMode ? "text-slate-400" : "text-slate-500")}>{t('notifSubHeader')}</p>
+              <h1 className={cn("text-xl md:text-2xl font-black tracking-tight", darkMode ? "text-white" : "text-slate-800")}>{t('notifHeader')}</h1>
+              <p className={cn("mt-0.5 font-medium text-xs", darkMode ? "text-slate-400" : "text-slate-500")}>{t('notifSubHeader')}</p>
             </div>
             <button
               onClick={() => {
@@ -94,29 +94,29 @@ export const Notifications: React.FC<NotificationsProps> = ({
                   }).catch(console.error);
                 });
               }}
-              className="px-6 py-2.5 bg-slate-900 dark:bg-slate-800 text-white dark:text-slate-200 text-sm font-bold rounded-2xl hover:bg-[#2D7FEA] transition-all shadow-lg shadow-[#2D7FEA]/10 shrink-0"
+              className="px-3.5 py-1.5 bg-slate-900 dark:bg-slate-800 text-white dark:text-slate-200 text-xs font-bold rounded-xl hover:bg-[#2D7FEA] transition-all shadow-xs shrink-0 cursor-pointer"
             >
               {t('markAllRead')}
             </button>
           </div>
         </header>
 
-        <div className="max-w-4xl mx-auto px-6 pb-10 space-y-4">
+        <div className="max-w-4xl mx-auto px-4 md:px-6 pb-8 space-y-3">
           {userNotifications.length === 0 && (
-            <div className="text-center py-20 bg-white dark:bg-slate-800/40 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
-              <Bell size={48} className="mx-auto mb-4 text-slate-200" />
-              <p className="text-slate-400 font-bold">{t('notifEmpty')}</p>
+            <div className="text-center py-16 bg-white dark:bg-slate-800/40 rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
+              <Bell size={36} className="mx-auto mb-3 text-slate-200" />
+              <p className="text-slate-400 font-bold text-xs">{t('notifEmpty')}</p>
             </div>
           )}
           <AnimatePresence initial={false}>
             {userNotifications.map((n) => (
               <motion.div
                 key={n.id}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, x: 20 }}
                 className={cn(
-                  "p-6 rounded-2xl border transition-all flex flex-col md:flex-row gap-6 relative overflow-hidden group",
+                  "p-3.5 md:p-4 rounded-xl border transition-all flex flex-col md:flex-row gap-3.5 relative overflow-hidden group",
                   n.read
                     ? "bg-white border-slate-100 dark:bg-slate-800/40 dark:border-slate-800 opacity-60 shadow-sm"
                     : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 shadow-xl shadow-slate-200/50 dark:shadow-none"
