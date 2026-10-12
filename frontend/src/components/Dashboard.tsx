@@ -269,7 +269,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     value: myTasksList.filter(t => t.status === status).length
   }));
 
-  const teamActivity = (notifications || []).slice(0, 6).map(n => {
+  const teamActivity = (notifications || []).slice(0, 4).map(n => {
     const foundUser = users?.find(u => u.id === n.userId);
     return {
       id: n.id,
@@ -302,7 +302,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   });
 
   const maintenanceOverview = sortedMaintenanceTasks
-    .slice(0, 6)
+    .slice(0, 4)
     .map(t => {
       const assigneeUser = users?.find(u => u.id === t.assignee);
       const project = projects?.find(p => p.id === t.projectId);
@@ -433,7 +433,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
       // 4. Waktu pembuatan terbaru
       return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
-    }).slice(0, 6);
+    }).slice(0, 4);
   })() : [];
 
   // Colors
@@ -781,13 +781,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
           
           {/* Column 1: My Tasks Panel */}
           <div className={cn(
-            "p-6 rounded-2xl border shadow-sm flex flex-col justify-between",
+            "p-4 md:p-5 rounded-2xl border shadow-sm flex flex-col justify-between",
             darkMode ? "bg-[#152844] border-slate-800" : "bg-white border-slate-100"
           )}>
             <div>
-              <div className="flex justify-between items-center mb-6">
-                <h3 className={cn("text-base font-extrabold flex items-center gap-2", darkMode ? "text-white" : "text-slate-900")}>
-                  <div className="w-1.5 h-5 rounded-full bg-blue-600" />
+              <div className="flex justify-between items-center mb-3.5">
+                <h3 className={cn("text-sm md:text-base font-extrabold flex items-center gap-2", darkMode ? "text-white" : "text-slate-900")}>
+                  <div className="w-1.5 h-4.5 rounded-full bg-blue-600" />
                   {t('myTasks')}
                 </h3>
                 <button 
@@ -798,20 +798,20 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 </button>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {myActiveTasks.length > 0 ? (
                   myActiveTasks.map(task => (
                     <div 
                       key={task.id}
                       onClick={() => handleExecute(task)}
                       className={cn(
-                        "group flex items-center justify-between p-3.5 rounded-xl border transition-all cursor-pointer hover:-translate-y-0.5",
+                        "group flex items-center justify-between p-2.5 rounded-xl border transition-all cursor-pointer hover:-translate-y-0.5",
                         darkMode 
                           ? "bg-slate-900/40 border-slate-800 hover:border-blue-500/30 hover:bg-slate-900/70" 
                           : "bg-slate-50 border-slate-100 hover:border-blue-500/20 hover:bg-white hover:shadow-sm"
                       )}
                     >
-                      <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex items-center gap-2.5 min-w-0">
                         <div className={cn(
                           "w-2 h-2 rounded-full shrink-0",
                           task.priority === 'High' ? "bg-red-500" :
@@ -821,9 +821,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           <h4 className={cn("text-xs font-bold truncate group-hover:text-blue-600 transition-colors", darkMode ? "text-white" : "text-slate-800")}>
                             {task.title}
                           </h4>
-                          <div className="flex items-center gap-1.5 text-[9px] text-slate-400 font-semibold uppercase mt-0.5">
+                          <div className="flex items-center gap-1.5 text-[8.5px] text-slate-400 font-semibold uppercase mt-0.5">
                             <span className={cn(
-                              "px-1.5 py-0.5 rounded text-[8px] font-extrabold uppercase",
+                              "px-1.5 py-0.2 rounded text-[7.5px] font-extrabold uppercase",
                               task.status === 'In Progress' ? "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300" :
                               task.status === 'To Do' ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300" :
                               task.status === 'Review' ? "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300" :
@@ -848,15 +848,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           e.stopPropagation();
                           handleExecute(task);
                         }}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-500/10 transition-colors shrink-0"
+                        className="p-1 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-500/10 transition-colors shrink-0"
                       >
                         {task.status === 'In Progress' ? <Check size={14} className="text-emerald-500" /> : <Play size={12} className="text-blue-500 fill-blue-500" />}
                       </button>
                     </div>
                   ))
                 ) : (
-                  <div className="py-12 border border-dashed rounded-xl border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center text-slate-400">
-                    <CheckCircle2 size={36} className="mb-2 text-emerald-500 opacity-60" />
+                  <div className="py-8 border border-dashed rounded-xl border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center text-slate-400">
+                    <CheckCircle2 size={30} className="mb-1.5 text-emerald-500 opacity-60" />
                     <p className="text-xs font-bold">{t('allTasksDone')}</p>
                   </div>
                 )}
@@ -866,21 +866,21 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
           {/* Column 2: Recent Team Activity Timeline */}
           <div className={cn(
-            "p-6 rounded-2xl border shadow-sm flex flex-col justify-between",
+            "p-4 md:p-5 rounded-2xl border shadow-sm flex flex-col justify-between",
             darkMode ? "bg-[#152844] border-slate-800" : "bg-white border-slate-100"
           )}>
             <div>
-              <h3 className={cn("text-base font-extrabold flex items-center gap-2 mb-6", darkMode ? "text-white" : "text-slate-900")}>
+              <h3 className={cn("text-sm md:text-base font-extrabold flex items-center gap-2 mb-3.5", darkMode ? "text-white" : "text-slate-900")}>
                 <Activity size={16} className="text-blue-600" />
                 {t('teamActivity')}
               </h3>
 
-              <div className="relative border-l border-slate-100 dark:border-slate-800/80 ml-2.5 pl-5 space-y-5">
+              <div className="relative border-l border-slate-100 dark:border-slate-800/80 ml-2.5 pl-4 space-y-3.5">
                 {loading || !dashboardData ? (
                   Array(4).fill(0).map((_, i) => (
-                    <div key={i} className="flex gap-3 items-center animate-pulse">
+                    <div key={i} className="flex gap-2.5 items-center animate-pulse">
                       <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700" />
-                      <div className="flex-1 space-y-2">
+                      <div className="flex-1 space-y-1.5">
                         <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-3/4" />
                         <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded w-1/4" />
                       </div>
@@ -891,10 +891,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     dashboardData.teamActivity.map((act: any) => (
                       <div key={act.id} className="relative">
                         {/* Dot indicator */}
-                        <div className="absolute -left-[26px] top-1 w-2.5 h-2.5 rounded-full border-2 border-white dark:border-slate-800 bg-blue-600" />
+                        <div className="absolute -left-[22px] top-1.5 w-2 h-2 rounded-full border-2 border-white dark:border-slate-800 bg-blue-600" />
                         
-                        <div className="flex gap-3 min-w-0 items-start">
-                          <div className="w-8 h-8 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700 shrink-0 aspect-square bg-slate-100 dark:bg-slate-700 flex items-center justify-center mt-0.5 shadow-2xs">
+                        <div className="flex gap-2.5 min-w-0 items-start">
+                          <div className="w-7 h-7 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700 shrink-0 aspect-square bg-slate-100 dark:bg-slate-700 flex items-center justify-center mt-0.5 shadow-2xs">
                             <img 
                               src={act.user.avatar} 
                               className="w-full h-full object-cover object-center aspect-square" 
@@ -914,7 +914,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       </div>
                     ))
                   ) : (
-                    <div className="py-12 flex flex-col items-center justify-center text-slate-400">
+                    <div className="py-8 flex flex-col items-center justify-center text-slate-400">
                       <p className="text-xs font-semibold">{language === 'en' ? 'No recent activities' : 'Tidak ada aktivitas baru'}</p>
                     </div>
                   )
@@ -925,23 +925,23 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
           {/* Column 3: Maintenance Overview Section */}
           <div className={cn(
-            "p-6 rounded-2xl border shadow-sm flex flex-col justify-between",
+            "p-4 md:p-5 rounded-2xl border shadow-sm flex flex-col justify-between",
             darkMode ? "bg-[#152844] border-slate-800" : "bg-white border-slate-100"
           )}>
             <div>
-              <h3 className={cn("text-base font-extrabold flex items-center gap-2 mb-6", darkMode ? "text-white" : "text-slate-900")}>
+              <h3 className={cn("text-sm md:text-base font-extrabold flex items-center gap-2 mb-3.5", darkMode ? "text-white" : "text-slate-900")}>
                 <Wrench size={16} className="text-amber-500" />
                 {language === 'en' ? 'Maintenance Overview' : 'Ikhtisar Perbaikan'}
               </h3>
 
-              <div className="space-y-3.5">
+              <div className="space-y-2">
                 {loading || !dashboardData ? (
                   Array(3).fill(0).map((_, i) => (
-                    <div key={i} className="flex flex-col gap-2 p-3 bg-slate-100 dark:bg-slate-700/20 rounded-xl animate-pulse">
-                      <div className="h-3.5 bg-slate-200 dark:bg-slate-700 rounded w-2/3" />
+                    <div key={i} className="flex flex-col gap-2 p-2.5 bg-slate-100 dark:bg-slate-700/20 rounded-xl animate-pulse">
+                      <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-2/3" />
                       <div className="flex gap-2 justify-between">
-                        <div className="h-3.5 bg-slate-200 dark:bg-slate-700 rounded w-1/4" />
-                        <div className="h-3.5 bg-slate-200 dark:bg-slate-700 rounded w-1/4" />
+                        <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-1/4" />
+                        <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-1/4" />
                       </div>
                     </div>
                   ))
@@ -951,23 +951,23 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       <div 
                         key={item.id}
                         className={cn(
-                          "p-3.5 rounded-xl border flex flex-col justify-between gap-3 hover:shadow-md transition-all duration-300",
+                          "p-2.5 rounded-xl border flex flex-col justify-between gap-1.5 hover:shadow-md transition-all duration-300",
                           darkMode ? "bg-slate-900/20 border-slate-800" : "bg-slate-50 border-slate-100"
                         )}
                       >
-                        <div className="flex justify-between items-start gap-4">
+                        <div className="flex justify-between items-start gap-3">
                           <div className="flex-1 min-w-0">
-                            <h4 className={cn("text-xs font-bold line-clamp-2", darkMode ? "text-white" : "text-slate-800")}>
+                            <h4 className={cn("text-xs font-bold line-clamp-1", darkMode ? "text-white" : "text-slate-800")}>
                               {item.title}
                             </h4>
                             {item.projectName && (
-                              <p className="text-[10px] text-slate-400 font-medium truncate mt-0.5">
+                              <p className="text-[9px] text-slate-400 font-medium truncate mt-0.5">
                                 {item.projectName}
                               </p>
                             )}
                           </div>
                           <span className={cn(
-                            "px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-wider shrink-0",
+                            "px-1.5 py-0.2 rounded text-[7.5px] font-black uppercase tracking-wider shrink-0",
                             item.priority === 'High' ? "bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400" :
                             item.priority === 'Medium' ? "bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400" :
                             "bg-blue-100 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400"
@@ -976,13 +976,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           </span>
                         </div>
                         
-                        <div className="flex justify-between items-center text-[10px] text-slate-400 font-bold">
+                        <div className="flex justify-between items-center text-[9px] text-slate-400 font-bold">
                           <div className="flex items-center gap-1.5">
                             {item.assignee ? (
                               <>
                                 <img 
                                   src={item.assignee.avatar} 
-                                  className="w-4 h-4 rounded-full" 
+                                  className="w-3.5 h-3.5 rounded-full object-cover shrink-0 aspect-square" 
                                   alt={item.assignee.name} 
                                 />
                                 <span className="truncate max-w-[80px]">{item.assignee.name}</span>
@@ -993,7 +993,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           </div>
                           
                           <span className={cn(
-                            "px-2 py-0.5 rounded-full text-[9px] font-bold",
+                            "px-1.5 py-0.2 rounded-full text-[8.5px] font-bold",
                             item.status === 'Done' ? "text-emerald-500" :
                             item.status === 'In Progress' ? "text-blue-500" : "text-slate-400"
                           )}>
@@ -1003,8 +1003,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       </div>
                     ))
                   ) : (
-                    <div className="py-12 border border-dashed rounded-xl border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center text-slate-400">
-                      <Wrench size={32} className="mb-2 opacity-40" />
+                    <div className="py-8 border border-dashed rounded-xl border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center text-slate-400">
+                      <Wrench size={28} className="mb-1.5 opacity-40" />
                       <p className="text-xs font-semibold">{language === 'en' ? 'No active tickets' : 'Tidak ada tiket aktif'}</p>
                     </div>
                   )
