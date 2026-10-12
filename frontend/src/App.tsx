@@ -11,7 +11,7 @@ import { LandingPage } from './components/LandingPage';
 import { ProfileSettings } from './components/ProfileSettings';
 import { ApiKeySettings } from './components/ApiKeySettings';
 import { CalendarView } from './components/CalendarView';
-import { mockUsers as initialUsers, mockTasks, mockProjects, mockNotifications } from './services/apiService';
+import { mockTasks, mockProjects, mockNotifications } from './services/apiService';
 import { Task, Project, User, Notification } from './types';
 import { motion, AnimatePresence } from 'motion/react';
 import { LogIn, ShieldCheck, User as UserIcon, Moon, Sun, CheckCircle2 } from 'lucide-react';
@@ -60,26 +60,22 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showLanding, setShowLanding] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
-    return localStorage.getItem('isLoggedIn') === 'true';
+    return localStorage.getItem('isLoggedIn') === 'true' && !!localStorage.getItem('token') && !!localStorage.getItem('currentUser');
   });
   const [users, setUsers] = useState<User[]>(() => {
     const saved = localStorage.getItem('users');
-    let currentUsers = saved ? JSON.parse(saved) : initialUsers;
-    
-    // Safety sync: Ensure mock users passwords are updated if they were changed in apiService
-    const syncedUsers = currentUsers.map((u: User) => {
-      const initialMatch = initialUsers.find(iu => iu.email === u.email);
-      if (initialMatch && initialMatch.password !== u.password) {
-        return { ...u, password: initialMatch.password };
-      }
-      return u;
-    });
-
-    return syncedUsers;
+    return saved ? JSON.parse(saved) : [];
   });
   const [currentUser, setCurrentUser] = useState<User>(() => {
     const saved = localStorage.getItem('currentUser');
-    return saved ? JSON.parse(saved) : initialUsers[0];
+    if (saved && localStorage.getItem('token')) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error('Gagal membaca currentUser dari localStorage', e);
+      }
+    }
+    return { id: '', name: '', email: '', role: 'Member', avatar: '' };
   });
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
@@ -284,9 +280,13 @@ export default function App() {
     setShowLanding(true);
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('currentUser');
+    localStorage.removeItem('token');
   };
 
-  const handleLogin = (user: User) => {
+  const handleLogin = (user: any) => {
+    if (user.token) {
+      localStorage.setItem('token', user.token);
+    }
     setCurrentUser(user);
     setIsLoggedIn(true);
     setShowLanding(false);

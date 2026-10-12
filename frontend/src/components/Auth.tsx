@@ -66,14 +66,13 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
     }
   }, [cooldown]);
 
-  // Bersihkan form saat berpindah antara Login dan Buat Akun agar tidak otomatis terisi
+  // Bersihkan form saat berpindah antara Login dan Buat Akun agar tidak otomatis terisi (pertahankan pesan sukses)
   React.useEffect(() => {
-    setEmail('');
     setPassword('');
     setConfirmPassword('');
     setName('');
     setRegisterOtpInput('');
-    setError('');
+    setError(prev => (prev.includes('✓') ? prev : ''));
   }, [isLogin]);
 
   const handleResendOtp = async () => {
@@ -214,7 +213,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
       }
       setLoading(true);
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000);
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
 
       try {
         const response = await fetch('/api/auth/login', {
@@ -227,6 +226,9 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
 
         const data = await response.json();
         if (response.ok) {
+          if (data.token) {
+            localStorage.setItem('token', data.token);
+          }
           onLogin(data);
         } else {
           setError(data.error || t('invalidCredentials'));
@@ -278,7 +280,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
 
         setLoading(true);
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000);
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
 
         try {
           const response = await fetch('/api/auth/send-register-otp', {
@@ -315,7 +317,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
         }
         setLoading(true);
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000);
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
 
         try {
           const response = await fetch('/api/auth/register', {
@@ -334,6 +336,9 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
 
           const data = await response.json();
           if (response.ok) {
+            if (data.token) {
+              localStorage.setItem('token', data.token);
+            }
             setUsers([...users, data]);
             setIsLogin(true);
             setRegisterMode('form');

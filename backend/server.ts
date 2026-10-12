@@ -26,6 +26,38 @@ async function startServer() {
     crossOriginResourcePolicy: { policy: "cross-origin" }
   }));
 
+  // Strict CORS policy
+  const allowedOrigins = [
+    'https://kroomspace.kroombox.com',
+    'http://localhost:3000',
+    'http://localhost:5173',
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:5173'
+  ];
+  if (process.env.APP_URL) {
+    try {
+      const appUrlOrigin = new URL(process.env.APP_URL).origin;
+      if (!allowedOrigins.includes(appUrlOrigin)) {
+        allowedOrigins.push(appUrlOrigin);
+      }
+    } catch {}
+  }
+
+  app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    if (origin && allowedOrigins.includes(origin)) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+      res.setHeader('Access-Control-Allow-Credentials', 'true');
+    }
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-User-Id, X-User-Role');
+
+    if (req.method === 'OPTIONS') {
+      return res.sendStatus(204);
+    }
+    next();
+  });
+
   app.use(express.json({ limit: '5mb' }));
   app.use(express.urlencoded({ limit: '5mb', extended: true }));
 

@@ -1,12 +1,13 @@
 import express, { Request, Response, NextFunction } from "express";
 import crypto from "crypto";
 import { prisma } from "../../lib/prisma";
-import { generateId } from "../../../frontend/src/lib/idGenerator";
+import { generateId } from "../lib/idGenerator";
 import nodemailer from "nodemailer";
 import bcrypt from "bcryptjs";
 import rateLimit from "express-rate-limit";
 import { GoogleGenAI, Type } from "@google/genai";
-import { requireAdmin } from "../middleware/auth";
+import { requireAuth, requireAdmin } from "../middleware/auth";
+import { generateToken } from "../lib/jwt";
 import { transporter, getEmailFrom } from "../config/mailer";
 import { otpStore } from "../config/otpStore";
 import { generateAIContent, getGeminiApiKey } from "../services/aiService";
@@ -362,7 +363,7 @@ export function registerRoutes(app: express.Express) {
     res.json({ tasks: mockTasks });
   });
 
-  app.post("/api/ai/analyze-priority", async (req, res) => {
+  app.post("/api/ai/analyze-priority", requireAuth, async (req, res) => {
     try {
       const { task } = req.body;
       const apiKey = await getGeminiApiKey();
@@ -401,7 +402,7 @@ export function registerRoutes(app: express.Express) {
     }
   });
 
-  app.post("/api/ai/generate-report", async (req, res) => {
+  app.post("/api/ai/generate-report", requireAuth, async (req, res) => {
     try {
       const { task, documentation, user } = req.body;
       const apiKey = await getGeminiApiKey();
@@ -513,7 +514,7 @@ export function registerRoutes(app: express.Express) {
     }
   });
 
-  app.post("/api/ai/sort-tasks", async (req, res) => {
+  app.post("/api/ai/sort-tasks", requireAuth, async (req, res) => {
     try {
       const { tasks } = req.body;
       const apiKey = await getGeminiApiKey();
@@ -558,7 +559,7 @@ export function registerRoutes(app: express.Express) {
     }
   });
 
-  app.post("/api/ai/consultation", async (req, res) => {
+  app.post("/api/ai/consultation", requireAuth, async (req, res) => {
     try {
       const { question, context, language } = req.body;
       const apiKey = await getGeminiApiKey();
@@ -867,8 +868,16 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
       
       otpStore.delete(`register_${email}`);
 
-      // Map back to frontend expected format — password TIDAK disertakan
+      const token = generateToken({
+        userId: newUser.id_pengguna,
+        email: newUser.email,
+        role: newUser.peran,
+        name: newUser.nama
+      });
+
+      // Map back to frontend expected format dengan token JWT
       res.status(201).json({
+        token,
         id: newUser.id_pengguna,
         name: newUser.nama,
         email: newUser.email,
@@ -884,7 +893,13 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
 
   app.post("/api/auth/login", authLimiter, async (req, res) => {
     try {
-      const { email, password } = req.body;
+      const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+      const password = typeof req.body.password === 'string' ? req.body.password : '';
+
+      if (!email || !password) {
+        return res.status(400).json({ error: "Email dan kata sandi wajib diisi" });
+      }
+
       const user = await prisma.pengguna.findUnique({ where: { email } });
 
       let isValid = false;
@@ -909,8 +924,16 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
         return res.status(401).json({ error: "Email atau kata sandi salah" });
       }
 
-      // Password TIDAK disertakan dalam response
+      const token = generateToken({
+        userId: user.id_pengguna,
+        email: user.email,
+        role: user.peran,
+        name: user.nama
+      });
+
+      // Kembalikan token JWT beserta info user
       res.json({
+        token,
         id: user.id_pengguna,
         name: user.nama,
         email: user.email,
@@ -1082,17 +1105,20 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
     }
   });
 
-  app.get("/api/users", async (req, res) => {
+  app.get("/api/users", requireAuth, async (req, res) => {
     try {
       const users = await prisma.pengguna.findMany();
-      // Password TIDAK disertakan dalam response
+      const isAdmin = req.user?.role === 'Admin';
+      const currentUserId = req.user?.userId;
+
+      // Password TIDAK disertakan, dan nomor WhatsApp hanya terlihat oleh admin atau pemilik akun
       res.json(users.map(u => ({
         id: u.id_pengguna,
         name: u.nama,
         email: u.email,
         role: u.peran,
         avatar: u.foto_profil,
-        whatsapp: u.whatsapp || ''
+        whatsapp: (isAdmin || u.id_pengguna === currentUserId) ? (u.whatsapp || '') : ''
       })));
     } catch (error) {
       console.error(error);
@@ -1100,12 +1126,12 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
     }
   });
 
-  app.put("/api/users/:id", async (req, res) => {
+  app.put("/api/users/:id", requireAuth, async (req, res) => {
     try {
       const { id } = req.params;
       const { name, email, whatsapp, role, avatar, currentPassword, newPassword } = req.body;
 
-      const reqUserId = req.headers['x-user-id'] as string;
+      const reqUserId = req.user?.userId;
       if (!reqUserId) {
         return res.status(401).json({ error: "Unauthorized: Harap login terlebih dahulu" });
       }
@@ -1257,16 +1283,26 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
   // --- API Endpoints CRUD Dasar (Prisma) ---
 
   // 1. Ambil semua Proyek
-  app.get("/api/proyek", async (req, res) => {
+  app.get("/api/proyek", requireAuth, async (req, res) => {
     try {
-      const { userId } = req.query;
+      const user = req.user!;
+      const isMember = user.role !== 'Admin';
+      const targetUserId = req.query.userId ? String(req.query.userId) : user.userId;
+      
+      const filter = isMember ? {
+        OR: [
+          { id_pengguna: user.userId },
+          { anggota: { some: { id_pengguna: user.userId } } }
+        ]
+      } : (req.query.userId ? {
+        OR: [
+          { id_pengguna: targetUserId },
+          { anggota: { some: { id_pengguna: targetUserId } } }
+        ]
+      } : undefined);
+
       const proyek = await prisma.proyek.findMany({
-        where: userId ? { 
-          OR: [
-            { id_pengguna: String(userId) },
-            { anggota: { some: { id_pengguna: String(userId) } } }
-          ]
-        } : undefined,
+        where: filter,
         include: { 
           kolom_papan: true,
           anggota: {
@@ -1282,10 +1318,11 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
   });
 
   // 2. Buat Proyek baru
-  app.post("/api/proyek", async (req, res) => {
+  app.post("/api/proyek", requireAuth, async (req, res) => {
     try {
       const { nama_proyek, tipe_tugas, mode_kanban, deskripsi, columns, userId } = req.body;
       const newId = await generateId('proyek', 'id_proyek');
+      const creatorId = req.user?.userId || userId || null;
       const proyekBaru = await prisma.proyek.create({
         data: {
           id_proyek: newId,
@@ -1293,7 +1330,7 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
           tipe_tugas,
           mode_kanban,
           deskripsi,
-          id_pengguna: userId || null,
+          id_pengguna: creatorId,
           ...(columns && columns.length > 0 && {
             kolom_papan: {
               create: columns.map((c: any) => ({
@@ -1315,7 +1352,7 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
   });
 
   // 2.1 Update Proyek
-  app.put("/api/proyek/:id", async (req, res) => {
+  app.put("/api/proyek/:id", requireAuth, async (req, res) => {
     try {
       const { id } = req.params;
       const { nama_proyek, tipe_tugas, mode_kanban, deskripsi, columns } = req.body;
@@ -1353,7 +1390,7 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
   });
 
   // 2.1a Delete Proyek
-  app.delete("/api/proyek/:id", async (req, res) => {
+  app.delete("/api/proyek/:id", requireAuth, async (req, res) => {
     try {
       const { id } = req.params;
       await prisma.proyek.delete({
@@ -1370,7 +1407,7 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
   // ─── API Template Proyek ───────────────────────────────────────────────────
 
   // GET semua template proyek
-  app.get("/api/proyek-templates", async (req, res) => {
+  app.get("/api/proyek-templates", requireAuth, async (req, res) => {
     try {
       const templates = await prisma.templateProyek.findMany({
         orderBy: { dibuat_pada: 'asc' },
@@ -1406,7 +1443,7 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
   });
 
   // GET satu template proyek
-  app.get("/api/proyek-templates/:id", async (req, res) => {
+  app.get("/api/proyek-templates/:id", requireAuth, async (req, res) => {
     try {
       const { id } = req.params;
       const tmpl = await prisma.templateProyek.findUnique({
@@ -1440,7 +1477,7 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
   });
 
   // POST /api/proyek-templates/generate (AI Template Generation)
-  app.post("/api/proyek-templates/generate", async (req, res) => {
+  app.post("/api/proyek-templates/generate", requireAuth, async (req, res) => {
     try {
       const { nama_template, deskripsi, kategori, tipe_tugas, mode_kanban } = req.body;
       const apiKey = await getGeminiApiKey();
@@ -1611,7 +1648,7 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
   });
 
   // POST buat template proyek baru
-  app.post("/api/proyek-templates", async (req, res) => {
+  app.post("/api/proyek-templates", requireAuth, async (req, res) => {
     try {
       const { nama_template, deskripsi, kategori, tipe_tugas, mode_kanban, kolom_papan, tugas } = req.body;
       const newId = await generateId('templateProyek', 'id_template');
@@ -1668,7 +1705,7 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
   });
 
   // DELETE template proyek
-  app.delete("/api/proyek-templates/:id", async (req, res) => {
+  app.delete("/api/proyek-templates/:id", requireAuth, async (req, res) => {
     try {
       const { id } = req.params;
       await prisma.templateProyek.delete({ where: { id_template: id } });
@@ -1680,7 +1717,7 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
   });
 
   // POST Terapkan Template → Buat Proyek + Tugas + Checklist sekaligus
-  app.post("/api/proyek-templates/:id/terapkan", async (req, res) => {
+  app.post("/api/proyek-templates/:id/terapkan", requireAuth, async (req, res) => {
     try {
       const { id } = req.params;
       const { nama_proyek, userId } = req.body;
@@ -1705,7 +1742,7 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
           deskripsi: tmpl.deskripsi,
           tipe_tugas: tmpl.kategori,
           mode_kanban: tmpl.mode_kanban,
-          id_pengguna: userId || null,
+          id_pengguna: req.user?.userId || userId || null,
           kolom_papan: {
             create: kolom.map((c: any, idx: number) => ({
               id_kolom: `KB${(kolomCounter + idx).toString().padStart(3, '0')}`,
@@ -1767,23 +1804,28 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
 
 
   // 2.2 Tambah Anggota Proyek
-  app.post("/api/proyek/:id/anggota", async (req, res) => {
+  app.post("/api/proyek/:id/anggota", requireAuth, async (req, res) => {
     try {
       const { id } = req.params;
       const { id_pengguna } = req.body;
-
-      let user = await prisma.pengguna.findUnique({ where: { id_pengguna } });
+      if (!id_pengguna) {
+        return res.status(400).json({ error: "id_pengguna wajib diisi" });
+      }
+      const user = await prisma.pengguna.findUnique({ where: { id_pengguna } });
       if (!user) {
-        // Auto-create user if missing (for mock users support)
-        user = await prisma.pengguna.create({
-          data: {
-            id_pengguna,
-            nama: "Team Member",
-            email: `${id_pengguna}@kroombox.com`,
-            kata_sandi: bcrypt.hashSync(crypto.randomBytes(12).toString('hex'), 10),
-            peran: "Member"
+        return res.status(404).json({ error: "Pengguna tidak ditemukan. Pengguna harus terdaftar terlebih dahulu." });
+      }
+
+      const existingMember = await prisma.anggotaProyek.findUnique({
+        where: {
+          id_proyek_id_pengguna: {
+            id_proyek: id,
+            id_pengguna
           }
-        });
+        }
+      });
+      if (existingMember) {
+        return res.status(400).json({ error: "Pengguna sudah menjadi anggota proyek ini." });
       }
 
       const anggotaBaru = await prisma.anggotaProyek.create({
@@ -1801,7 +1843,7 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
   });
 
   // 2.3 Hapus Anggota Proyek
-  app.delete("/api/proyek/:id/anggota/:userId", async (req, res) => {
+  app.delete("/api/proyek/:id/anggota/:userId", requireAuth, async (req, res) => {
     try {
       const { id, userId } = req.params;
       await prisma.anggotaProyek.delete({
@@ -1985,11 +2027,13 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
   });
 
   // Notifikasi Endpoints
-  app.get("/api/notifikasi", async (req, res) => {
+  app.get("/api/notifikasi", requireAuth, async (req, res) => {
     try {
-      const { userId } = req.query;
+      const user = req.user!;
+      const isMember = user.role !== 'Admin';
+      const targetUserId = isMember ? user.userId : (req.query.userId ? String(req.query.userId) : user.userId);
       const notif = await prisma.notifikasi.findMany({
-        where: userId ? { id_pengguna: String(userId) } : undefined,
+        where: { id_pengguna: targetUserId },
         orderBy: { waktu: 'desc' }
       });
       res.json(notif);
@@ -1999,15 +2043,16 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
     }
   });
 
-  app.post("/api/notifikasi", async (req, res) => {
+  app.post("/api/notifikasi", requireAuth, async (req, res) => {
     try {
       const { id_pengguna, id_tugas, pesan, tipe, sudah_dibaca } = req.body;
+      const targetUserId = id_pengguna || req.user?.userId;
 
       // Cek apakah ada notifikasi identik dalam 10 detik terakhir
       const sepuluhDetikLalu = new Date(Date.now() - 10 * 1000);
       const notifSama = await prisma.notifikasi.findFirst({
         where: {
-          id_pengguna,
+          id_pengguna: targetUserId,
           id_tugas: id_tugas || null,
           pesan,
           tipe,
@@ -2025,7 +2070,7 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
       const notifBaru = await prisma.notifikasi.create({
         data: {
           id_notifikasi: newId,
-          id_pengguna,
+          id_pengguna: targetUserId,
           id_tugas,
           pesan,
           tipe,
@@ -2039,7 +2084,7 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
     }
   });
 
-  app.put("/api/notifikasi/:id", async (req, res) => {
+  app.put("/api/notifikasi/:id", requireAuth, async (req, res) => {
     try {
       const { id } = req.params;
       const { sudah_dibaca } = req.body;
@@ -2054,7 +2099,7 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
     }
   });
 
-  app.delete("/api/notifikasi/:id", async (req, res) => {
+  app.delete("/api/notifikasi/:id", requireAuth, async (req, res) => {
     try {
       const { id } = req.params;
       await prisma.notifikasi.delete({
@@ -2068,18 +2113,15 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
   });
 
   // REST API Endpoint for KroomSpace Dashboard
-  app.get("/api/dashboard", async (req, res) => {
+  app.get("/api/dashboard", requireAuth, async (req, res) => {
     try {
-      const { userId } = req.query;
+      const authUser = req.user!;
+      const isMember = authUser.role !== 'Admin';
+      const userId = isMember ? authUser.userId : (req.query.userId ? String(req.query.userId) : authUser.userId);
       
-      let user = null;
-      if (userId) {
-        user = await prisma.pengguna.findUnique({
-          where: { id_pengguna: String(userId) }
-        });
-      }
-
-      const isMember = user && user.peran === 'Member';
+      const user = await prisma.pengguna.findUnique({
+        where: { id_pengguna: userId }
+      });
       
       const tasksWhereClause = isMember ? {
         OR: [
@@ -2316,18 +2358,30 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
   });
 
   // 3. Ambil semua Tugas
-  app.get("/api/tugas", async (req, res) => {
+  app.get("/api/tugas", requireAuth, async (req, res) => {
     try {
-      const { userId } = req.query;
+      const user = req.user!;
+      const isMember = user.role !== 'Admin';
+      const targetUserId = isMember ? user.userId : (req.query.userId ? String(req.query.userId) : user.userId);
+
+      const filter = isMember ? {
+        proyek: {
+          OR: [
+            { id_pengguna: user.userId },
+            { anggota: { some: { id_pengguna: user.userId } } }
+          ]
+        }
+      } : (req.query.userId ? {
+        proyek: {
+          OR: [
+            { id_pengguna: targetUserId },
+            { anggota: { some: { id_pengguna: targetUserId } } }
+          ]
+        }
+      } : undefined);
+
       const tugas = await prisma.tugas.findMany({
-        where: userId ? { 
-          proyek: { 
-            OR: [
-              { id_pengguna: String(userId) },
-              { anggota: { some: { id_pengguna: String(userId) } } }
-            ]
-          }
-        } : undefined,
+        where: filter,
         include: {
           proyek: true,
           penanggung_jawab: true,
@@ -2345,7 +2399,7 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
   });
 
   // 4. Buat Tugas baru
-  app.post("/api/tugas", async (req, res) => {
+  app.post("/api/tugas", requireAuth, async (req, res) => {
     try {
       const { id_proyek, judul_tugas, deskripsi, status, prioritas, tipe, id_penanggung_jawab, checklist, comments, attachments, contributors, catatan_selesai, tanggal_mulai, tanggal_selesai, apakah_diblokir, alasan_diblokir } = req.body;
       const newId = await generateId('tugas', 'id_tugas');
@@ -2354,22 +2408,22 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
       let baseCommentId = comments && comments.length > 0 ? parseInt((await generateId('komentar', 'id_komentar')).match(/\d+$/)?.[0] || '1') : 1;
       let baseAttachId = attachments && attachments.length > 0 ? parseInt((await generateId('lampiran', 'id_lampiran')).match(/\d+$/)?.[0] || '1') : 1;
 
-      // Auto-create missing users for assignment/contributors
-      const usersToCheck = [];
-      if (id_penanggung_jawab) usersToCheck.push(id_penanggung_jawab);
-      if (contributors && contributors.length > 0) usersToCheck.push(...contributors);
-      for (const uid of usersToCheck) {
-        let user = await prisma.pengguna.findUnique({ where: { id_pengguna: uid } });
-        if (!user) {
-          await prisma.pengguna.create({
-            data: {
-              id_pengguna: uid,
-              nama: "Team Member",
-              email: `${uid}@kroombox.com`,
-              kata_sandi: bcrypt.hashSync(crypto.randomBytes(12).toString('hex'), 10),
-              peran: "Member"
-            }
-          });
+      // Validate assigned user and contributors exist in database (do NOT auto-create phantom accounts)
+      let validatedPenanggungJawab = null;
+      if (id_penanggung_jawab) {
+        const user = await prisma.pengguna.findUnique({ where: { id_pengguna: id_penanggung_jawab } });
+        if (user) {
+          validatedPenanggungJawab = id_penanggung_jawab;
+        }
+      }
+
+      let validContributors: string[] = [];
+      if (Array.isArray(contributors) && contributors.length > 0) {
+        for (const uid of contributors) {
+          const user = await prisma.pengguna.findUnique({ where: { id_pengguna: uid } });
+          if (user) {
+            validContributors.push(uid);
+          }
         }
       }
 
@@ -2377,7 +2431,7 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
         data: {
           id_tugas: newId,
           id_proyek,
-          id_penanggung_jawab: id_penanggung_jawab || null,
+          id_penanggung_jawab: validatedPenanggungJawab,
           judul_tugas,
           deskripsi,
           status,
@@ -2387,9 +2441,9 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
           tanggal_selesai: tanggal_selesai ? new Date(tanggal_selesai) : null,
           apakah_diblokir: apakah_diblokir || false,
           alasan_diblokir: alasan_diblokir || null,
-          ...(contributors && contributors.length > 0 && {
+          ...(validContributors.length > 0 && {
             kontributor: {
-              create: contributors.map((c: string) => ({ id_pengguna: c }))
+              create: validContributors.map((c: string) => ({ id_pengguna: c }))
             }
           }),
           ...(checklist && checklist.length > 0 && {
@@ -2435,7 +2489,7 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
   });
 
   // 5. Update Tugas
-  app.put("/api/tugas/:id", async (req, res) => {
+  app.put("/api/tugas/:id", requireAuth, async (req, res) => {
     try {
       const { id } = req.params;
       const { status, judul_tugas, deskripsi, prioritas, tipe, id_penanggung_jawab, checklist, comments, attachments, contributors, catatan_selesai, tanggal_mulai, tanggal_selesai, apakah_diblokir, alasan_diblokir } = req.body;
@@ -2526,7 +2580,7 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
   });
 
   // 6. Hapus Tugas
-  app.delete("/api/tugas/:id", async (req, res) => {
+  app.delete("/api/tugas/:id", requireAuth, async (req, res) => {
     try {
       const { id } = req.params;
       
@@ -2550,7 +2604,7 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
   });
 
   // Dokumentasi Endpoints
-  app.get("/api/dokumentasi", async (req, res) => {
+  app.get("/api/dokumentasi", requireAuth, async (req, res) => {
     try {
       const dokumentasi = await prisma.dokumentasiTugas.findMany({
         include: { pengguna: true }
@@ -2562,15 +2616,16 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
     }
   });
 
-  app.post("/api/dokumentasi", async (req, res) => {
+  app.post("/api/dokumentasi", requireAuth, async (req, res) => {
     try {
       const { id_tugas, id_pengguna, catatan_selesai, kendala, solusi } = req.body;
+      const targetUserId = req.user?.userId || id_pengguna;
       const newId = await generateId('dokumentasiTugas', 'id_dokumentasi');
       const docBaru = await prisma.dokumentasiTugas.create({
         data: {
           id_dokumentasi: newId,
           id_tugas,
-          id_pengguna,
+          id_pengguna: targetUserId,
           catatan_selesai,
           kendala,
           solusi
@@ -2584,7 +2639,7 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
     }
   });
 
-  app.delete("/api/dokumentasi/:id", async (req, res) => {
+  app.delete("/api/dokumentasi/:id", requireAuth, async (req, res) => {
     try {
       const { id } = req.params;
       await prisma.dokumentasiTugas.delete({
@@ -2598,7 +2653,7 @@ This adds the required Access-Control-Allow-Origin header to the responses.`;
   });
 
   // Maintenance Report Endpoint
-  app.post("/api/maintenance/report", async (req, res) => {
+  app.post("/api/maintenance/report", requireAuth, async (req, res) => {
     try {
       const { to_email, subject, summary_text } = req.body;
       if (!to_email || !summary_text) {
