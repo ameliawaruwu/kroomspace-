@@ -648,11 +648,10 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
               className="flex items-center gap-2 px-3.5 py-2 bg-gradient-to-r from-[#1E3A8A] to-[#3498DB] text-white text-xs font-bold rounded-xl shadow-sm hover:shadow-md hover:shadow-blue-500/20 active:scale-95 transition-all"
             >
               <Plus size={15} />
-              {t('createProject')}
             </button>
           </header>
 
-          <div className="px-4 md:px-6 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 items-stretch">
+          <div className="px-4 md:px-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3.5 items-start">
             {projects.map((project) => {
               const displayTasks = allTasks || tasks;
               const projectTasks = displayTasks.filter(t => t.projectId === project.id);
@@ -663,15 +662,15 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                 <motion.div
                   key={project.id}
                   id={`project-card-${project.name.toLowerCase().replace(/\s+/g, '-')}`}
-                  whileHover={{ y: -4 }}
+                  whileHover={{ y: -3 }}
                   onClick={() => {
                     setCurrentProjectId(project.id);
                     setIsBoardOpen(true);
                   }}
-                  className="bg-white dark:bg-slate-800 p-4 md:p-5 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-xs hover:shadow-xl hover:shadow-blue-500/10 hover:border-blue-100 dark:hover:border-blue-500/30 transition-all cursor-pointer group relative flex flex-col justify-between h-full"
+                  className="bg-white dark:bg-slate-800 p-3.5 sm:p-4 rounded-xl border border-slate-100 dark:border-slate-700 shadow-xs hover:shadow-lg hover:shadow-blue-500/10 hover:border-blue-100 dark:hover:border-blue-500/30 transition-all cursor-pointer group relative flex flex-col"
                 >
                   {/* Options Menu */}
-                  <div className="absolute top-4 right-4" onClick={e => e.stopPropagation()}>
+                  <div className="absolute top-3 right-3 z-10" onClick={e => e.stopPropagation()}>
                     <div className="relative">
                       <button
                         id={`btn_menu_${project.id}`}
@@ -680,13 +679,13 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                           const menu = document.getElementById(`menu_dropdown_${project.id}`);
                           if (menu) menu.classList.toggle('hidden');
                         }}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all"
+                        className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all"
                       >
-                        <MoreVertical size={16} />
+                        <MoreVertical size={14} />
                       </button>
                       <div
                         id={`menu_dropdown_${project.id}`}
-                        className="hidden absolute right-0 top-8 z-20 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl overflow-hidden min-w-[140px]"
+                        className="hidden absolute right-0 top-7 z-20 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl overflow-hidden min-w-[120px]"
                       >
                         <button
                           onClick={(e) => {
@@ -698,10 +697,10 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                             setEditingProjectId(project.id);
                             setShowCreateModal(true);
                           }}
-                          className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-blue-500/10 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                          className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-blue-500/10 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                           id="btn_edit_proyek"
                         >
-                          <Pencil size={14} />
+                          <Pencil size={12} />
                           Edit
                         </button>
                         <button
@@ -710,130 +709,129 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                             document.getElementById(`menu_dropdown_${project.id}`)?.classList.add('hidden');
                             setProjectToDelete(project);
                           }}
-                          className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
+                          className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
                           id="btn-hapus-proyek"
                         >
-                          <Trash2 size={14} />
+                          <Trash2 size={12} />
                           Hapus
                         </button>
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex flex-col flex-1">
+                  <div className="flex flex-col">
                     {/* Badge Model Proyek vs Operasional */}
-                    <div className="mb-3 flex items-center justify-between pr-8">
+                    <div className="mb-2 flex items-center justify-between pr-6">
                       <span className={cn(
-                        "px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 border shadow-2xs",
+                        "px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider flex items-center gap-1 border shadow-2xs",
                         (project.mode === 'Operational' || project.type === 'Maintenance')
                           ? "bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800/50"
                           : "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800/50"
                       )}>
                         {(project.mode === 'Operational' || project.type === 'Maintenance') ? (
                           <>
-                            <Wrench size={12} className="text-amber-500" />
+                            <Wrench size={10} className="text-amber-500" />
                             {language === 'en' ? 'Operational' : 'Operasional'}
                           </>
                         ) : (
                           <>
-                            <Briefcase size={12} className="text-blue-500" />
+                            <Briefcase size={10} className="text-blue-500" />
                             {language === 'en' ? 'Project' : 'Proyek'}
                           </>
                         )}
                       </span>
                       {(project.apakah_selesai || (progress === 100 && projectTasks.length > 0)) && (
-                        <span className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 border bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/50 shadow-2xs">
-                          <CheckCircle2 size={12} className="text-emerald-500" />
+                        <span className="px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider flex items-center gap-1 border bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/50 shadow-2xs">
+                          <CheckCircle2 size={10} className="text-emerald-500" />
                           {language === 'en' ? 'Done' : 'Selesai'}
                         </span>
                       )}
                     </div>
 
                     {/* Title */}
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 group-hover:text-blue-600 transition-colors pr-8 line-clamp-2 min-h-[56px] flex items-center">
+                    <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white mb-1 group-hover:text-blue-600 transition-colors pr-6 line-clamp-1">
                       {t(project.name)}
                     </h3>
 
                     {/* Description */}
-                    <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 mb-6 font-medium leading-relaxed min-h-[42px]">
-                      {t(project.description)}
+                    <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mb-3 font-normal leading-relaxed">
+                      {t(project.description) || (language === 'en' ? 'No description available' : 'Tidak ada deskripsi')}
                     </p>
                   </div>
 
-                  <div className="mt-auto">
+                  <div>
                     {/* Progress */}
-                    <div className="space-y-3 mb-6">
-                      <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-wider">
+                    <div className="pt-2.5 border-t border-slate-100 dark:border-slate-700/60 mb-2.5 space-y-1.5">
+                      <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-wider">
                         <span className="text-slate-400 dark:text-slate-500">
                           {progress}% {t('taskPercentComplete')}
                         </span>
                         <span className="text-slate-400 dark:text-slate-500">{completedCount} / {projectTasks.length} {t('tasksLabel')}</span>
                       </div>
-                      <div className="h-2 bg-slate-50 dark:bg-slate-900 rounded-full overflow-hidden border border-slate-100 dark:border-slate-800">
+                      <div className="h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
                         <motion.div
                           initial={{ width: 0 }}
                           animate={{ width: `${progress}%` }}
-                          className="h-full bg-blue-500 rounded-full shadow-sm"
+                          className="h-full bg-blue-500 rounded-full shadow-2xs"
                         />
                       </div>
                     </div>
 
                     {/* Open Board & Members */}
-                    <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800">
-                    <div className="flex -space-x-2 items-center">
-                      {(() => {
-                        const cardOwner = dbUsers.find(u => String(u.id) === String((project as any).id_pengguna)) || 
-                          (user && String(user.id) === String((project as any).id_pengguna) ? user : null);
-                        const cardMembers = (project.anggota || []).map((a: any) => {
-                          const targetId = typeof a === 'object' && a !== null ? (a.id_pengguna || a.id) : a;
-                          const found = dbUsers.find(u => String(u.id) === String(targetId));
-                          if (found) return found;
-                          if (a.pengguna) return { id: a.pengguna.id_pengguna, name: a.pengguna.nama, avatar: a.pengguna.foto_profil };
-                          return null;
-                        }).filter(Boolean);
-                        const cardAll = [cardOwner, ...cardMembers].filter((v, i, arr) => 
-                          v && arr.findIndex((t: any) => String(t?.id || t?.id_pengguna) === String(v?.id || v?.id_pengguna)) === i
-                        );
+                    <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
+                      <div className="flex -space-x-1.5 items-center">
+                        {(() => {
+                          const cardOwner = dbUsers.find(u => String(u.id) === String((project as any).id_pengguna)) || 
+                            (user && String(user.id) === String((project as any).id_pengguna) ? user : null);
+                          const cardMembers = (project.anggota || []).map((a: any) => {
+                            const targetId = typeof a === 'object' && a !== null ? (a.id_pengguna || a.id) : a;
+                            const found = dbUsers.find(u => String(u.id) === String(targetId));
+                            if (found) return found;
+                            if (a.pengguna) return { id: a.pengguna.id_pengguna, name: a.pengguna.nama, avatar: a.pengguna.foto_profil };
+                            return null;
+                          }).filter(Boolean);
+                          const cardAll = [cardOwner, ...cardMembers].filter((v, i, arr) => 
+                            v && arr.findIndex((t: any) => String(t?.id || t?.id_pengguna) === String(v?.id || v?.id_pengguna)) === i
+                          );
 
-                        return (
-                          <>
-                            {cardAll.slice(0, 4).map((member: any, i: number) => {
-                              const name = member.name || member.nama || 'User';
-                              const avatar = member.avatar || member.foto_profil;
-                              return (
-                                <div 
-                                  key={member.id || i}
-                                  className="w-7 h-7 rounded-full border-2 border-white dark:border-slate-800 bg-gradient-to-tr from-blue-600 to-indigo-500 text-white text-[10px] font-bold flex items-center justify-center overflow-hidden shrink-0 shadow-xs"
-                                  title={name}
-                                >
-                                  {avatar ? (
-                                    <img src={avatar} alt={name} className="w-full h-full object-cover" />
-                                  ) : (
-                                    name.charAt(0).toUpperCase()
-                                  )}
+                          return (
+                            <>
+                              {cardAll.slice(0, 4).map((member: any, i: number) => {
+                                const name = member.name || member.nama || 'User';
+                                const avatar = member.avatar || member.foto_profil;
+                                return (
+                                  <div 
+                                    key={member.id || i}
+                                    className="w-5.5 h-5.5 rounded-full border border-white dark:border-slate-800 bg-gradient-to-tr from-blue-600 to-indigo-500 text-white text-[8.5px] font-bold flex items-center justify-center overflow-hidden shrink-0 shadow-2xs"
+                                    title={name}
+                                  >
+                                    {avatar ? (
+                                      <img src={avatar} alt={name} className="w-full h-full object-cover" />
+                                    ) : (
+                                      name.charAt(0).toUpperCase()
+                                    )}
+                                  </div>
+                                );
+                              })}
+                              {cardAll.length > 4 && (
+                                <div className="w-5.5 h-5.5 rounded-full border border-white dark:border-slate-800 bg-slate-100 dark:bg-slate-700 text-slate-500 text-[8.5px] font-bold flex items-center justify-center shrink-0">
+                                  +{cardAll.length - 4}
                                 </div>
-                              );
-                            })}
-                            {cardAll.length > 4 && (
-                              <div className="w-7 h-7 rounded-full border-2 border-white dark:border-slate-800 bg-slate-100 dark:bg-slate-700 text-slate-500 text-[10px] font-bold flex items-center justify-center shrink-0">
-                                +{cardAll.length - 4}
-                              </div>
-                            )}
-                          </>
-                        );
-                      })()}
-                    </div>
-                    <div className="flex items-center gap-1.5 text-blue-500 dark:text-blue-400 font-bold text-xs uppercase tracking-tight">
-                      {t('openBoard')} <ChevronRight size={14} />
+                              )}
+                            </>
+                          );
+                        })()}
+                      </div>
+                      <div className="flex items-center gap-1 text-blue-500 dark:text-blue-400 font-bold text-[11px] uppercase tracking-tight">
+                        {t('openBoard')} <ChevronRight size={12} />
+                      </div>
                     </div>
                   </div>
-                </div>
-              </motion.div>
+                </motion.div>
               );
             })}
-
           </div>
-</>
+        </>
       ) : (
         <div className="flex flex-col" style={{ height: 'calc(100vh - 3.25rem)' }}>
           <header className="px-4 md:px-6 py-2.5 md:py-3 border-b border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl sticky top-0 z-30 transition-all">
