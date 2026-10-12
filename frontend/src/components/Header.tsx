@@ -113,16 +113,23 @@ export const Header: React.FC<HeaderProps> = ({
         {/* User Profile Button */}
         <button 
           onClick={onProfileClick}
+          title={user.name}
           className={cn(
-            "p-1.5 rounded-2xl border transition-all flex items-center justify-center hover:scale-105 shrink-0",
+            "p-1 rounded-full border transition-all flex items-center justify-center hover:scale-105 shrink-0 relative aspect-square",
             darkMode 
               ? "bg-[#1E3A5F]/50 border-[#1E3A5F]/60 hover:bg-[#1E3A5F] hover:border-[#3FA9F5]/40" 
               : "bg-[#F0F9FF] border-[#BFDFFF]/60 shadow-sm hover:border-[#3FA9F5]/40 hover:shadow-md hover:shadow-[#3FA9F5]/10 hover:bg-[#DBEEFF]/50"
           )}
         >
-          <div className="relative">
-            <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-full border-2 border-white shadow-sm shrink-0 object-cover" />
-            <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#3FA9F5] border-2 border-white rounded-full" />
+          <div className="relative w-8 h-8 shrink-0 aspect-square">
+            <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-white dark:border-[#1C2B45] shadow-sm shrink-0 aspect-square bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
+              <img 
+                src={user.avatar} 
+                alt={user.name} 
+                className="w-full h-full object-cover object-center aspect-square" 
+              />
+            </div>
+            <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#3FA9F5] border-2 border-white dark:border-[#1C2B45] rounded-full z-10" />
           </div>
         </button>
       </div>

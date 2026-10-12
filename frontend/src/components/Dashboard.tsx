@@ -893,12 +893,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         {/* Dot indicator */}
                         <div className="absolute -left-[26px] top-1 w-2.5 h-2.5 rounded-full border-2 border-white dark:border-slate-800 bg-blue-600" />
                         
-                        <div className="flex gap-3 min-w-0">
-                          <img 
-                            src={act.user.avatar} 
-                            className="w-8 h-8 rounded-full border border-slate-200 dark:border-slate-700 shrink-0 object-cover" 
-                            alt={act.user.name} 
-                          />
+                        <div className="flex gap-3 min-w-0 items-start">
+                          <div className="w-8 h-8 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700 shrink-0 aspect-square bg-slate-100 dark:bg-slate-700 flex items-center justify-center mt-0.5 shadow-2xs">
+                            <img 
+                              src={act.user.avatar} 
+                              className="w-full h-full object-cover object-center aspect-square" 
+                              alt={act.user.name} 
+                            />
+                          </div>
                           <div className="min-w-0">
                             <p className={cn("text-xs font-semibold leading-relaxed", darkMode ? "text-slate-300" : "text-slate-700")}>
                               <span className={cn("font-bold mr-1", darkMode ? "text-white" : "text-slate-900")}>{act.user.name}</span>

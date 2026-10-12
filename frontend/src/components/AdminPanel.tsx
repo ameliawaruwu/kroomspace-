@@ -222,7 +222,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ users, setUsers, current
                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-4">
-                        <img src={user.avatar} className="w-12 h-12 rounded-full border-2 border-white dark:border-slate-700 shadow-lg" alt="" />
+                        <img src={user.avatar} className="w-12 h-12 rounded-full border-2 border-white dark:border-slate-700 shadow-lg object-cover object-center shrink-0 aspect-square" alt="" />
                         <div>
                           <p className="font-bold text-sm tracking-tight">{user.name}</p>
                           <div className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">

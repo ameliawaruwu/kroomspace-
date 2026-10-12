@@ -332,7 +332,7 @@ export const DocumentationDrawer: React.FC<DocumentationDrawerProps> = ({
 
                 {/* Author info */}
                 <div className={cn("flex items-center gap-3 p-3.5 rounded-2xl border", C.cardBg, C.border)}>
-                  <img src={user.avatar} alt={user.name} className="w-9 h-9 rounded-full border-2 border-white shadow-sm" />
+                  <img src={user.avatar} alt={user.name} className="w-9 h-9 rounded-full border-2 border-white shadow-sm shrink-0 aspect-square object-cover object-center" />
                   <div>
                     <p className={cn("text-sm font-bold", C.text)}>{user.name}</p>
                     <p className={cn("text-[10px] font-medium flex items-center gap-1", C.sub)}>
@@ -417,7 +417,7 @@ export const DocumentationDrawer: React.FC<DocumentationDrawerProps> = ({
                           className="w-full px-5 py-4 flex items-center justify-between group"
                         >
                           <div className="flex items-center gap-3">
-                            <img src={doc.authorAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${doc.authorName}`} className="w-8 h-8 rounded-full border-2 border-white shadow-sm shrink-0" alt={doc.authorName} />
+                            <img src={doc.authorAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${doc.authorName}`} className="w-8 h-8 rounded-full border-2 border-white shadow-sm shrink-0 aspect-square object-cover object-center" alt={doc.authorName} />
                             <div className="text-left">
                               <p className={cn("text-sm font-bold", C.text)}>{doc.authorName}</p>
                               <p className={cn("text-[10px] font-medium flex items-center gap-1", C.sub)}>
