@@ -17,7 +17,9 @@ import {
   Activity,
   Layers,
   Wrench,
-  ChevronRight
+  ChevronRight,
+  Calendar,
+  FolderKanban
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -78,15 +80,15 @@ const Sparkline = ({ data, color }: { data: number[]; color: string }) => {
 };
 
 const SkeletonCard = () => (
-  <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700/60 shadow-sm animate-pulse space-y-4">
+  <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs animate-pulse space-y-4">
     <div className="flex justify-between items-center">
-      <div className="h-4 w-28 bg-slate-200 dark:bg-slate-700 rounded" />
-      <div className="h-9 w-9 bg-slate-200 dark:bg-slate-700 rounded-xl" />
+      <div className="h-4 w-28 bg-slate-200 dark:bg-slate-800 rounded" />
+      <div className="h-4 w-4 bg-slate-200 dark:bg-slate-800 rounded" />
     </div>
-    <div className="h-8 w-16 bg-slate-200 dark:bg-slate-700 rounded" />
-    <div className="flex justify-between items-center pt-2">
-      <div className="h-3.5 w-16 bg-slate-200 dark:bg-slate-700 rounded" />
-      <div className="h-6 w-20 bg-slate-200 dark:bg-slate-700 rounded" />
+    <div className="h-8 w-20 bg-slate-200 dark:bg-slate-800 rounded" />
+    <div className="flex justify-between items-center pt-3 border-t border-slate-100 dark:border-slate-800/80">
+      <div className="h-3.5 w-16 bg-slate-200 dark:bg-slate-800 rounded" />
+      <div className="h-4 w-20 bg-slate-200 dark:bg-slate-800 rounded" />
     </div>
   </div>
 );
@@ -466,23 +468,56 @@ export const Dashboard: React.FC<DashboardProps> = ({
   return (
     <div className="space-y-5 pb-8 transition-colors duration-300">
       
+      {/* Breadcrumb & Date Header like panel.kroombox.com */}
+      <div className="px-4 md:px-6 pt-3 md:pt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
+        <div className="flex items-center gap-1.5 font-medium">
+          <FolderKanban size={14} className="text-slate-400" />
+          <span>Workspace</span>
+          <span className="text-slate-300 dark:text-slate-600">/</span>
+          <span className="text-blue-600 dark:text-blue-400 font-semibold">{t('dashboard')}</span>
+        </div>
+        <div className="flex items-center gap-2 text-[11px] text-slate-400">
+          <Calendar size={13} />
+          <span>{new Date().toLocaleDateString(language === 'en' ? 'en-US' : 'id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+          <span>•</span>
+          <span className="font-mono">{new Date().toLocaleTimeString(language === 'en' ? 'en-US' : 'id-ID', { hour: '2-digit', minute: '2-digit' })}</span>
+        </div>
+      </div>
+
+      {/* Greeting Header & Controls */}
       <header className={cn(
-        "flex flex-col sm:flex-row justify-between items-start sm:items-center px-4 md:px-6 py-3 md:py-3.5 border-b sticky top-0 z-30 backdrop-blur-md transition-all",
-        darkMode ? "bg-[#0D1B35]/90 border-slate-800" : "bg-white/90 border-slate-100"
+        "flex flex-col sm:flex-row justify-between items-start sm:items-center px-4 md:px-6 py-2 pb-1 transition-all"
       )}>
         <div>
-          <h1 className={cn("text-xl md:text-2xl font-black tracking-tight", darkMode ? "text-white" : "text-slate-900")}>
-            {language === 'en' ? 'Welcome, ' : 'Selamat Datang, '}
-            <span className="text-[#3498DB]">{user.name}</span>
+          <h1 className={cn("text-2xl sm:text-3xl font-bold tracking-tight", darkMode ? "text-white" : "text-slate-900")}>
+            {(() => {
+              const hour = new Date().getHours();
+              if (language === 'en') {
+                if (hour < 12) return 'Good morning, ';
+                if (hour < 18) return 'Good afternoon, ';
+                return 'Good evening, ';
+              } else {
+                if (hour < 11) return 'Selamat pagi, ';
+                if (hour < 15) return 'Selamat siang, ';
+                if (hour < 18) return 'Selamat sore, ';
+                return 'Selamat malam, ';
+              }
+            })()}
+            <span>{user.name}</span>
           </h1>
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+            {language === 'en' 
+              ? 'Welcome to your workspace. Monitor project health, metrics, and manage deployment from here.'
+              : 'Selamat datang di ruang kerja Anda. Pantau kesehatan proyek, metrik, dan kelola tugas dari sini.'}
+          </p>
         </div>
         <div className="flex items-center gap-2.5 mt-3 sm:mt-0">
           {isAdmin && (
             <div className={cn(
-              "flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[9.5px] font-bold uppercase tracking-wider",
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[11px] font-semibold tracking-wide",
               darkMode ? "bg-blue-500/10 border-blue-500/30 text-blue-400" : "bg-blue-50 border-blue-100 text-blue-600"
             )}>
-              <ShieldCheck size={12} />
+              <ShieldCheck size={13} />
               Admin Mode
             </div>
           )}
@@ -490,7 +525,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             onClick={() => fetchDashboardData(true)}
             disabled={isRefreshing}
             className={cn(
-              "p-2 rounded-xl border transition-all active:scale-95",
+              "p-2 rounded-xl border transition-all active:scale-95 shadow-2xs",
               darkMode 
                 ? "bg-slate-800 border-slate-700 text-slate-300 hover:text-white hover:bg-slate-700" 
                 : "bg-white border-slate-200 text-slate-600 hover:text-slate-800 hover:bg-slate-50"
@@ -505,10 +540,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
       {/* Main Container */}
       <div className="px-4 md:px-6 space-y-5">
 
-        {/* 4 Smart KPI Cards */}
+        {/* 4 Smart KPI Cards - Kroombox Panel Card Model */}
         <section className={cn(
-          "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 lg:sticky lg:top-12 lg:md:top-13 lg:z-20 py-2.5 -my-2.5 backdrop-blur-md transition-all duration-300",
-          darkMode ? "bg-slate-900/95" : "bg-slate-50/95"
+          "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 py-2 transition-all duration-300"
         )}>
           {loading || !dashboardData ? (
             Array(4).fill(0).map((_, i) => <SkeletonCard key={i} />)
@@ -516,116 +550,128 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <>
               {/* Card 1: Task Completed */}
               <motion.div 
-                whileHover={{ y: -3 }}
+                whileHover={{ y: -2 }}
                 className={cn(
-                  "p-4 rounded-xl border shadow-xs flex flex-col justify-between group transition-all duration-300",
-                  darkMode ? "bg-[#152844] border-slate-800" : "bg-white border-slate-100"
+                  "p-5 rounded-2xl border shadow-xs flex flex-col justify-between group transition-all duration-200",
+                  darkMode 
+                    ? "bg-slate-900 border-slate-800 hover:border-slate-700" 
+                    : "bg-white border-slate-200/80 hover:border-slate-300"
                 )}
               >
                 <div className="flex justify-between items-start">
-                  <div>
-                    <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                      {language === 'en' ? 'Task Completed' : 'Tugas Selesai'}
-                    </span>
-                    <h3 className={cn("text-2xl font-black mt-0.5", darkMode ? "text-white" : "text-slate-900")}>
+                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                    {language === 'en' ? 'Task Completed' : 'Tugas Selesai'}
+                  </span>
+                  <CheckCircle2 size={18} className="text-emerald-500 dark:text-emerald-400" strokeWidth={1.75} />
+                </div>
+                <div className="mt-3">
+                  <div className="flex items-baseline gap-1.5">
+                    <span className={cn("text-3xl font-bold tracking-tight", darkMode ? "text-white" : "text-slate-900")}>
                       {dashboardData.kpis.taskCompleted.value}
-                    </h3>
-                  </div>
-                  <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-500">
-                    <CheckCircle2 size={17} />
+                    </span>
+                    <span className="text-xs text-slate-400 font-normal">
+                      {language === 'en' ? 'tasks' : 'tugas'}
+                    </span>
                   </div>
                 </div>
-                <div className="flex justify-between items-end mt-3 gap-2">
-                  <div className="text-[9.5px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
-                    {language === 'en' ? 'vs prev week' : 'vs minggu lalu'}
-                  </div>
+                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-400 dark:text-slate-500">
+                  <span>{language === 'en' ? 'vs prev week' : 'vs minggu lalu'}</span>
                   <Sparkline data={dashboardData.kpis.taskCompleted.sparkline} color={COLORS.success} />
                 </div>
               </motion.div>
 
               {/* Card 2: On-Time Rate */}
               <motion.div 
-                whileHover={{ y: -3 }}
+                whileHover={{ y: -2 }}
                 className={cn(
-                  "p-4 rounded-xl border shadow-xs flex flex-col justify-between group transition-all duration-300",
-                  darkMode ? "bg-[#152844] border-slate-800" : "bg-white border-slate-100"
+                  "p-5 rounded-2xl border shadow-xs flex flex-col justify-between group transition-all duration-200",
+                  darkMode 
+                    ? "bg-slate-900 border-slate-800 hover:border-slate-700" 
+                    : "bg-white border-slate-200/80 hover:border-slate-300"
                 )}
               >
                 <div className="flex justify-between items-start">
-                  <div>
-                    <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                      {language === 'en' ? 'On-Time Rate' : 'Rasio Tepat Waktu'}
-                    </span>
-                    <h3 className={cn("text-2xl font-black mt-0.5", darkMode ? "text-white" : "text-slate-900")}>
+                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                    {language === 'en' ? 'On-Time Rate' : 'Rasio Tepat Waktu'}
+                  </span>
+                  <Clock size={18} className="text-blue-500 dark:text-blue-400" strokeWidth={1.75} />
+                </div>
+                <div className="mt-3">
+                  <div className="flex items-baseline gap-1.5">
+                    <span className={cn("text-3xl font-bold tracking-tight", darkMode ? "text-white" : "text-slate-900")}>
                       {dashboardData.kpis.onTimeRate.value}%
-                    </h3>
-                  </div>
-                  <div className="p-2 rounded-lg bg-blue-500/10 text-blue-500">
-                    <Clock size={17} />
+                    </span>
+                    <span className="text-xs text-slate-400 font-normal">
+                      {language === 'en' ? 'target 90%' : 'target 90%'}
+                    </span>
                   </div>
                 </div>
-                <div className="flex justify-between items-end mt-3 gap-2">
-                  <div className="text-[9.5px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
-                    {language === 'en' ? 'vs prev rate' : 'vs rasio lalu'}
-                  </div>
+                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-400 dark:text-slate-500">
+                  <span>{language === 'en' ? 'vs prev rate' : 'vs rasio lalu'}</span>
                   <Sparkline data={dashboardData.kpis.onTimeRate.sparkline} color={COLORS.info} />
                 </div>
               </motion.div>
 
               {/* Card 3: Project Health */}
               <motion.div 
-                whileHover={{ y: -3 }}
+                whileHover={{ y: -2 }}
                 className={cn(
-                  "p-4 rounded-xl border shadow-xs flex flex-col justify-between group transition-all duration-300",
-                  darkMode ? "bg-[#152844] border-slate-800" : "bg-white border-slate-100"
+                  "p-5 rounded-2xl border shadow-xs flex flex-col justify-between group transition-all duration-200",
+                  darkMode 
+                    ? "bg-slate-900 border-slate-800 hover:border-slate-700" 
+                    : "bg-white border-slate-200/80 hover:border-slate-300"
                 )}
               >
                 <div className="flex justify-between items-start">
-                  <div>
-                    <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                      {language === 'en' ? 'Project Health' : 'Kesehatan Proyek'}
-                    </span>
-                    <h3 className={cn("text-2xl font-black mt-0.5", darkMode ? "text-white" : "text-slate-900")}>
+                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                    {language === 'en' ? 'Project Health' : 'Kesehatan Proyek'}
+                  </span>
+                  <Activity size={18} className="text-purple-500 dark:text-purple-400" strokeWidth={1.75} />
+                </div>
+                <div className="mt-3">
+                  <div className="flex items-baseline gap-1.5">
+                    <span className={cn("text-3xl font-bold tracking-tight", darkMode ? "text-white" : "text-slate-900")}>
                       {dashboardData.kpis.aiProjectHealth.value}%
-                    </h3>
-                  </div>
-                  <div className="p-2 rounded-lg bg-purple-500/10 text-purple-500">
-                    <Activity size={17} />
+                    </span>
+                    <span className="text-xs text-slate-400 font-normal">
+                      {language === 'en' ? 'overall' : 'keseluruhan'}
+                    </span>
                   </div>
                 </div>
-                <div className="flex justify-between items-end mt-3 gap-2">
-                  <div className="text-[9.5px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
-                    {language === 'en' ? 'vs yesterday' : 'vs kemarin'}
-                  </div>
+                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-400 dark:text-slate-500">
+                  <span>{language === 'en' ? 'vs yesterday' : 'vs kemarin'}</span>
                   <Sparkline data={dashboardData.kpis.aiProjectHealth.sparkline} color={COLORS.purple} />
                 </div>
               </motion.div>
 
               {/* Card 4: Open Maintenance Tickets */}
               <motion.div 
-                whileHover={{ y: -3 }}
+                whileHover={{ y: -2 }}
                 className={cn(
-                  "p-4 rounded-xl border shadow-xs flex flex-col justify-between group transition-all duration-300",
-                  darkMode ? "bg-[#152844] border-slate-800" : "bg-white border-slate-100"
+                  "p-5 rounded-2xl border shadow-xs flex flex-col justify-between group transition-all duration-200",
+                  darkMode 
+                    ? "bg-slate-900 border-slate-800 hover:border-slate-700" 
+                    : "bg-white border-slate-200/80 hover:border-slate-300"
                 )}
               >
                 <div className="flex justify-between items-start">
-                  <div>
-                    <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                      {language === 'en' ? 'Open Maintenance' : 'Tiket Perbaikan Aktif'}
-                    </span>
-                    <h3 className={cn("text-2xl font-black mt-0.5", darkMode ? "text-white" : "text-slate-900")}>
+                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                    {language === 'en' ? 'Open Maintenance' : 'Tiket Perbaikan Aktif'}
+                  </span>
+                  <Wrench size={18} className="text-amber-500 dark:text-amber-400" strokeWidth={1.75} />
+                </div>
+                <div className="mt-3">
+                  <div className="flex items-baseline gap-1.5">
+                    <span className={cn("text-3xl font-bold tracking-tight", darkMode ? "text-white" : "text-slate-900")}>
                       {dashboardData.kpis.openMaintenance.value}
-                    </h3>
-                  </div>
-                  <div className="p-2 rounded-lg bg-amber-500/10 text-amber-500">
-                    <Wrench size={17} />
+                    </span>
+                    <span className="text-xs text-slate-400 font-normal">
+                      {language === 'en' ? 'tickets' : 'tiket'}
+                    </span>
                   </div>
                 </div>
-                <div className="flex justify-between items-end mt-3 gap-2">
-                  <div className="text-[9.5px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
-                    {language === 'en' ? 'vs prev week' : 'vs minggu lalu'}
-                  </div>
+                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-400 dark:text-slate-500">
+                  <span>{language === 'en' ? 'need attention' : 'perlu perhatian'}</span>
                   <Sparkline data={dashboardData.kpis.openMaintenance.sparkline} color={COLORS.warning} />
                 </div>
               </motion.div>
@@ -639,7 +685,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           {/* Chart 1: Task Completion Trend */}
           <div className={cn(
             "lg:col-span-2 p-4 md:p-5 rounded-2xl border shadow-xs",
-            darkMode ? "bg-[#152844] border-slate-800" : "bg-white border-slate-100"
+            darkMode ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200/80 shadow-xs"
           )}>
             <div className="flex justify-between items-center mb-3">
               <div>
@@ -718,7 +764,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           {/* Chart 2: Task Status Distribution */}
           <div className={cn(
             "p-4 md:p-5 rounded-2xl border shadow-xs flex flex-col justify-between",
-            darkMode ? "bg-[#152844] border-slate-800" : "bg-white border-slate-100"
+            darkMode ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200/80 shadow-xs"
           )}>
             <div>
               <h3 className={cn("text-sm md:text-base font-extrabold", darkMode ? "text-white" : "text-slate-900")}>
@@ -782,7 +828,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           {/* Column 1: My Tasks Panel */}
           <div className={cn(
             "p-4 md:p-5 rounded-2xl border shadow-sm flex flex-col justify-between",
-            darkMode ? "bg-[#152844] border-slate-800" : "bg-white border-slate-100"
+            darkMode ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200/80 shadow-xs"
           )}>
             <div>
               <div className="flex justify-between items-center mb-3.5">
@@ -867,7 +913,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           {/* Column 2: Recent Team Activity Timeline */}
           <div className={cn(
             "p-4 md:p-5 rounded-2xl border shadow-sm flex flex-col justify-between",
-            darkMode ? "bg-[#152844] border-slate-800" : "bg-white border-slate-100"
+            darkMode ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200/80 shadow-xs"
           )}>
             <div>
               <h3 className={cn("text-sm md:text-base font-extrabold flex items-center gap-2 mb-3.5", darkMode ? "text-white" : "text-slate-900")}>
@@ -926,7 +972,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           {/* Column 3: Maintenance Overview Section */}
           <div className={cn(
             "p-4 md:p-5 rounded-2xl border shadow-sm flex flex-col justify-between",
-            darkMode ? "bg-[#152844] border-slate-800" : "bg-white border-slate-100"
+            darkMode ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200/80 shadow-xs"
           )}>
             <div>
               <h3 className={cn("text-sm md:text-base font-extrabold flex items-center gap-2 mb-3.5", darkMode ? "text-white" : "text-slate-900")}>
@@ -1024,7 +1070,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className={cn("w-full max-w-md rounded-2xl p-8 shadow-2xl border flex flex-col gap-6", darkMode ? "bg-[#152844] border-slate-800" : "bg-white border-slate-100")}
+              className={cn("w-full max-w-md rounded-2xl p-8 shadow-2xl border flex flex-col gap-6", darkMode ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200/80 shadow-xs")}
             >
               <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-xl bg-blue-600 text-white">
