@@ -9,8 +9,12 @@ export const getEmailFrom = () => {
 };
 
 export async function initMail() {
-  const mailUser = process.env.MAIL_USERNAME || process.env.EMAIL_USER;
-  const mailPass = process.env.MAIL_PASSWORD || process.env.EMAIL_PASS;
+  const mailUser = (process.env.MAIL_USERNAME || process.env.EMAIL_USER)?.trim();
+  let mailPass = (process.env.MAIL_PASSWORD || process.env.EMAIL_PASS)?.trim();
+  if (mailPass) {
+    // Bersihkan spasi jika password disalin dari Google App Password format "xxxx xxxx xxxx xxxx"
+    mailPass = mailPass.replace(/\s+/g, '');
+  }
   const mailHost = process.env.MAIL_HOST || "smtp.gmail.com";
   const mailPort = Number(process.env.MAIL_PORT) || 587;
 

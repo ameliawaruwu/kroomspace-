@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bell, Sun, Moon } from 'lucide-react';
+import { Bell, Sun, Moon, Menu } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -11,6 +11,7 @@ interface HeaderProps {
   user: any;
   unreadCount?: number;
   sidebarCollapsed?: boolean;
+  onMenuToggle?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({ 
@@ -20,22 +21,45 @@ export const Header: React.FC<HeaderProps> = ({
   onProfileClick,
   user,
   unreadCount = 0,
-  sidebarCollapsed = false
+  sidebarCollapsed = false,
+  onMenuToggle
 }) => {
   const { language, setLanguage, t } = useLanguage();
 
   return (
     <header className={cn(
-      "h-12 md:h-13 flex items-center justify-between px-3 md:px-5 fixed top-0 right-0 z-[35] transition-all duration-300",
+      "h-12 md:h-13 flex items-center justify-between px-2.5 sm:px-4 md:px-5 fixed top-0 right-0 z-[35] transition-all duration-300",
       sidebarCollapsed ? "left-0 lg:left-[64px]" : "left-0 lg:left-[225px]",
       darkMode 
         ? "bg-[#0D1B35]/90 backdrop-blur-xl border-b border-[#1E3A5F]/50" 
         : "bg-white/90 backdrop-blur-xl border-b border-[#BFDFFF]/40 shadow-xs shadow-[#3FA9F5]/5"
     )}>
 
-      {/* Mobile title placeholder */}
-      <div className="md:hidden flex-1 pl-10">
-        <span className="font-black text-xs tracking-wider bg-gradient-to-r from-[#3FA9F5] to-[#2D7FEA] bg-clip-text text-transparent">KroomSpace</span>
+      {/* Mobile Menu Toggle & Brand Logo */}
+      <div className="lg:hidden flex items-center gap-2">
+        <button 
+          id="btn_mobile_menu"
+          onClick={onMenuToggle}
+          className={cn(
+            "p-1.5 rounded-xl border flex items-center justify-center transition-all active:scale-95",
+            darkMode 
+              ? "bg-[#1E3A5F]/50 border-[#1E3A5F]/70 text-slate-200 hover:bg-[#1E3A5F]" 
+              : "bg-[#F0F9FF] border-[#BFDFFF]/70 text-[#2D7FEA] hover:bg-[#DBEEFF]"
+          )}
+          aria-label="Buka Menu Navigasi"
+        >
+          <Menu size={18} />
+        </button>
+        <div className="flex items-center gap-1.5 cursor-pointer select-none">
+          <img 
+            src="/logo-ks.png" 
+            alt="KroomSpace Logo" 
+            className="w-6 h-6 object-contain rounded-md" 
+          />
+          <span className="font-extrabold text-sm tracking-tight bg-gradient-to-r from-[#3FA9F5] to-[#2D7FEA] bg-clip-text text-transparent">
+            KroomSpace
+          </span>
+        </div>
       </div>
 
       <div className="flex items-center gap-1.5 md:gap-3 ml-auto">

@@ -126,6 +126,69 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   const attachmentFileInputRef = useRef<HTMLInputElement>(null);
   const proofFileInputRef = useRef<HTMLInputElement>(null);
   const draggedRecentlyRef = useRef(false);
+  const boardScrollRef = useRef<HTMLDivElement>(null);
+  const isDraggingBoardRef = useRef(false);
+  const startXRef = useRef(0);
+  const scrollLeftRef = useRef(0);
+
+  const scrollBoard = (direction: 'left' | 'right') => {
+    if (boardScrollRef.current) {
+      boardScrollRef.current.scrollBy({
+        left: direction === 'left' ? -320 : 320,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  const handleBoardWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    if (e.shiftKey || Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+      return;
+    }
+
+    const target = e.target as HTMLElement;
+    const taskScrollContainer = target.closest('.column-task-scroll');
+    if (taskScrollContainer) {
+      const canScrollUp = taskScrollContainer.scrollTop > 0 && e.deltaY < 0;
+      const canScrollDown =
+        taskScrollContainer.scrollTop + taskScrollContainer.clientHeight < taskScrollContainer.scrollHeight - 2 &&
+        e.deltaY > 0;
+      if (canScrollUp || canScrollDown) {
+        return;
+      }
+    }
+
+    if (e.deltaY !== 0 && boardScrollRef.current) {
+      boardScrollRef.current.scrollLeft += e.deltaY;
+    }
+  };
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    if (
+      target.closest('button') ||
+      target.closest('a') ||
+      target.closest('input') ||
+      target.closest('textarea') ||
+      target.closest('[data-rfd-draggable-id]') ||
+      target.closest('[data-rfd-drag-handle-context-id]')
+    ) {
+      return;
+    }
+    isDraggingBoardRef.current = true;
+    startXRef.current = e.pageX - (boardScrollRef.current?.offsetLeft || 0);
+    scrollLeftRef.current = boardScrollRef.current?.scrollLeft || 0;
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isDraggingBoardRef.current || !boardScrollRef.current) return;
+    const x = e.pageX - (boardScrollRef.current.offsetLeft || 0);
+    const walk = (x - startXRef.current) * 1.2;
+    boardScrollRef.current.scrollLeft = scrollLeftRef.current - walk;
+  };
+
+  const handleMouseUpOrLeave = () => {
+    isDraggingBoardRef.current = false;
+  };
   const currentProject = projects.find(p => p.id === currentProjectId);
   const isOperational = currentProject?.mode === 'Operational';
 
@@ -623,7 +686,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   };
 
   return (
-    <div className={cn("min-h-screen", isBoardOpen ? "h-screen overflow-hidden" : "space-y-6 animate-in fade-in duration-700 overflow-y-auto transition-colors pb-10")}>
+    <div className={cn("min-h-screen w-full min-w-0 flex flex-col", isBoardOpen ? "h-screen overflow-hidden" : "space-y-6 animate-in fade-in duration-700 overflow-y-auto transition-colors pb-10")}>
       {!isBoardOpen ? (
         <>
           <header className={cn(
@@ -833,7 +896,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
           </div>
         </>
       ) : (
-        <div className="flex flex-col" style={{ height: 'calc(100vh - 3.25rem)' }}>
+        <div className="flex flex-col w-full min-w-0" style={{ height: 'calc(100vh - 3.25rem)' }}>
           <header className="px-4 md:px-6 py-2.5 md:py-3 border-b border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl sticky top-0 z-30 transition-all">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
               <div className="flex items-center gap-2">
@@ -844,8 +907,8 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                  >
                    <ChevronLeft size={20} />
                  </button>
-                  <div className="flex items-center gap-2.5">
-                    <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">
+                  <div className="flex items-center gap-1.5 sm:gap-2.5 flex-wrap min-w-0">
+                    <h2 className="text-base sm:text-xl font-black text-slate-900 dark:text-white tracking-tight truncate max-w-[180px] sm:max-w-none">
                       {currentProject?.name || 'Project Board'}
                     </h2>
                     {(() => {
@@ -885,8 +948,8 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   </div>
               </div>
               <div className="flex items-center gap-3 xl:gap-4 shrink-0">
-                <div className="flex -space-x-2 mr-2 items-center py-1">
-                  {allProjectUsers.map((member: any) => {
+                <div className="flex -space-x-1.5 sm:-space-x-2 mr-1 sm:mr-2 items-center py-1">
+                  {allProjectUsers.slice(0, 4).map((member: any) => {
                     if (!member) return null;
                     const memberId = member.id || member.id_pengguna;
                     const memberName = member.name || member.nama || 'User';
@@ -900,7 +963,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                         className="relative group ring-2 ring-white dark:ring-slate-900 rounded-full shrink-0"
                       >
                         <div 
-                          className="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white text-xs font-bold shadow-sm overflow-hidden"
+                          className="w-7 h-7 sm:w-9 sm:h-9 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white text-[11px] font-bold shadow-sm overflow-hidden"
                           title={`${memberName} ${isOwner ? '(Pemilik)' : ''} ${member.email ? `(${member.email})` : ''}`}
                         >
                           {avatarUrl ? (
@@ -917,19 +980,50 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                     );
                   })}
 
+                  {allProjectUsers.length > 4 && (
+                    <div 
+                      className="w-7 h-7 sm:w-9 sm:h-9 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center text-[10px] font-black border-2 border-white dark:border-slate-900 shrink-0"
+                      title={`+${allProjectUsers.length - 4} anggota lainnya`}
+                    >
+                      +{allProjectUsers.length - 4}
+                    </div>
+                  )}
+
                   <button 
                     onClick={() => setShowAddMemberModal(true)}
-                    className="w-9 h-9 rounded-full border-2 border-dashed border-slate-300 dark:border-slate-600 flex items-center justify-center bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-blue-500 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all cursor-pointer z-10 shrink-0 ml-1"
+                    className="w-7 h-7 sm:w-9 sm:h-9 rounded-full border-2 border-dashed border-slate-300 dark:border-slate-600 flex items-center justify-center bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-blue-500 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all cursor-pointer z-10 shrink-0 ml-1"
                     title={t('addMember') || "Tambah Anggota"}
                     id="btn_add_project_member"
                   >
-                    <Plus size={16} />
+                    <Plus size={14} />
                   </button>
                 </div>
 
                 <div className="h-8 w-px bg-slate-200 dark:bg-slate-700 mx-1 hidden lg:block" />
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  {/* Horizontal Scroll Navigation Controls */}
+                  <div className="flex items-center gap-0.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-1 shadow-xs">
+                    <button 
+                      type="button"
+                      onClick={() => scrollBoard('left')}
+                      className="p-1.5 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-all"
+                      title="Geser Papan ke Kiri"
+                      aria-label="Scroll board left"
+                    >
+                      <ChevronLeft size={16} />
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => scrollBoard('right')}
+                      className="p-1.5 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-all"
+                      title="Geser Papan ke Kanan"
+                      aria-label="Scroll board right"
+                    >
+                      <ChevronRight size={16} />
+                    </button>
+                  </div>
+
                   <div className="relative">
                      <button 
                       onClick={() => setActiveMenu(activeMenu === 'more-actions' ? null : 'more-actions')}
@@ -1089,7 +1183,16 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
             </div>
           ) : (
             <DragDropContext onDragStart={onDragStart} onDragEnd={onDragEnd}>
-              <div className="flex gap-3 md:gap-3.5 pb-3 px-4 md:px-6 pt-3 scrollbar-hide items-stretch overflow-y-hidden" style={{ overflowX: 'auto', flex: 1 }}>
+              <div 
+                ref={boardScrollRef}
+                onWheel={handleBoardWheel}
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUpOrLeave}
+                onMouseLeave={handleMouseUpOrLeave}
+                className="flex gap-3 md:gap-3.5 pb-4 px-4 md:px-6 pt-3 kanban-scrollbar items-stretch overflow-y-hidden overflow-x-auto w-full min-w-0" 
+                style={{ overflowX: 'auto', flex: 1 }}
+              >
                 {boardColumns.map((column, index) => (
                   <div key={column.id} className="flex flex-shrink-0 h-full">
                     <div className={cn(
@@ -1215,7 +1318,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                           {...provided.droppableProps}
                           ref={provided.innerRef}
                           className={cn(
-                            "rounded-xl transition-all duration-200 px-1 py-1 overflow-y-auto scrollbar-hide flex-1",
+                            "rounded-xl transition-all duration-200 px-1 py-1 overflow-y-auto scrollbar-hide flex-1 column-task-scroll",
                             snapshot.isDraggingOver 
                               ? darkMode ? "bg-[#3FA9F5]/10 ring-1 ring-[#3FA9F5]/20" : "bg-[#3FA9F5]/8 ring-1 ring-[#3FA9F5]/15" 
                               : ""

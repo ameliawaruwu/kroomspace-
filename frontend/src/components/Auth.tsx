@@ -386,7 +386,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
           <div className="flex flex-col items-center text-center mb-8 md:mb-10">
             <div className="mb-3 md:mb-4 group relative">
               <img
-                src="https://i.ibb.co.com/Fk4YB1cM/logo-ks.png"
+                src="/logo-ks.png"
                 alt="KroomSpace Logo"
                 style={{ height: '120px', width: 'auto' }}
                 className="object-contain transition-transform duration-500 group-hover:scale-105"

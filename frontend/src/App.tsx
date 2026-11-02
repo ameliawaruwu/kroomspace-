@@ -102,6 +102,7 @@ export default function App() {
     return localStorage.getItem('darkMode') === 'true';
   });
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     localStorage.setItem('darkMode', darkMode.toString());
@@ -794,10 +795,12 @@ export default function App() {
         onLogout={handleLogout}
         darkMode={darkMode}
         onCollapse={setIsSidebarCollapsed}
+        isMobileOpen={isMobileMenuOpen}
+        setIsMobileOpen={setIsMobileMenuOpen}
       />
       
       <main className={cn(
-        "flex-1 min-h-screen flex flex-col relative overflow-x-hidden transition-all duration-300",
+        "flex-1 min-h-screen flex flex-col relative overflow-x-hidden min-w-0 transition-all duration-300",
         isSidebarCollapsed ? "lg:ml-[64px]" : "lg:ml-[225px]"
       )}>
         <Header 
@@ -808,8 +811,9 @@ export default function App() {
           user={currentUser}
           unreadCount={notifications.filter(n => !n.read && (!n.userId || n.userId === currentUser.id)).length}
           sidebarCollapsed={isSidebarCollapsed}
+          onMenuToggle={() => setIsMobileMenuOpen(prev => !prev)}
         />
-        <div className="flex-1 overflow-y-auto scroll-smooth pt-12 md:pt-13">
+        <div className="flex-1 min-w-0 w-full overflow-y-auto scroll-smooth pt-12 md:pt-13">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
@@ -817,7 +821,7 @@ export default function App() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.15 }}
-              className="pb-8 md:pb-10"
+              className="pb-8 md:pb-10 min-w-0 w-full"
             >
               {renderContent()}
             </motion.div>

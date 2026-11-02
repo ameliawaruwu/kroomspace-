@@ -25,10 +25,23 @@ interface SidebarProps {
   onLogout: () => void;
   darkMode: boolean;
   onCollapse?: (collapsed: boolean) => void;
+  isMobileOpen?: boolean;
+  setIsMobileOpen?: (open: boolean) => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, user, onLogout, darkMode, onCollapse }) => {
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
+export const Sidebar: React.FC<SidebarProps> = ({ 
+  activeTab, 
+  setActiveTab, 
+  user, 
+  onLogout, 
+  darkMode, 
+  onCollapse,
+  isMobileOpen: externalIsMobileOpen,
+  setIsMobileOpen: externalSetIsMobileOpen
+}) => {
+  const [internalIsMobileOpen, setInternalIsMobileOpen] = useState(false);
+  const isMobileOpen = externalIsMobileOpen !== undefined ? externalIsMobileOpen : internalIsMobileOpen;
+  const setIsMobileOpen = externalSetIsMobileOpen || setInternalIsMobileOpen;
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { t } = useLanguage();
 
@@ -56,36 +69,51 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, user,
     onCollapse?.(next);
   };
 
-  const SidebarContent = ({ collapsed = false }: { collapsed?: boolean }) => (
+  const SidebarContent = ({ collapsed = false, isMobile = false }: { collapsed?: boolean; isMobile?: boolean }) => (
     <div className="flex flex-col h-full">
-      {/* Spacer for mobile hamburger */}
-      <div className="h-14 lg:h-0 shrink-0" />
-
-      {/* Brand Logo - centered, logo above, text below */}
+      {/* Brand Logo Header */}
       <div className={cn(
-        "hidden lg:flex flex-col items-center border-b shrink-0 transition-all duration-300 relative",
+        "flex flex-col items-center border-b shrink-0 transition-all duration-300 relative",
         collapsed ? "py-2 px-1.5" : "py-3.5 px-3",
         darkMode ? "border-[#1E3A5F]/50" : "border-[#EBF5FF]"
       )}>
-        {/* Toggle button - inside brand section, top right */}
-        <button
-          onClick={handleCollapse}
-          className={cn(
-            "absolute w-5 h-5 rounded-md flex items-center justify-center transition-all hover:scale-110 z-10",
-            collapsed ? "top-1.5 right-1" : "top-2.5 right-2",
-            darkMode
-              ? "text-slate-500 hover:bg-[#1E3A5F] hover:text-white"
-              : "text-slate-300 hover:bg-slate-100 hover:text-slate-600"
-          )}
-        >
-          {collapsed
-            ? <PanelLeftOpen size={13} />
-            : <PanelLeftClose size={13} />
-          }
-        </button>
+        {/* Toggle button - inside brand section, top right (Desktop only) */}
+        {!isMobile && (
+          <button
+            onClick={handleCollapse}
+            className={cn(
+              "hidden lg:flex absolute w-5 h-5 rounded-md items-center justify-center transition-all hover:scale-110 z-10",
+              collapsed ? "top-1.5 right-1" : "top-2.5 right-2",
+              darkMode
+                ? "text-slate-500 hover:bg-[#1E3A5F] hover:text-white"
+                : "text-slate-300 hover:bg-slate-100 hover:text-slate-600"
+            )}
+          >
+            {collapsed
+              ? <PanelLeftOpen size={13} />
+              : <PanelLeftClose size={13} />
+            }
+          </button>
+        )}
+
+        {/* Close button for mobile drawer */}
+        {isMobile && (
+          <button
+            onClick={() => setIsMobileOpen(false)}
+            className={cn(
+              "lg:hidden absolute top-3 right-3 p-1.5 rounded-lg transition-all",
+              darkMode
+                ? "text-slate-400 hover:bg-[#1E3A5F] hover:text-white"
+                : "text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+            )}
+            aria-label="Tutup Menu"
+          >
+            <X size={18} />
+          </button>
+        )}
 
         <img
-          src="https://i.ibb.co.com/Fk4YB1cM/logo-ks.png"
+          src="/logo-ks.png"
           alt="KroomSpace Logo"
           style={{ height: collapsed ? '22px' : '44px', width: 'auto' }}
           className="object-contain transition-all duration-300"
@@ -195,22 +223,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, user,
 
   return (
     <>
-      {/* Mobile hamburger button */}
-      <button
-        id="btn_menu_toggle"
-        className="lg:hidden fixed top-0 left-0 z-[60] w-10 h-full flex flex-col items-center justify-center text-white transition-all"
-        style={{ background: 'linear-gradient(180deg, #3FA9F5, #2D7FEA)' }}
-        onClick={() => setIsMobileOpen(!isMobileOpen)}
-        aria-label="Toggle sidebar"
-      >
-        {isMobileOpen ? <X size={18} className="pointer-events-none" /> : (
-          <div className="flex flex-col items-center gap-1">
-            <Menu size={18} className="pointer-events-none" />
-            <span className="text-[8px] font-bold tracking-widest [writing-mode:vertical-lr] mt-2">MENU</span>
-          </div>
-        )}
-      </button>
-
       {/* Mobile overlay */}
       <AnimatePresence>
         {isMobileOpen && (
@@ -218,13 +230,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, user,
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="lg:hidden fixed inset-0 z-[45] bg-black/40 backdrop-blur-sm"
+            className="lg:hidden fixed inset-0 z-[55] bg-slate-900/60 backdrop-blur-xs"
             onClick={() => setIsMobileOpen(false)}
           />
         )}
       </AnimatePresence>
 
-      {/* Mobile sidebar */}
+      {/* Mobile sidebar drawer */}
       <AnimatePresence>
         {isMobileOpen && (
           <motion.aside
@@ -233,13 +245,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, user,
             exit={{ x: -320, opacity: 0 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
             className={cn(
-              "fixed inset-y-0 left-0 z-[50] w-[230px] max-w-[85vw] border-r flex flex-col lg:hidden",
+              "fixed inset-y-0 left-0 z-[60] w-[260px] max-w-[85vw] border-r flex flex-col shadow-2xl lg:hidden",
               darkMode
-                ? "bg-[#0D1B35]/98 border-[#1E3A5F]/60 text-slate-300"
-                : "bg-white border-[#E8F4FD]/80 text-slate-600"
+                ? "bg-[#0D1B35] border-[#1E3A5F]/80 text-slate-300"
+                : "bg-white border-[#BFDFFF]/60 text-slate-600"
             )}
           >
-            <SidebarContent collapsed={false} />
+            <SidebarContent collapsed={false} isMobile={true} />
           </motion.aside>
         )}
       </AnimatePresence>
@@ -256,7 +268,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, user,
         )}
       >
         <div className="flex flex-col h-full overflow-hidden">
-          <SidebarContent collapsed={isCollapsed} />
+          <SidebarContent collapsed={isCollapsed} isMobile={false} />
         </div>
       </motion.aside>
     </>

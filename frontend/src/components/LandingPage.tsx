@@ -356,7 +356,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart, language, set
           {/* Logo - kiri */}
           <div className="flex items-center gap-2 group cursor-pointer mr-auto" onClick={() => setActiveMenu('Beranda')}>
             <div className="relative">
-              <img src="https://i.ibb.co.com/Fk4YB1cM/logo-ks.png" alt="KroomSpace Logo" style={{ height: '36px', width: 'auto' }} className="relative object-contain transition-all duration-300" />
+              <img src="/logo-ks.png" alt="KroomSpace Logo" style={{ height: '36px', width: 'auto' }} className="relative object-contain transition-all duration-300" />
             </div>
             <span className={cn("text-base font-black tracking-tight uppercase transition-colors", darkMode ? "text-white" : "text-[#1E3A8A]")}>KROOMSPACE</span>
           </div>
@@ -965,7 +965,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart, language, set
             <div className="space-y-6">
               <div className="flex items-center gap-2.5">
                 <img
-                  src="https://i.ibb.co.com/Fk4YB1cM/logo-ks.png"
+                  src="/logo-ks.png"
                   alt="KroomSpace"
                   style={{ height: '50px', width: 'auto' }}
                   className="object-contain"
